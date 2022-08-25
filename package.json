@@ -1,0 +1,21 @@
+{
+  "name": "com.katas.modman",
+  "version": "0.0.1",
+  "unity": "2021.3",
+  "unityRelease": "8f1",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
+  },
+  "displayName": "Modman",
+  "description": "Adds support for modding in your project.",
+  "license": "MIT",
+  "author": {
+    "name": "Pablo Gutierrez Millares"
+  },
+  "keywords": [
+    "mod",
+    "mods",
+    "modding"
+  ],
+  "samples": []
+}
