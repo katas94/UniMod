@@ -1,7 +1,11 @@
 {
     "name": "Katas.Modman.Editor",
     "rootNamespace": "ModmanEditor",
-    "references": [],
+    "references": [
+        "GUID:69448af7b92c7f342b298e06a37122aa",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:35f464a4835088d4f9f5bbced099ed10"
+    ],
     "includePlatforms": [
         "Editor"
     ],
