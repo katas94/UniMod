@@ -10,19 +10,18 @@ using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
-
 using Object = UnityEngine.Object;
 
 namespace Modman
 {
     public class ModService : IModService
     {
-        public const string MOD_FILE_EXTENSION_NO_DOT = "skm";
-        public const string MOD_FILE_EXTENSION = "." + MOD_FILE_EXTENSION_NO_DOT;
-        public const string CATALOG_NAME = "mod";
-        public const string CONFIG_FILE = "config.json";
-        public const string SUKIRU_VERSION_FILE = "SukiruVersion.txt";
-        public const string INITIALISER_ADDRESS = "__mod_initialiser";
+        public const string ModFileExtensionNoDot = "mod";
+        public const string ModFileExtension = "." + ModFileExtensionNoDot;
+        public const string CatalogName = "mod";
+        public const string ConfigFile = "config.json";
+        public const string SukiruVersionFile = "SukiruVersion.txt";
+        public const string InitialiserAddress = "__mod_initialiser";
 
 #if UNITY_EDITOR || UNITY_STANDALONE_WIN
         private const string BUILD_TARGET = "StandaloneWindows64";
@@ -59,7 +58,7 @@ namespace Modman
 
             foreach (string file in files)
             {
-                if (Path.GetExtension(file) == MOD_FILE_EXTENSION)
+                if (Path.GetExtension(file) == ModFileExtension)
                 {
                     ZipFile.ExtractToDirectory(file, ModsFolder, true);
                     Debug.Log($"Mod installed successfully: \"{file}\"");
@@ -100,28 +99,28 @@ namespace Modman
                 throw new Exception($"Could not find any installed mod with id \"{id}\".");
             
             // load mod content catalog
-            string modcatalogPath = Path.Combine(folder, "catalog_" + CATALOG_NAME + ".json");
+            string modcatalogPath = Path.Combine(folder, "catalog_" + CatalogName + ".json");
             IResourceLocator resourceLocator = await Addressables.LoadContentCatalogAsync(modcatalogPath, true);
             
             // load mod config file
-            string modConfigPath = Path.Combine(folder, CONFIG_FILE);
+            string modConfigPath = Path.Combine(folder, ConfigFile);
 
             if (!File.Exists(modConfigPath))
                 throw new Exception($"Could not find the config.json file.");
             
             using StreamReader reader = File.OpenText(modConfigPath);
             string json = await reader.ReadToEndAsync();
-            var config = JsonConvert.DeserializeObject<ModConfig>(json);
+            var config = JsonConvert.DeserializeObject<ModInfo>(json);
 
             // check if the mod build is compatible with the current platform
-            if (!Enum.TryParse(config.platform, false, out RuntimePlatform platform))
-                throw new Exception($"Mod's target platform is unknown: \"{config.platform}\"");
+            if (!Enum.TryParse(config.Platform, false, out RuntimePlatform platform))
+                throw new Exception($"Mod's target platform is unknown: \"{config.Platform}\"");
 
             // check if the mod was built for this version of the game
-            if (string.IsNullOrEmpty(config.sukiruVersion))
+            if (string.IsNullOrEmpty(config.AppVersion))
                 Debug.LogWarning("Could not get the Sukiru version that this mod was built for. The mod is not guaranted to work and the game could crash or be unstable.");
-            if (config.sukiruVersion != Application.version)
-                Debug.LogWarning($"This mod was built for Sukiru {config.sukiruVersion}, so it is not guaranted to work and the game could crash or be unstable.");
+            if (config.AppVersion != Application.version)
+                Debug.LogWarning($"This mod was built for Sukiru {config.AppVersion}, so it is not guaranted to work and the game could crash or be unstable.");
 
 #if UNITY_EDITOR
             // special case for unity editor (mod builds are never set to any of the Editor platforms)
@@ -140,12 +139,12 @@ namespace Modman
                 throw new Exception($"Current platform is unsupported: this mod build was targeted for \"{platform}\"");
             
             // load all the mod assemblies specified in the config file
-            if (config.assemblies != null)
-                foreach (string assembly in config.assemblies)
-                    await LoadAssembly(resourceLocator, assembly);
+            // if (config.assemblies != null)
+            //     foreach (string assembly in config.assemblies)
+            //         await LoadAssembly(resourceLocator, assembly);
 
             // initialise the mod (if it contains an initialiser)
-            if (resourceLocator.Locate(INITIALISER_ADDRESS, typeof(GameObject), out IList<IResourceLocation> locations))
+            if (resourceLocator.Locate(InitialiserAddress, typeof(GameObject), out IList<IResourceLocation> locations))
             {
                 var initialiserGo = await Addressables.LoadAssetAsync<GameObject>(locations.FirstOrDefault());
                 initialiserGo = Object.Instantiate(initialiserGo);
@@ -157,7 +156,7 @@ namespace Modman
                 await initialiser.Initialise();
             }
 
-            if (!Debug.isDebugBuild && config.debugBuild)
+            if (!Debug.isDebugBuild && config.DebugBuild)
                 Debug.LogWarning($"{id}: This is a development build.");
 
             Debug.Log($"Mod loaded successfully: {id}");

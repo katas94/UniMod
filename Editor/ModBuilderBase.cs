@@ -19,25 +19,26 @@ using CompressionLevel = System.IO.Compression.CompressionLevel;
 
 namespace ModmanEditor
 {
-    public abstract class ModBuilder
+    public abstract class ModBuilderBase : IModBuilder
     {
-        public const string AA_PROFILE_SETTINGS_NAME = "__mod_profile";
+        public const string AAProfileSettingsName = "__mod_profile";
+        public const string AAAssemblyLabel = "__mod_assembly";
 
-        protected readonly ModDefinition _modDefinition;
-        protected readonly CodeOptimization _buildTarget;
-        protected readonly string _outputPath;
-        protected readonly RuntimePlatform _targetPlatform;
+        protected readonly ModConfig ModConfig;
+        protected readonly CodeOptimization BuildMode;
+        protected readonly string OutputPath;
+        protected readonly RuntimePlatform TargetPlatform;
 
-        protected string _tmpAssetsFolder;
+        protected string TMPAssetsFolder;
 
-        public ModBuilder (ModDefinition modDefinition, CodeOptimization buildTarget, string outputPath)
+        public ModBuilderBase (ModConfig modConfig, CodeOptimization buildMode, string outputPath)
         {
-            _modDefinition = modDefinition;
-            _buildTarget = buildTarget;
+            ModConfig = modConfig;
+            BuildMode = buildMode;
             // make sure the output path has the proper mod extension
-            _outputPath = IOUtils.EnsureFileExtension(outputPath, ModService.MOD_FILE_EXTENSION_NO_DOT);
+            OutputPath = IOUtils.EnsureFileExtension(outputPath, ModService.ModFileExtensionNoDot);
             
-            // check if the current build target is supported by this modbuilder
+            // check if the current build target is supported by this builder
             RuntimePlatform? platform = BuildTargetToRuntimePlatform(EditorUserBuildSettings.activeBuildTarget);
 
             if (!platform.HasValue)
@@ -45,16 +46,16 @@ namespace ModmanEditor
             if (!SupportsPlatform(platform.Value))
                 throw new Exception($"The current active build target is not supported by {GetType().Name}");
             
-            _targetPlatform = platform.Value;
+            TargetPlatform = platform.Value;
         }
 
         /// <summary>
-        /// Builds the mod with the specified target.
+        /// Builds the mod.
         /// </summary>
-        public virtual async UniTask Build ()
+        public async UniTask BuildAsync ()
         {
-            if (_buildTarget == CodeOptimization.None)
-                throw new Exception("The specified build target is None. Please specify a proper build target (Release or Debug)");
+            if (BuildMode == CodeOptimization.None)
+                throw new Exception("The specified build mode is None. Please specify a proper build mode (Release or Debug)");
             if (!AddressableAssetSettingsDefaultObject.SettingsExists)
                 throw new Exception("There is no Addressables configurations within the project, did you removed it accidentally?");
 
@@ -70,16 +71,16 @@ namespace ModmanEditor
             {
                 // verify the mod setup is correct before building
                 if (!ModUtils.VerifyModSetup())
-                    throw new Exception($"The current mod setup is not valid. Please initialise or check the mod setup using the \"{ModUtils.INIT_MOD_SETUP_MENU_ITEM}\" menu.");
+                    throw new Exception($"The current mod setup is not valid. Please initialise or check the mod setup using the \"{ModUtils.InitModSetupMenuItem}\" menu.");
 
                 // create the temporary output folder for the mod bundle
                 tmpFolder = IOUtils.CreateTmpFolder();
-                string tmpOutputFolder = Path.Combine(tmpFolder, _modDefinition.Id);
+                string tmpOutputFolder = Path.Combine(tmpFolder, ModConfig.modId);
                 Directory.CreateDirectory(tmpOutputFolder);
 
                 // create the temporary assets folder
-                _tmpAssetsFolder = IOUtils.GetUniqueFolderPath("Assets");
-                Directory.CreateDirectory(_tmpAssetsFolder);
+                TMPAssetsFolder = IOUtils.GetUniqueFolderPath("Assets");
+                Directory.CreateDirectory(TMPAssetsFolder);
 
                 // register all plugins under the mod assets folder
                 string[] plugins = IOUtils.FindAllFilesWithExtension(ModUtils.ModPluginsFolder, "dll", true);
@@ -92,7 +93,7 @@ namespace ModmanEditor
                 await RegisterAssemblies(assemblies);
 
                 // process all registered assemblies so they can be included on the addressable assets bundle
-                string[] paths = Directory.GetFiles(_tmpAssetsFolder); // get paths before the .meta files are created
+                string[] paths = Directory.GetFiles(TMPAssetsFolder); // get paths before the .meta files are created
                 AssetDatabase.Refresh(); // generate meta files
                 
                 foreach (string path in paths)
@@ -105,30 +106,30 @@ namespace ModmanEditor
                 // register the mod initialiser prefab in addressables (if any)
                 string initialiserGuid = null;
 
-                if (_modDefinition.Initialiser != null && !AssetDatabase.TryGetGUIDAndLocalFileIdentifier(_modDefinition.Initialiser, out initialiserGuid, out long _))
-                    throw new Exception($"Could not get the asset GUID for the mod initialiser. Is the initialiser properly configured in the {nameof(ModDefinition)} file?");
+                if (ModConfig.instanceProvider != null && !AssetDatabase.TryGetGUIDAndLocalFileIdentifier(ModConfig.instanceProvider, out initialiserGuid, out long _))
+                    throw new Exception($"Could not get the asset GUID for the mod initialiser. Is the initialiser properly configured in the {nameof(ModConfig)} file?");
                 
                 if (initialiserGuid != null)
                 {
                     AddressableAssetEntry initialiserEntry = aaSettings.CreateOrMoveEntry(initialiserGuid, assembliesGroup, true, false);
-                    initialiserEntry.address = ModService.INITIALISER_ADDRESS;
+                    initialiserEntry.address = ModService.InitialiserAddress;
                 }
 
                 // prepare the Addressable Assets settings for the build
-                aaSettings.OverridePlayerVersion = ModService.CATALOG_NAME;
+                aaSettings.OverridePlayerVersion = ModService.CatalogName;
                 aaSettings.BuildRemoteCatalog = true;
                 aaSettings.RemoteCatalogBuildPath = aaSettings.DefaultGroup.GetSchema<BundledAssetGroupSchema>().BuildPath;
                 aaSettings.RemoteCatalogLoadPath = aaSettings.DefaultGroup.GetSchema<BundledAssetGroupSchema>().LoadPath;
 
                 // clean the mod profile, create a new one and set it as the active profile
-                if (profileSettings.GetAllProfileNames().Contains(AA_PROFILE_SETTINGS_NAME))
-                    profileSettings.RemoveProfile(profileSettings.GetProfileId(AA_PROFILE_SETTINGS_NAME));
+                if (profileSettings.GetAllProfileNames().Contains(AAProfileSettingsName))
+                    profileSettings.RemoveProfile(profileSettings.GetProfileId(AAProfileSettingsName));
                 
-                aaTmpProfileId = profileSettings.AddProfile(AA_PROFILE_SETTINGS_NAME, null);
+                aaTmpProfileId = profileSettings.AddProfile(AAProfileSettingsName, null);
                 aaSettings.activeProfileId = aaTmpProfileId;
 
                 // setup profile local paths
-                string loadPath = $"{{UnityEngine.Application.persistentDataPath}}/Mods/{_modDefinition.Id}";
+                string loadPath = $"{{UnityEngine.Application.persistentDataPath}}/Mods/{ModConfig.modId}";
                 profileSettings.SetValue(aaTmpProfileId, "Local.BuildPath", tmpOutputFolder);
                 profileSettings.SetValue(aaTmpProfileId, "Local.LoadPath", loadPath);
 
@@ -139,31 +140,31 @@ namespace ModmanEditor
                     throw new Exception($"Failed to build assets bundle. Error message:\n{result.Error}");
 
                 // initialise the mod config
-                ModConfig config = new ();
+                ModInfo info = new ();
 
-                config.id = _modDefinition.Id;
-                config.version = _modDefinition.Version;
-                config.displayName = _modDefinition.DisplayName;
-                config.platform = _targetPlatform.ToString();
-                config.sukiruVersion = File.ReadAllText($"Assets/{ModService.SUKIRU_VERSION_FILE}");
-                config.debugBuild = _buildTarget == CodeOptimization.Debug;
+                info.ModId = ModConfig.modId;
+                info.ModVersion = ModConfig.modVersion;
+                info.DisplayName = ModConfig.displayName;
+                info.Platform = TargetPlatform.ToString();
+                info.AppVersion = File.ReadAllText($"Assets/{ModService.SukiruVersionFile}");
+                info.DebugBuild = BuildMode == CodeOptimization.Debug;
                 
                 var assetNames = paths.Select(path => Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path))); // remove .bytes and .dll/.pdb
                 var assemblyNames = new HashSet<string>(assetNames);
-                config.assemblies = assemblyNames.ToArray();
+                // info.assemblies = assemblyNames.ToArray();
 
                 // write the config.json file
-                string serializedConfig = JsonConvert.SerializeObject(config, Formatting.Indented);
-                File.WriteAllText(Path.Combine(tmpOutputFolder, ModService.CONFIG_FILE), serializedConfig);
+                string serializedConfig = JsonConvert.SerializeObject(info, Formatting.Indented);
+                File.WriteAllText(Path.Combine(tmpOutputFolder, ModService.ConfigFile), serializedConfig);
 
                 // compress all mod contents into the final .skm (Sukiru Mod) file
-                if (File.Exists(_outputPath)) File.Delete(_outputPath);
-                ZipFile.CreateFromDirectory(tmpOutputFolder, _outputPath, CompressionLevel.Optimal, true);
+                if (File.Exists(OutputPath)) File.Delete(OutputPath);
+                ZipFile.CreateFromDirectory(tmpOutputFolder, OutputPath, CompressionLevel.Optimal, true);
             }
             finally // cleanup
             {
                 IOUtils.DeleteDirectory(tmpFolder);
-                IOUtils.DeleteDirectory(_tmpAssetsFolder, true);
+                IOUtils.DeleteDirectory(TMPAssetsFolder, true);
                 aaSettings.RemoveGroup(assembliesGroup);
                 profileSettings.RemoveProfile(aaTmpProfileId);
                 aaSettings.activeProfileId = previousActiveProfileId;
@@ -187,16 +188,16 @@ namespace ModmanEditor
         /// </summary>
         protected virtual void RegisterAssembly (string path, bool throwIfNotFound = true)
         {
-            if (string.IsNullOrEmpty(_tmpAssetsFolder) || !Directory.Exists(_tmpAssetsFolder))
+            if (string.IsNullOrEmpty(TMPAssetsFolder) || !Directory.Exists(TMPAssetsFolder))
                 throw new Exception("You tried to register an assembly without an initialised temporary assets folder.");
             
             // the destination paths use the .bytes format so they are recognised as TextAsset
             // this will allow us to include the files on the Addressable Assets bundle
             string name = Path.GetFileNameWithoutExtension(path);
             string dllSrcPath = path;
-            string dllDestPath = Path.Combine(_tmpAssetsFolder, name) + ".dll.bytes";
+            string dllDestPath = Path.Combine(TMPAssetsFolder, name) + ".dll.bytes";
             string pdbSrcPath = Path.ChangeExtension(path, ".pdb");
-            string pdbDestPath = Path.Combine(_tmpAssetsFolder, name) + ".pdb.bytes";
+            string pdbDestPath = Path.Combine(TMPAssetsFolder, name) + ".pdb.bytes";
 
             // check if the assembly exists
             if (!File.Exists(dllSrcPath))
@@ -214,7 +215,7 @@ namespace ModmanEditor
             File.Copy(dllSrcPath, dllDestPath, true);
 
             // copy pdb file only if in debug mode. do nothing if the pdb is not found
-            if (_buildTarget == CodeOptimization.Debug && File.Exists(pdbSrcPath))
+            if (BuildMode == CodeOptimization.Debug && File.Exists(pdbSrcPath))
                 File.Copy(pdbSrcPath, pdbDestPath, true);
         }
 
@@ -234,8 +235,9 @@ namespace ModmanEditor
             }
         }
 
-        protected static RuntimePlatform? BuildTargetToRuntimePlatform (BuildTarget buildTarget)
-            => buildTarget switch
+        protected static RuntimePlatform? BuildTargetToRuntimePlatform(BuildTarget buildTarget)
+        {
+            return buildTarget switch
             {
                 BuildTarget.Android => RuntimePlatform.Android,
                 BuildTarget.PS4 => RuntimePlatform.PS4,
@@ -258,5 +260,6 @@ namespace ModmanEditor
                 BuildTarget.EmbeddedLinux => RuntimePlatform.EmbeddedLinuxArm64,
                 _ => null
             };
+        }
     }
 }

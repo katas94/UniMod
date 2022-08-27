@@ -16,17 +16,17 @@ namespace ModmanEditor
         private const string OUTPUT_PATH_KEY = "modding_output_path";
         private const string BUILD_TARGET_KEY = "modding_build_target";
 
-        public static string ModBuildOutputPath
+        public static string CachedBuildOutputPath
         {
-            get => PlayerPrefs.GetString(OUTPUT_PATH_KEY, null);
-            set => PlayerPrefs.SetString(OUTPUT_PATH_KEY, value);
+            get => EditorPrefs.GetString(OUTPUT_PATH_KEY, null);
+            set => EditorPrefs.SetString(OUTPUT_PATH_KEY, value);
         }
 
-        public static CodeOptimization? BuildTarget
+        public static CodeOptimization? CachedBuildMode
         {
             get
             {
-                string buildTargetValue = PlayerPrefs.GetString(BUILD_TARGET_KEY, null);
+                string buildTargetValue = EditorPrefs.GetString(BUILD_TARGET_KEY, null);
 
                 if (string.IsNullOrEmpty(buildTargetValue) || !Enum.TryParse(buildTargetValue, out CodeOptimization value))
                     return null;
@@ -34,81 +34,68 @@ namespace ModmanEditor
                 return value;
             }
 
-            set => PlayerPrefs.SetString(BUILD_TARGET_KEY, value.ToString());
+            set => EditorPrefs.SetString(BUILD_TARGET_KEY, value.ToString());
         }
 
-        [MenuItem(MENU_ITEM + "Build mod...")]
-        public static void Build ()
-            => BuildModWithGui();
-
-        [MenuItem(MENU_ITEM + "Rebuild mod")]
-        public static void Rebuild ()
-            => BuildModWithGui(ModBuildOutputPath, BuildTarget);
-
         /// <summary>
-        /// Builds the mod project to the given path.
+        /// Builds the given mod config with the given parameters.
         /// </summary>
-        public static async UniTask BuildMod (string outputPath, CodeOptimization target)
+        public static async UniTask BuildModAsync (ModConfig config, CodeOptimization buildMode, string outputPath)
         {
             if (string.IsNullOrEmpty(outputPath))
                 throw new Exception("The given output path is null or empty.");
-            if (target == CodeOptimization.None)
-                throw new Exception("The given build target cannot be none");
+            if (buildMode == CodeOptimization.None)
+                throw new Exception("Build mode cannot be none");
 
-            ModBuilder builder = new FastModBuilder(ModDefinition.Instance, target, outputPath);
-            await builder.Build();
+            IModBuilder builder = new FastModBuilder(config, buildMode, outputPath);
+            await builder.BuildAsync();
             Debug.Log("Mod build completed!");
         }
 
-        // builds the mod and asks to the user the output path and target (if not given in the arguments)
-        private static void BuildModWithGui (string outputPath = null, CodeOptimization? target = null)
+        /// <summary>
+        /// Builds the given mod config with the given parameters. The user will be asked for any unset parameters.
+        /// </summary>
+        public static async UniTask BuildModWithGuiAsync (ModConfig config, CodeOptimization? buildMode = null, string outputPath = null)
         {
-            if (!CheckModDefinition()) return;
+            if (config is null)
+                return;
             
-            // if no build target is specified, ask for one to the user
-            if (!target.HasValue)
-            {
-                int option = EditorUtility.DisplayDialogComplex("Build target", "Chose the build target", "Release", "Cancel build", "Debug");
-
-                target = option switch
-                {
-                    0 => CodeOptimization.Release,
-                    2 => CodeOptimization.Debug,
-                    _ => null
-                };
-
-                if (!target.HasValue) return;
-            }
-
-            // if no output path is specified, ask for one to the user
+            // ask the user for the parameters that were not specified
+            buildMode ??= DisplayBuildModeDialog();
+            if (buildMode == CodeOptimization.None)
+                return;
+            
+            outputPath ??= DisplayModBuildOutputPathDialog(config, buildMode.Value);
             if (string.IsNullOrEmpty(outputPath))
-            {
-                string defaultName = $"{ModDefinition.Instance.DisplayName}-{target.Value}{ModService.MOD_FILE_EXTENSION}";
-                outputPath = EditorUtility.SaveFilePanel("Build mod", null, defaultName, ModService.MOD_FILE_EXTENSION_NO_DOT);
-                if (string.IsNullOrEmpty(outputPath)) return;
-            }
-
-            ModBuildOutputPath = outputPath;
-            BuildTarget = target.Value;
-            BuildMod(outputPath, target.Value).Forget();
+                return;
+            
+            // cache parameters and build the mod
+            CachedBuildOutputPath = outputPath;
+            CachedBuildMode = buildMode;
+            
+            await BuildModAsync(config, buildMode.Value, outputPath);
         }
 
-        private static bool CheckModDefinition ()
+        public static CodeOptimization DisplayBuildModeDialog()
         {
-            ModDefinition definition = ModDefinition.Instance;
+            int option = EditorUtility.DisplayDialogComplex("Build mode", "Select a build mode", "Release", "Cancel", "Debug");
 
-            if (definition == null)
+            return option switch
             {
-                if (EditorUtility.DisplayDialog("Missing mod definition", "Could not find the mod definition file within the project. Do you want to initialise the mod setup?", "Yes", "No, cancel build"))
-                {
-                    InitialiseOrCheckModSetup();
-                    Selection.activeObject = ModDefinition.Instance;
-                }
-                
-                return false;
-            }
-
-            return true;
+                0 => CodeOptimization.Release,
+                2 => CodeOptimization.Debug,
+                _ => CodeOptimization.None
+            };
+        }
+        
+        public static string DisplayModBuildOutputPathDialog(ModConfig config, CodeOptimization buildMode)
+        {
+            if (config is null || buildMode == CodeOptimization.None)
+                return null;
+            
+            string defaultName = $"{config.modId}-{config.modVersion}-{buildMode}{ModService.ModFileExtension}";
+            string outputPath = EditorUtility.SaveFilePanel("Build mod...", null, defaultName, ModService.ModFileExtensionNoDot);
+            return outputPath;
         }
 
         /// <summary>

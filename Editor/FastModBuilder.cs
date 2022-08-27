@@ -11,10 +11,10 @@ namespace ModmanEditor
     /// 
     /// This builder should support any platform, but any platform-specific mod builder should be preferred.
     /// </summary>
-    public class FastModBuilder : ModBuilder
+    public class FastModBuilder : ModBuilderBase
     {
-        public FastModBuilder (ModDefinition definition, CodeOptimization buildTarget, string outputPath)
-            : base(definition, buildTarget, outputPath) { }
+        public FastModBuilder (ModConfig config, CodeOptimization buildMode, string outputPath)
+            : base(config, buildMode, outputPath) { }
 
         protected override UniTask RegisterAssemblies (string[] assemblyNames)
         {
