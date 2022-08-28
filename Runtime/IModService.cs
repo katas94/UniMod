@@ -4,8 +4,8 @@ namespace Modman
 {
     public interface IModService
     {
-        UniTask RefreshModsFolder ();
-        UniTask LoadAllMods ();
-        UniTask LoadMod (string id);
+        UniTask RefreshModsFolderAsync ();
+        UniTask LoadAllModsAsync ();
+        UniTask LoadModAsync (string id);
     }
 }

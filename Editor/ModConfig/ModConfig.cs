@@ -7,8 +7,8 @@ using UnityEditorInternal;
 
 namespace ModmanEditor
 {
-    [CreateAssetMenu(fileName = "ModConfig", menuName = "Modman/ModConfig")]
-    public partial class ModConfig : ScriptableObject
+    [CreateAssetMenu(fileName = "ModConfig", menuName = "Modman/Mod Config")]
+    public sealed partial class ModConfig : ScriptableObject
     {
         [Serializable]
         public struct ModDependency
@@ -23,8 +23,8 @@ namespace ModmanEditor
         public string modVersion;
         public string displayName;
         public string description;
+        public ModStartup startup;
         public List<ModDependency> dependencies;
-        public ModInstanceProvider instanceProvider;
         
         [Header("Includes")][Space(5)]
         public List<DefaultAsset> folderIncludes;
@@ -35,5 +35,8 @@ namespace ModmanEditor
         public List<DefaultAsset> folderExcludes;
         public List<DefaultAsset> managedPluginExcludes;
         public List<AssemblyDefinitionAsset> assemblyDefinitionExcludes;
+        
+        [Header("Build")][Space(5)]
+        public ModBuilder builder;
     }
 }

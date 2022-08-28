@@ -9,8 +9,8 @@ namespace ModmanEditor
     [CustomEditor(typeof(ModConfig))]
     public class ModConfigEditor : Editor
     {
-        private static readonly List<string> AssemblyNames = new List<string>();
-        private static StringBuilder MessageBuilder = new StringBuilder();
+        private static readonly List<string> AssemblyNames = new();
+        private static StringBuilder MessageBuilder = new();
         
         public override void OnInspectorGUI()
         {
@@ -22,7 +22,7 @@ namespace ModmanEditor
             
             // get the assembly names included for the current target platform/configuration and display them in a help box
             AssemblyNames.Clear();
-            config.GetAllIncludedManagedAssemblyNames(EditorUserBuildSettings.activeBuildTarget, AssemblyNames);
+            config.GetAllIncludes(EditorUserBuildSettings.activeBuildTarget, AssemblyNames);
             AssemblyNames.Sort();
             MessageBuilder.Clear();
 
@@ -43,8 +43,10 @@ namespace ModmanEditor
             
             // display the tool buttons
             GUILayout.Space(8);
-            if (GUILayout.Button("Build mod"))
-                ModUtils.BuildModWithGuiAsync(config).Forget();
+            if (GUILayout.Button("Build"))
+                config.BuildModWithGuiAsync(tryRebuild: false).Forget();
+            if (GUILayout.Button("Rebuild"))
+                config.BuildModWithGuiAsync(tryRebuild: true).Forget();
         }
     }
 }
