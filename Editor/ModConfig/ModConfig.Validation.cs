@@ -1,13 +1,17 @@
+using System;
 using UnityEditor;
 
 namespace ModmanEditor
 {
     public partial class ModConfig
     {
+        public event Action IncludesModified;
+        
         private AssetListValidator<DefaultAsset> _folderIncludesValidator;
         private AssetListValidator<DefaultAsset> _managedPluginIncludesValidator;
         private AssetListValidator<DefaultAsset> _folderExcludesValidator;
         private AssetListValidator<DefaultAsset> _managedPluginExcludesValidator;
+        private bool _lastIncludeAssetsFolderValue;
 
         private void OnValidate()
         {
@@ -20,6 +24,19 @@ namespace ModmanEditor
             _managedPluginIncludesValidator.Validate();
             _folderExcludesValidator.Validate();
             _managedPluginExcludesValidator.Validate();
+            
+            // check if the includes/excludes were modified
+            bool includesModified = _lastIncludeAssetsFolderValue != includeAssetsFolder
+                || _folderIncludesValidator.ListChanged
+                || _managedPluginIncludesValidator.ListChanged
+                || _folderExcludesValidator.ListChanged
+                || _managedPluginExcludesValidator.ListChanged;
+            
+            _lastIncludeAssetsFolderValue = includeAssetsFolder;
+            
+            // fire event if so
+            if (includesModified)
+                IncludesModified?.Invoke();
         }
 
         private static bool IsFolder(DefaultAsset asset)

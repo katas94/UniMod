@@ -12,10 +12,43 @@ namespace ModmanEditor
         private static readonly List<string> AssemblyNames = new();
         private static StringBuilder MessageBuilder = new();
         
+        private string _includesMessage;
+        
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
             
+            var config = target as ModConfig;
+            if (config is null)
+                return;
+            
+            // this prevents inspector lagging if there is a lot of included assemblies (since it would fetch them on each inspector frame update)
+            config.IncludesModified -= UpdateIncludesMessage;
+            config.IncludesModified += UpdateIncludesMessage;
+            
+            // display build assembly info and build button
+            if (string.IsNullOrEmpty(_includesMessage))
+                UpdateIncludesMessage();
+            
+            GUILayout.Space(8);
+            if (GUILayout.Button("Build"))
+                config.BuildModWithGuiAsync(tryRebuild: false).Forget();
+            EditorGUILayout.HelpBox(_includesMessage, MessageType.Info, true);
+            
+            // display rebuild cached info and rebuild button (if there is any cached info)
+            var cachedBuildMode = config.CachedBuildMode;
+            var cachedOutputPath = config.CachedBuildOutputPath;
+            if (cachedBuildMode is null || string.IsNullOrEmpty(cachedOutputPath))
+                return;
+            
+            GUILayout.Space(16);
+            if (GUILayout.Button("Rebuild"))
+                config.BuildModWithGuiAsync(tryRebuild: true).Forget();
+            EditorGUILayout.HelpBox($"\nRebuild parameters:\n\n\tBuild mode: {config.CachedBuildMode}\n\tOutput path: {config.CachedBuildOutputPath}\n", MessageType.Info, true);
+        }
+
+        private void UpdateIncludesMessage()
+        {
             var config = target as ModConfig;
             if (config is null)
                 return;
@@ -32,21 +65,13 @@ namespace ModmanEditor
             }
             else
             {
-                MessageBuilder.Append("The following managed assemblies will be included with the mod build:\n\n");
+                MessageBuilder.Append("\nThe following managed assemblies will be included with the mod build:\n\n");
                 
                 foreach (string assemblyName in AssemblyNames)
                     MessageBuilder.Append($"\t{assemblyName}\n");
             }
             
-            GUILayout.Space(8);
-            EditorGUILayout.HelpBox(MessageBuilder.ToString(), MessageType.Info, true);
-            
-            // display the tool buttons
-            GUILayout.Space(8);
-            if (GUILayout.Button("Build"))
-                config.BuildModWithGuiAsync(tryRebuild: false).Forget();
-            if (GUILayout.Button("Rebuild"))
-                config.BuildModWithGuiAsync(tryRebuild: true).Forget();
+            _includesMessage = MessageBuilder.ToString();
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace ModmanEditor
 {
@@ -27,8 +28,8 @@ namespace ModmanEditor
                 return;
             
             // find all default assets in included and excluded folders (plugins doesn't have an specific asset type)
-            var includedGuids = FindAssets(PLUGIN_FILTER, folderIncludes);
-            var excludedGuids = FindAssets(PLUGIN_FILTER, folderExcludes);
+            var includedGuids = FindAssets(PLUGIN_FILTER, folderIncludes, includeAssetsFolder);
+            var excludedGuids = FindAssets(PLUGIN_FILTER, folderExcludes, false);
             
             // add included guids from the included folders and specific includes
             Guids.Clear();
@@ -61,7 +62,7 @@ namespace ModmanEditor
         
         // helper method similar to AssetDatabase.FindAssets but with a collection of DefaultAsset objects that should be valid folders
         // if the given collection is empty, an empty array will be returned (contrary to AssetDatabase.FindAssets which would search on all folders)
-        private static string[] FindAssets(string filter, IEnumerable<DefaultAsset> folderAssets)
+        private static string[] FindAssets(string filter, IEnumerable<DefaultAsset> folderAssets, bool includeAssetsFolder)
         {
             ValidFolders.Clear();
             
@@ -73,6 +74,9 @@ namespace ModmanEditor
                 
                 ValidFolders.Add(folder);
             }
+            
+            if (includeAssetsFolder)
+                ValidFolders.Add("Assets");
             
             if (ValidFolders.Count == 0)
                 return Array.Empty<string>();

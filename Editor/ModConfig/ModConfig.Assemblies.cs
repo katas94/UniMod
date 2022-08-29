@@ -29,8 +29,8 @@ namespace ModmanEditor
                 return;
             
             // find all assembly definition assets in included and excluded folders
-            var includedGuids = FindAssets(ASSEMBLY_DEFINITION_ASSET_FILTER, folderIncludes);
-            var excludedGuids = FindAssets(ASSEMBLY_DEFINITION_ASSET_FILTER, folderExcludes);
+            var includedGuids = FindAssets(ASSEMBLY_DEFINITION_ASSET_FILTER, folderIncludes, includeAssetsFolder);
+            var excludedGuids = FindAssets(ASSEMBLY_DEFINITION_ASSET_FILTER, folderExcludes, false);
             
             // add included guids from the included folders and specific includes
             Guids.Clear();

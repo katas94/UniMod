@@ -13,8 +13,8 @@ namespace ModmanEditor
         [Serializable]
         public struct ModDependency
         {
-            public string Id;
-            public string Version;
+            public string id;
+            public string version;
         }
         
         public string appId;
@@ -27,6 +27,7 @@ namespace ModmanEditor
         public List<ModDependency> dependencies;
         
         [Header("Includes")][Space(5)]
+        public bool includeAssetsFolder = true;
         public List<DefaultAsset> folderIncludes;
         public List<DefaultAsset> managedPluginIncludes;
         public List<AssemblyDefinitionAsset> assemblyDefinitionIncludes;

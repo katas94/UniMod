@@ -13,7 +13,8 @@ namespace ModmanEditor
         {
             get
             {
-                string buildTargetValue = EditorPrefs.GetString(_buildTargetKey, null);
+                RefreshCacheKeys();
+                string buildTargetValue = PlayerPrefs.GetString(_buildTargetKey, null);
                 
                 if (string.IsNullOrEmpty(buildTargetValue) || !Enum.TryParse(buildTargetValue, out CodeOptimization value))
                     return null;
@@ -21,13 +22,26 @@ namespace ModmanEditor
                 return value;
             }
 
-            set => EditorPrefs.SetString(_buildTargetKey, value.ToString());
+            set
+            {
+                RefreshCacheKeys();
+                PlayerPrefs.SetString(_buildTargetKey, value.ToString());
+            }
         }
 
         public string CachedBuildOutputPath
         {
-            get => EditorPrefs.GetString(_outputPathKey, null);
-            set => EditorPrefs.SetString(_outputPathKey, value);
+            get
+            {
+                RefreshCacheKeys();
+                return PlayerPrefs.GetString(_outputPathKey, null);
+            }
+            
+            set
+            {
+                RefreshCacheKeys();
+                PlayerPrefs.SetString(_outputPathKey, value);
+            }
         }
 
         private string _buildTargetKey;
@@ -48,7 +62,6 @@ namespace ModmanEditor
                 Debug.Log($"Mod built successfully!\nOutput path: {outputPath}");
                 
                 // cache build parameters for next Gui builds
-                RefreshCacheKeys();
                 CachedBuildOutputPath = outputPath;
                 CachedBuildMode = buildMode;
             }
@@ -66,7 +79,6 @@ namespace ModmanEditor
         {
             if (tryRebuild)
             {
-                RefreshCacheKeys();
                 buildMode ??= CachedBuildMode;
                 outputPath ??= CachedBuildOutputPath;
             }
