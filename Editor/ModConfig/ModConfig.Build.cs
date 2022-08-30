@@ -1,11 +1,11 @@
 using System;
 using Cysharp.Threading.Tasks;
-using Modman;
+using Katas.Modman;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
 
-namespace ModmanEditor
+namespace Katas.ModmanEditor
 {
     public partial class ModConfig
     {

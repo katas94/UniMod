@@ -1,7 +1,7 @@
 using System;
 using UnityEditor;
 
-namespace ModmanEditor
+namespace Katas.ModmanEditor
 {
     public partial class ModConfig
     {

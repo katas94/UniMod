@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 
-namespace Modman
+namespace Katas.Modman
 {
     public interface IModService
     {

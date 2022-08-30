@@ -12,11 +12,11 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
-using Modman;
+using Katas.Modman;
 
 using CompressionLevel = System.IO.Compression.CompressionLevel;
 
-namespace ModmanEditor
+namespace Katas.ModmanEditor
 {
     public enum ModAssemblyBuilderType
     {

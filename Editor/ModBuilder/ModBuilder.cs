@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor.Compilation;
 using Cysharp.Threading.Tasks;
 
-namespace ModmanEditor
+namespace Katas.ModmanEditor
 {
     /// <summary>
     /// Implement this 

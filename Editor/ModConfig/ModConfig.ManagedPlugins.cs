@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEngine;
 
-namespace ModmanEditor
+namespace Katas.ModmanEditor
 {
     public partial class ModConfig
     {

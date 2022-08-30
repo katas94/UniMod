@@ -11,7 +11,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace Modman
+namespace Katas.Modman
 {
     public class ModService : IModService
     {
