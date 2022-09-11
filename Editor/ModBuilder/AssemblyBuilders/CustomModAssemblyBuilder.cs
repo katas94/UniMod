@@ -11,6 +11,6 @@ namespace Katas.ModmanEditor
     public abstract class CustomModAssemblyBuilder : ScriptableObject, IModAssemblyBuilder
     {
         public abstract bool SupportsBuildTarget (BuildTarget buildTarget);
-        public abstract UniTask<string[]> BuildAssembliesAsync (ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget);
+        public abstract UniTask BuildAssembliesAsync (ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder);
     }
 }

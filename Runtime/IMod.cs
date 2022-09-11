@@ -31,6 +31,5 @@ namespace Katas.Modman
         UniTask LoadAsync(bool loadAssemblies);
         UniTask UninstallAsync();
         UniTask<Sprite> LoadThumbnailAsync();
-        void UnloadThumbnail();
     }
 }

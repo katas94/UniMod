@@ -15,7 +15,7 @@ namespace Katas.Modman
     {
         public const string CatalogName = "mod";
         public const string StartupAddress = "__mod_startup";
-        public const string AssembliesLabel = "__mod_assembly";
+        public const string AssembliesFolder = "Assemblies";
         
         public readonly string ModFolder;
         
@@ -79,13 +79,17 @@ namespace Katas.Modman
             // if the mod contains a startup script, then load and execute it
             if (ResourceLocator.Locate(StartupAddress, typeof(object), out IList<IResourceLocation> locations))
             {
-                var startup = await Addressables.LoadAssetAsync<ModStartup>(locations.FirstOrDefault());
-                if (startup)
-                    await startup.StartAsync();
+                var location = locations.FirstOrDefault();
+                if (location is not null)
+                {
+                    var startup = await Addressables.LoadAssetAsync<ModStartup>(location);
+                    if (startup)
+                        await startup.StartAsync();
+                }
             }
 
             if (!Debug.isDebugBuild && Info.DebugBuild)
-                Debug.LogWarning($"{Info.ModId}: This is a development build.");
+                Debug.LogWarning($"{Info.ModId}: using a development build");
         }
 
         public UniTask UninstallAsync()
@@ -99,72 +103,77 @@ namespace Katas.Modman
             throw new System.NotImplementedException();
         }
 
-        public void UnloadThumbnail()
-        {
-            throw new System.NotImplementedException();
-        }
-
         private async UniTask LoadAssembliesAsync()
         {
-            // fetch all assembly locations
-            if (!ResourceLocator.Locate(AssembliesLabel, typeof(TextAsset), out IList<IResourceLocation> assemblyLocations))
-                throw new Exception("Could not load the assembly locations from Addressables");
+            // get paths from all mod assembly files
+            string assembliesFolder = Path.Combine(ModFolder, AssembliesFolder);
+            string[] paths = Directory.GetFiles(assembliesFolder, "*.dll");
             
-            foreach (var location in assemblyLocations)
-                await LoadAssemblyAsync(location, Info.DebugBuild);
-        }
-
-        // loads the assembly from the given location
-        private async UniTask LoadAssemblyAsync (IResourceLocation location, bool debuggingEnabled)
-        {
-            string name = location.PrimaryKey;
-            TextAsset assemblyAsset;
-            TextAsset symbolStoreAsset = null;
-            
-            // try to load the assembly asset
+            // load all assemblies
             try
             {
-                assemblyAsset = await Addressables.LoadAssetAsync<TextAsset>(location);
+                await UniTask.WhenAll(paths.Select(LoadAssemblyAsync));
+            }
+            catch (Exception)
+            {
+                await UniTask.SwitchToMainThread();
+                throw;
+            }
+            
+            await UniTask.SwitchToMainThread();
+        }
+
+        // loads the given assembly file
+        private async UniTask LoadAssemblyAsync (string filePath)
+        {
+            await UniTask.SwitchToThreadPool();
+            
+            // try to load the assembly asset
+            byte[] rawAssembly = null;
+            byte[] rawSymbolStore = null;
+            
+            // try to load the raw assembly
+            try
+            {
+                rawAssembly = await File.ReadAllBytesAsync(filePath);
             }
             catch (Exception exception)
             {
-                throw new Exception($"Failed to load assembly from Addressables: {name}\n{exception}");
+                throw new Exception($"Failed to read assembly file: {filePath}\n{exception}");
             }
             
             // if debugging is enabled try to also load the symbol store asset
+            string pdbFilePath = null;
+            
             try
             {
-                if (debuggingEnabled)
-                    symbolStoreAsset = await Addressables.LoadAssetAsync<TextAsset>($"{name}.pdb");
+                if (Info.DebugBuild)
+                {
+                    string folderPath = Path.GetDirectoryName(filePath);
+                    pdbFilePath = Path.GetFileNameWithoutExtension(filePath);
+                    pdbFilePath = Path.Combine(folderPath, $"{pdbFilePath}.pdb");
+                    
+                    if (File.Exists(pdbFilePath))
+                        rawSymbolStore = await File.ReadAllBytesAsync(pdbFilePath);
+                }
             }
             catch (Exception exception)
             {
-                Debug.LogWarning($"Failed to load the symbol store file for the assembly: {name}\n{exception}");
+                Debug.LogWarning($"Failed to read the symbol store file: {pdbFilePath}\n{exception}");
             }
 
-            try
-            {
-                // trt load the assembly from the raw bytes
-                string error;
-                bool assemblyLoadedSuccessfully;
-                
-                if (symbolStoreAsset)
-                    assemblyLoadedSuccessfully = DomainAssemblies.Load(assemblyAsset.bytes, symbolStoreAsset.bytes, out error);
-                else
-                    assemblyLoadedSuccessfully = DomainAssemblies.Load(assemblyAsset.bytes, out error);
+            // trt load the assembly from the raw bytes
+            string error;
+            bool assemblyLoadedSuccessfully;
+            
+            if (rawSymbolStore is null)
+                assemblyLoadedSuccessfully = DomainAssemblies.Load(rawAssembly, out error);
+            else
+                assemblyLoadedSuccessfully = DomainAssemblies.Load(rawAssembly, rawSymbolStore, out error);
 
-                // check if we successfully loaded
-                if (!assemblyLoadedSuccessfully)
-                    Debug.LogError($"Failed to load the assembly: {error}");
-            }
-            finally
-            {
-                // release the assets
-                if (assemblyAsset)
-                    Addressables.Release(assemblyAsset);
-                if (symbolStoreAsset)
-                    Addressables.Release(symbolStoreAsset);
-            }
+            // check if we successfully loaded
+            if (!assemblyLoadedSuccessfully)
+                Debug.LogError($"Failed to load the assembly: {error}");
         }
     }
 }

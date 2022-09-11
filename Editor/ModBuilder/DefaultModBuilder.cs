@@ -33,7 +33,6 @@ namespace Katas.ModmanEditor
         public CompressionLevel compressionLevel = CompressionLevel.Optimal;
         public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.PlatformSpecific;
         public List<CustomModAssemblyBuilder> customAssemblyBuilders;
-        public bool ignoreMissingAssemblies = false;
         
         /// <summary>
         /// Builds the mod with the specified parameters.
@@ -71,15 +70,12 @@ namespace Katas.ModmanEditor
             // create a new Addressable Assets group for the assemblies and startup assets (we will clean it after the build)
             var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
             var aaProfileSettings = aaSettings.profileSettings;
-            var aaModAssetsGroup = aaSettings.CreateGroup("__mod_assets", false, true, false, aaSettings.DefaultGroup.Schemas);
             string previousActiveAaProfileId = aaSettings.activeProfileId;
             string aaTmpProfileId = null;
             string tmpFolder = null;
-            string tmpAssembliesFolder = null;
+            string assembliesOutputFolder = null;
+            string startupGui = null;
             
-            // add the assemblies label to Addressable settings
-            aaSettings.AddLabel(RuntimeMod.AssembliesLabel, false);
-
             try
             {
                 // create the temporary output folder for the Addressables build
@@ -90,48 +86,19 @@ namespace Katas.ModmanEditor
                 // if the mod has assemblies, build them and include them on the Addressables build
                 if (hasAssemblies)
                 {
-                    // create the temporary folder for the assemblies inside the Assets folder
-                    tmpAssembliesFolder = IOUtils.GetUniqueFolderPath("Assets");
-                    Directory.CreateDirectory(tmpAssembliesFolder);
-                    
-                    // build the assemblies and fetch the output paths
-                    var assemblyPaths = await assemblyBuilder.BuildAssembliesAsync(config, buildMode, buildTarget);
-                    
-                    // copy each assembly to the tmp folder in Assets, changing the extensions to .bytes
-                    foreach (string assemblyPath in assemblyPaths)
-                        CopyAssemblyForAddressablesBuild(assemblyPath, tmpAssembliesFolder, buildMode);
-                    
-                    // process all copied assemblies and include them on Addressables
-                    string[] paths = Directory.GetFiles(tmpAssembliesFolder); // get paths before the .meta files are created
-                    AssetDatabase.Refresh(); // generate meta files
-                    
-                    foreach (string path in paths)
-                    {
-                        string guid = AssetDatabase.AssetPathToGUID(path);
-                        string assemblyName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path));
-                        var entry = aaSettings.CreateOrMoveEntry(guid, aaModAssetsGroup, true, false);
-                        
-                        // only assembly assets are given a label so we can easely fetch all of them from Addressables
-                        if (path.EndsWith(".dll.bytes"))
-                        {
-                            entry.address = assemblyName;
-                            entry.SetLabel(RuntimeMod.AssembliesLabel, true, false, false);
-                        }
-                        else
-                        {
-                            // pdb files are given an address the same as its assembly address plus the pdb extension
-                            entry.address = $"{assemblyName}.pdb";
-                        }
-                    }
+                    // create the assemblies output folder and build the assemblies
+                    assembliesOutputFolder = Path.Combine(tmpOutputFolder, RuntimeMod.AssembliesFolder);
+                    Directory.CreateDirectory(assembliesOutputFolder);
+                    await assemblyBuilder.BuildAssembliesAsync(config, buildMode, buildTarget, assembliesOutputFolder);
                 }
 
                 // if the mod has assemblies then it may also include a startup script, in that case include it in the Addressables build
                 if (hasAssemblies && config.startup)
                 {
-                    if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(config.startup, out string startupGui, out long _))
+                    if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(config.startup, out startupGui, out long _))
                         throw new Exception($"Could not get the asset GUID for the mod startup instance.");
                     
-                    var entry = aaSettings.CreateOrMoveEntry(startupGui, aaModAssetsGroup, true, false);
+                    var entry = aaSettings.CreateOrMoveEntry(startupGui, aaSettings.DefaultGroup, true, false);
                     entry.address = RuntimeMod.StartupAddress;
                 }
 
@@ -186,13 +153,13 @@ namespace Katas.ModmanEditor
             finally
             {
                 // cleanup
+                if (startupGui is not null)
+                    aaSettings.RemoveAssetEntry(startupGui);
+                
                 IOUtils.DeleteDirectory(tmpFolder);
-                IOUtils.DeleteDirectory(tmpAssembliesFolder, true);
-                aaSettings.RemoveGroup(aaModAssetsGroup);
+                IOUtils.DeleteDirectory(assembliesOutputFolder, true);
                 aaProfileSettings.RemoveProfile(aaTmpProfileId);
                 aaSettings.activeProfileId = previousActiveAaProfileId;
-                aaSettings.RemoveLabel(RuntimeMod.AssembliesLabel, false);
-                AssetDatabase.Refresh();
             }
         }
         
@@ -231,50 +198,13 @@ namespace Katas.ModmanEditor
         }
 
         /// <summary>
-        /// Copies the assembly at path into the destination, copying also the pdb files if doing a debug build and changing the extensions to .bytes so
-        /// the files can be included in the Addressables build.
+        /// Checks if the given filePath corresponds to a valid managed assembly.
         /// </summary>
-        protected virtual void CopyAssemblyForAddressablesBuild (string path, string destination, CodeOptimization buildMode)
-        {
-            if (string.IsNullOrEmpty(destination) || !Directory.Exists(destination))
-                throw new Exception("Cannot copy the assembly with a null or non-existent destination folder");
-            
-            // the destination paths use the .bytes format so they are recognised as TextAsset
-            // this will allow us to include the files on the Addressable Assets bundle
-            string name = Path.GetFileNameWithoutExtension(path);
-            string dllSrcPath = path;
-            string dllDestPath = Path.Combine(destination, name) + ".dll.bytes";
-            string pdbSrcPath = Path.ChangeExtension(path, ".pdb");
-            string pdbDestPath = Path.Combine(destination, name) + ".pdb.bytes";
-
-            // check if the assembly exists
-            if (!File.Exists(dllSrcPath))
-            {
-                if (ignoreMissingAssemblies)
-                    return;
-                
-                throw new FileNotFoundException($"Could not find the assembly file at \"{dllSrcPath}\"");
-            }
-
-            // check if the assembly is a valid net managed assembly
-            if (!IsNetManagedAssembly(dllSrcPath))
-                throw new Exception($"\"{dllSrcPath}\" is not a managed assembly");
-            
-            File.Copy(dllSrcPath, dllDestPath, true);
-
-            // copy pdb file only if in debug mode. do nothing if the pdb is not found
-            if (buildMode == CodeOptimization.Debug && File.Exists(pdbSrcPath))
-                File.Copy(pdbSrcPath, pdbDestPath, true);
-        }
-
-        /// <summary>
-        /// Checks if the given filePath corresponds to a valid managed NET assembly.
-        /// </summary>
-        public static bool IsNetManagedAssembly (string filePath)
+        public static bool IsManagedAssembly (string filePath)
         {
             try
             {
-                var testAssembly = AssemblyName.GetAssemblyName(filePath);
+                _ = AssemblyName.GetAssemblyName(filePath);
                 return true;
             }
             catch (Exception)

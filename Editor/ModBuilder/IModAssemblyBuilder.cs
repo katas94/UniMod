@@ -7,6 +7,6 @@ namespace Katas.ModmanEditor
     public interface IModAssemblyBuilder
     {
         bool SupportsBuildTarget (BuildTarget buildTarget);
-        UniTask<string[]> BuildAssembliesAsync (ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget);
+        UniTask BuildAssembliesAsync (ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder);
     }
 }
