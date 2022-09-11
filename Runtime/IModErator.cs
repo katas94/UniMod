@@ -9,7 +9,7 @@ namespace Katas.Modman
         IEnumerable<IMod> InstalledMods { get; }
         string InstallationFolder { get; set; } // implementer should have a default path so callers are not obliged to set one
         
-        UniTask RefreshInstallationFolder();
+        UniTask RefreshInstallationFolderAsync();
         
         UniTask InstallModsAsync(string folderPath, bool deleteModFilesAfter);
         UniTask InstallModsAsync(IEnumerable<string> modFilePaths, bool deleteModFilesAfter);

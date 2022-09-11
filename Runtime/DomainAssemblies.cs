@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
 
 namespace Katas.Modman
 {
@@ -75,6 +76,7 @@ namespace Katas.Modman
             }
             
             error = null;
+            Debug.Log($"Loaded assembly: {assembly.FullName}");
             return true;
         }
         

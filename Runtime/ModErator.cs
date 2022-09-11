@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -13,10 +14,7 @@ namespace Katas.Modman
         public const string InfoFile = "info.json";
         public const string ModFileExtensionNoDot = "mod";
         public const string ModFileExtension = "." + ModFileExtensionNoDot;
-        public const string CatalogName = "mod";
-        public const string StartupAddress = "__mod_startup";
-        public const string AssembliesLabel = "__mod_assembly";
-        
+
         public static readonly string DefaultInstallationFolder = Path.Combine(Application.persistentDataPath, "Mods");
 
         private static ModErator _instance;
@@ -37,7 +35,7 @@ namespace Katas.Modman
             _instance = this;
         }
         
-        public async UniTask RefreshInstallationFolder()
+        public async UniTask RefreshInstallationFolderAsync()
         {
             if (!Directory.Exists(InstallationFolder))
                 return;
@@ -89,39 +87,67 @@ namespace Katas.Modman
 
         public async UniTask InstallModAsync(string modFilePath, bool deleteModFileAfter)
         {
+            // validate parameters
+            if (string.IsNullOrEmpty(modFilePath))
+                throw new Exception("The given mod file path cannot be null or empty");
+            if (!File.Exists(modFilePath))
+                throw new Exception($"Couldn't find mod file: {modFilePath}");
             if (Path.GetExtension(modFilePath) != ModFileExtension)
-                return;
-            
-            // we want to avoid to override the current installation if it is already loaded
-            string modId = Path.GetFileNameWithoutExtension(modFilePath);
-            if (_mods.TryGetValue(modId, out var mod) && mod.IsLoaded)
-                throw new ModInstallationException(modId, "The mod ID is currently loaded. Avoiding to override the current installation...");
+                throw new Exception($"\"{modFilePath}\": expeteced \"{ModErator.ModFileExtension}\" file extension");
             
             // install the mod on a separated thread
             await UniTask.SwitchToThreadPool();
-            
-            // obtain the extract path and extract the mod file
-            string extractPath = Path.Combine(InstallationFolder, modId);
-            
+            ZipArchive archive = null;
+            string modId = null;
+            string modFolder = null;
+
             try
             {
-                if (Directory.Exists(extractPath))
-                    IOUtils.DeleteDirectory(extractPath);
+                // open the mod zip file and fetch the mod id by reading the name of the root folder
+                archive = ZipFile.Open(modFilePath, ZipArchiveMode.Read);
+                var firstEntryFullName = archive.Entries.FirstOrDefault()?.FullName;
+                modId = firstEntryFullName.Split('/')[0];
+                
+                if (string.IsNullOrEmpty(modId))
+                    throw new Exception("Couldn't fetch the mod ID from the archive file");
+
+                // we want to avoid to override the current installation if it is already loaded
+                if (_mods.TryGetValue(modId, out var mod) && mod.IsLoaded)
+                    throw new ModInstallationException(modId, "The mod ID is currently loaded. Avoiding to override the current installation...");
+
+                // check that the extract path is ready and perform the extraction
+                modFolder = Path.Combine(InstallationFolder, modId);
+                
+                if (Directory.Exists(modFolder))
+                    IOUtils.DeleteDirectory(modFolder);
                 else if (!Directory.Exists(InstallationFolder))
                     Directory.CreateDirectory(InstallationFolder);
-                
-                ZipFile.ExtractToDirectory(modFilePath, InstallationFolder, true);
+    
+                archive.ExtractToDirectory(InstallationFolder, true);
+            }
+            catch (ModInstallationException)
+            {
+                await UniTask.SwitchToMainThread();
+                throw;
             }
             catch (Exception exception)
             {
                 await UniTask.SwitchToMainThread();
-                throw new ModInstallationException(modId, exception);
+                
+                if (string.IsNullOrEmpty(modId))
+                    throw;
+                else
+                    throw new ModInstallationException(modId, exception);
+            }
+            finally
+            {
+                archive?.Dispose();
             }
             
             Debug.Log($"Successfully installed mod {modId}");
             
             // mod was installed, now refresh the folder so the mod's instance gets created and registered
-            await RefreshModFolderAsync(extractPath);
+            await RefreshModFolderAsync(modFolder);
             
             // don't throw if we could not delete the mod file but we successfully installed the mod
             try
@@ -225,7 +251,7 @@ namespace Katas.Modman
                 
                 // instantiate and register the mod instance (this will override any previous mod instance with same id)
                 lock (_mods)
-                    _mods[id] = new PlayerMod(modFolder, info);
+                    _mods[id] = new RuntimeMod(modFolder, info);
                     
                 return null;
             }

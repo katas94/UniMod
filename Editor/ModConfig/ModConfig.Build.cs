@@ -112,8 +112,8 @@ namespace Katas.ModmanEditor
             if (buildMode == CodeOptimization.None)
                 return null;
             
-            string defaultName = $"{modId}-{modVersion}-{buildMode}{ModService.ModFileExtension}";
-            string outputPath = EditorUtility.SaveFilePanel("Build mod...", null, defaultName, ModService.ModFileExtensionNoDot);
+            string defaultName = $"{modId}-{modVersion}-{buildMode}{ModErator.ModFileExtension}";
+            string outputPath = EditorUtility.SaveFilePanel("Build mod...", null, defaultName, ModErator.ModFileExtensionNoDot);
             return outputPath;
         }
         

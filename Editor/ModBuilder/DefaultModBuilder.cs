@@ -62,7 +62,7 @@ namespace Katas.ModmanEditor
                 throw new Exception($"Could not find a mod assembly builder that supports the current build target: {buildTarget}");
             
             // make sure the output path has the proper mod extension
-            outputPath = IOUtils.EnsureFileExtension(outputPath, ModService.ModFileExtensionNoDot);
+            outputPath = IOUtils.EnsureFileExtension(outputPath, ModErator.ModFileExtensionNoDot);
             
             // initialize Addressables if it was not before
             if (!AddressableAssetSettingsDefaultObject.SettingsExists)
@@ -78,7 +78,7 @@ namespace Katas.ModmanEditor
             string tmpAssembliesFolder = null;
             
             // add the assemblies label to Addressable settings
-            aaSettings.AddLabel(ModService.AssembliesLabel, false);
+            aaSettings.AddLabel(RuntimeMod.AssembliesLabel, false);
 
             try
             {
@@ -115,7 +115,7 @@ namespace Katas.ModmanEditor
                         if (path.EndsWith(".dll.bytes"))
                         {
                             entry.address = assemblyName;
-                            entry.SetLabel(ModService.AssembliesLabel, true, false, false);
+                            entry.SetLabel(RuntimeMod.AssembliesLabel, true, false, false);
                         }
                         else
                         {
@@ -132,11 +132,11 @@ namespace Katas.ModmanEditor
                         throw new Exception($"Could not get the asset GUID for the mod startup instance.");
                     
                     var entry = aaSettings.CreateOrMoveEntry(startupGui, aaModAssetsGroup, true, false);
-                    entry.address = ModService.StartupAddress;
+                    entry.address = RuntimeMod.StartupAddress;
                 }
 
                 // prepare the Addressable Assets settings for the build
-                aaSettings.OverridePlayerVersion = ModService.CatalogName;
+                aaSettings.OverridePlayerVersion = RuntimeMod.CatalogName;
                 aaSettings.BuildRemoteCatalog = true;
                 aaSettings.RemoteCatalogBuildPath = aaSettings.DefaultGroup.GetSchema<BundledAssetGroupSchema>().BuildPath;
                 aaSettings.RemoteCatalogLoadPath = aaSettings.DefaultGroup.GetSchema<BundledAssetGroupSchema>().LoadPath;
@@ -174,7 +174,7 @@ namespace Katas.ModmanEditor
                 };
                 
                 string infoJson = JsonConvert.SerializeObject(info, Formatting.Indented);
-                string infoFilePath = Path.Combine(tmpOutputFolder, ModService.InfoFile);
+                string infoFilePath = Path.Combine(tmpOutputFolder, ModErator.InfoFile);
                 await File.WriteAllTextAsync(infoFilePath, infoJson);
 
                 // compress all mod contents into the final mod file
@@ -191,7 +191,7 @@ namespace Katas.ModmanEditor
                 aaSettings.RemoveGroup(aaModAssetsGroup);
                 aaProfileSettings.RemoveProfile(aaTmpProfileId);
                 aaSettings.activeProfileId = previousActiveAaProfileId;
-                aaSettings.RemoveLabel(ModService.AssembliesLabel, false);
+                aaSettings.RemoveLabel(RuntimeMod.AssembliesLabel, false);
                 AssetDatabase.Refresh();
             }
         }

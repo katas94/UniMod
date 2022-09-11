@@ -2,6 +2,7 @@
 using System.Reflection;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AddressableAssets.ResourceLocators;
 
 namespace Katas.Modman
 {
@@ -24,6 +25,7 @@ namespace Katas.Modman
         ModStatus Status { get; }
         bool IsLoaded { get; }
         bool AreAssembliesLoaded { get; }
+        IResourceLocator ResourceLocator { get; }
         IReadOnlyList<Assembly> LoadedAssemblies { get; }
         
         UniTask LoadAsync(bool loadAssemblies);
