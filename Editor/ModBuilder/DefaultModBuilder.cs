@@ -90,16 +90,16 @@ namespace Katas.ModmanEditor
                     assembliesOutputFolder = Path.Combine(tmpOutputFolder, RuntimeMod.AssembliesFolder);
                     Directory.CreateDirectory(assembliesOutputFolder);
                     await assemblyBuilder.BuildAssembliesAsync(config, buildMode, buildTarget, assembliesOutputFolder);
-                }
-
-                // if the mod has assemblies then it may also include a startup script, in that case include it in the Addressables build
-                if (hasAssemblies && config.startup)
-                {
-                    if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(config.startup, out startupGui, out long _))
-                        throw new Exception($"Could not get the asset GUID for the mod startup instance.");
                     
-                    var entry = aaSettings.CreateOrMoveEntry(startupGui, aaSettings.DefaultGroup, true, false);
-                    entry.address = RuntimeMod.StartupAddress;
+                    // if the mod includes a startup script, include it in the Addressables build
+                    if (config.startup)
+                    {
+                        if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(config.startup, out startupGui, out long _))
+                            throw new Exception($"Could not get the asset GUID for the mod startup instance.");
+                        
+                        var entry = aaSettings.CreateOrMoveEntry(startupGui, aaSettings.DefaultGroup, true, false);
+                        entry.address = RuntimeMod.StartupAddress;
+                    }
                 }
 
                 // prepare the Addressable Assets settings for the build
