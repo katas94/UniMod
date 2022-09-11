@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 
-namespace Katas.ModmanEditor
+namespace Katas.Modman.Editor
 {
     public partial class ModConfig
     {

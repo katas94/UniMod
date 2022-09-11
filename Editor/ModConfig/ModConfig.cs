@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Katas.Modman;
 using UnityEditor;
 using UnityEditorInternal;
 
-namespace Katas.ModmanEditor
+namespace Katas.Modman.Editor
 {
     [CreateAssetMenu(fileName = "ModConfig", menuName = "Modman/Mod Config")]
     public sealed partial class ModConfig : ScriptableObject

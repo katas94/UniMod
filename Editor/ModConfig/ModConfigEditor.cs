@@ -4,10 +4,10 @@ using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
-namespace Katas.ModmanEditor
+namespace Katas.Modman.Editor
 {
     [CustomEditor(typeof(ModConfig))]
-    public class ModConfigEditor : Editor
+    public class ModConfigEditor : UnityEditor.Editor
     {
         private static readonly List<string> AssemblyNames = new();
         private static StringBuilder MessageBuilder = new();
