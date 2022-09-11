@@ -36,6 +36,9 @@ namespace Katas.Modman
 
         public async UniTask LoadAsync(bool loadAssemblies)
         {
+            if (IsLoaded)
+                return;
+            
             // check if the mod build is compatible with the current platform
             if (!Enum.TryParse(Info.Platform, false, out RuntimePlatform platform))
                 throw new Exception($"Mod's target platform is unknown: \"{Info.Platform}\"");
@@ -65,6 +68,7 @@ namespace Katas.Modman
             // load mod content catalog
             string modcatalogPath = Path.Combine(ModFolder, "catalog_" + CatalogName + ".json");
             ResourceLocator = await Addressables.LoadContentCatalogAsync(modcatalogPath, true);
+            IsLoaded = true;
             
             // if we are not loading the assemblies or the mod has no assemblies we are done
             if (!loadAssemblies || !Info.HasAssemblies)

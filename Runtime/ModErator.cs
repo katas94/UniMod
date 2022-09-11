@@ -40,12 +40,12 @@ namespace Katas.Modman
             if (!Directory.Exists(InstallationFolder))
                 return;
             
-            // install any new mods first (deleting the mod files after the installation)
-            await InstallModsAsync(InstallationFolder, true);
-
-            // get all the mod folders from the installation folder and refresh them. we do this just in case there was a manual installation
+            // get all the mod folders from the installation folder and refresh them. we do this just in case there has been a manual installation
             string[] modFolders = Directory.GetDirectories(InstallationFolder);
             await UniTask.WhenAll(modFolders.Select(RefreshModFolderAsync));
+            
+            // install any new mods and delete the mod files after the installation
+            await InstallModsAsync(InstallationFolder, true);
 
             // TODO: resolve dependency tree
             
