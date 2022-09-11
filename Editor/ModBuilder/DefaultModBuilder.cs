@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Reflection;
 using System.IO.Compression;
 using System.Collections.Generic;
 using UnityEngine;
@@ -49,7 +48,7 @@ namespace Katas.ModmanEditor
             
             // get current active build target and try to get the equivalent runtime platform value
             var buildTarget = EditorUserBuildSettings.activeBuildTarget;
-            if (!TryGetRuntimePlatformFromBuildTarget(buildTarget, out var runtimePlatform))
+            if (!ModBuildingUtils.TryGetRuntimePlatformFromBuildTarget(buildTarget, out var runtimePlatform))
                 throw new Exception($"Couldn't get the equivalent runtime platform value for the current active build target: {buildTarget}");
             
             // check if the mod config includes any assemblies, in that case check if we have an assembly builder that supports the current active platform
@@ -195,61 +194,6 @@ namespace Katas.ModmanEditor
                 default:
                     return false;
             }
-        }
-
-        /// <summary>
-        /// Checks if the given filePath corresponds to a valid managed assembly.
-        /// </summary>
-        public static bool IsManagedAssembly (string filePath)
-        {
-            try
-            {
-                _ = AssemblyName.GetAssemblyName(filePath);
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Tries to get the equivalent RuntimePlatform value from the given BuildTarget. Returns true if succeeded.
-        /// </summary>
-        public static bool TryGetRuntimePlatformFromBuildTarget(BuildTarget buildTarget, out RuntimePlatform runtimePlatform)
-        {
-            RuntimePlatform? platform = buildTarget switch
-            {
-                BuildTarget.Android => RuntimePlatform.Android,
-                BuildTarget.PS4 => RuntimePlatform.PS4,
-                BuildTarget.PS5 => RuntimePlatform.PS5,
-                BuildTarget.StandaloneLinux64 => RuntimePlatform.LinuxPlayer,
-                BuildTarget.CloudRendering => RuntimePlatform.LinuxPlayer,
-                BuildTarget.StandaloneOSX => RuntimePlatform.OSXPlayer,
-                BuildTarget.StandaloneWindows => RuntimePlatform.WindowsPlayer,
-                BuildTarget.StandaloneWindows64 => RuntimePlatform.WindowsPlayer,
-                BuildTarget.Switch => RuntimePlatform.Switch,
-                BuildTarget.WSAPlayer => RuntimePlatform.WSAPlayerARM,
-                BuildTarget.XboxOne => RuntimePlatform.XboxOne,
-                BuildTarget.iOS => RuntimePlatform.IPhonePlayer,
-                BuildTarget.tvOS => RuntimePlatform.tvOS,
-                BuildTarget.WebGL => RuntimePlatform.WebGLPlayer,
-                BuildTarget.Lumin => RuntimePlatform.Lumin,
-                BuildTarget.GameCoreXboxSeries => RuntimePlatform.GameCoreXboxSeries,
-                BuildTarget.GameCoreXboxOne => RuntimePlatform.GameCoreXboxOne,
-                BuildTarget.Stadia => RuntimePlatform.Stadia,
-                BuildTarget.EmbeddedLinux => RuntimePlatform.EmbeddedLinuxArm64,
-                _ => null
-            };
-
-            if (platform.HasValue)
-            {
-                runtimePlatform = platform.Value;
-                return true;
-            }
-            
-            runtimePlatform = default;
-            return false;
         }
     }
 }

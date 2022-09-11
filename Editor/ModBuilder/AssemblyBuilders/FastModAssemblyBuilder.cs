@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor.Compilation;
@@ -47,46 +46,7 @@ namespace Katas.ModmanEditor
             }
             
             // copy the assemblies to the output folder
-            try
-            {
-                await UniTask.WhenAll(_paths.Select(path => CopyAssemblyToOutputFolder(path, outputFolder, buildMode)));
-                await UniTask.SwitchToMainThread();
-            }
-            catch (Exception)
-            {
-                // the copying method executes in background threads so lets make sure to return to the main thread before throwing
-                await UniTask.SwitchToMainThread();
-                throw;
-            }
-        }
-        
-        private async UniTask CopyAssemblyToOutputFolder (string path, string outputFolder, CodeOptimization buildMode)
-        {
-            await UniTask.SwitchToThreadPool();
-            
-            if (string.IsNullOrEmpty(outputFolder) || !Directory.Exists(outputFolder))
-                throw new Exception("The given output folder is null/empty or it does not exist");
-            
-            // check if the assembly file exists
-            if (!File.Exists(path))
-                throw new FileNotFoundException($"Could not find the assembly file at \"{path}\"");
-            
-            // get the src/dst paths for both the assembly and its pdb (debugging) file
-            string fileName = Path.GetFileName(path);
-            string dllSrcPath = path;
-            string dllDestPath = Path.Combine(outputFolder, fileName);
-            string pdbSrcPath = Path.ChangeExtension(dllSrcPath, ".pdb");
-            string pdbDestPath = Path.ChangeExtension(dllDestPath, ".pdb");
-
-            // check if the assembly is a valid net managed assembly
-            if (!DefaultModBuilder.IsManagedAssembly(dllSrcPath))
-                throw new Exception($"\"{dllSrcPath}\" is not a managed assembly");
-            
-            File.Copy(dllSrcPath, dllDestPath, true);
-
-            // copy pdb file only if in debug mode and the file exists. Some assemblies may not come with a pdb file so we are not requiring it
-            if (buildMode == CodeOptimization.Debug && File.Exists(pdbSrcPath))
-                File.Copy(pdbSrcPath, pdbDestPath, true);
+            await UniTask.WhenAll(_paths.Select(path => ModBuildingUtils.CopyAssemblyToOutputFolder(path, outputFolder, buildMode)));
         }
     }
 }
