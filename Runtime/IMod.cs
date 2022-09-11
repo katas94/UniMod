@@ -1,4 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Katas.Modman
@@ -18,15 +20,14 @@ namespace Katas.Modman
     /// </summary>
     public interface IMod
     {
-        string Path { get; }
         ModInfo Info { get; }
         ModStatus Status { get; }
-        bool IsContentLoaded { get; }
+        bool IsLoaded { get; }
         bool AreAssembliesLoaded { get; }
+        IReadOnlyList<Assembly> LoadedAssemblies { get; }
         
-        UniTask LoadContentAsync();
-        UniTask LoadAssembliesAsync();
-        UniTask StartAsync();
+        UniTask LoadAsync(bool loadAssemblies);
+        UniTask UninstallAsync();
         UniTask<Sprite> LoadThumbnailAsync();
         void UnloadThumbnail();
     }

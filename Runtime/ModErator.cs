@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Reflection;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -28,28 +26,33 @@ namespace Katas.Modman
         public IEnumerable<IMod> InstalledMods => _mods.Values;
         public string InstallationFolder { get; set; }
         
-        private readonly Dictionary<string, IMod> _mods;
-        private readonly HashSet<string> _loadedAssemblies;
-
+        private readonly Dictionary<string, IMod> _mods = new();
+        
         public ModErator(string installationFolder = null)
         {
             if (_instance is not null)
                 throw new Exception("[Modman] There can only be one ModErator instance");
             
             InstallationFolder = installationFolder ?? DefaultInstallationFolder;
-            _mods = new();
-            _loadedAssemblies = new();
-            
-            // get all the full names for the assemblies that are currently loaded
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            _loadedAssemblies.UnionWith(assemblies.Select(assembly => assembly.FullName));
-            
             _instance = this;
         }
         
-        public UniTask InstallModsAsync()
+        public async UniTask RefreshInstallationFolder()
         {
-            return InstallModsAsync(InstallationFolder, true);
+            if (!Directory.Exists(InstallationFolder))
+                return;
+            
+            // install any new mods first (deleting the mod files after the installation)
+            await InstallModsAsync(InstallationFolder, true);
+
+            // get all the mod folders from the installation folder and refresh them. we do this just in case there was a manual installation
+            string[] modFolders = Directory.GetDirectories(InstallationFolder);
+            await UniTask.WhenAll(modFolders.Select(RefreshModFolderAsync));
+
+            // TODO: resolve dependency tree
+            
+            // make sure that callers say on main thread after awaiting this
+            await UniTask.SwitchToMainThread();
         }
 
         public UniTask InstallModsAsync(string folderPath, bool deleteModFilesAfter)
@@ -63,20 +66,20 @@ namespace Katas.Modman
         
         public UniTask InstallModsAsync(IEnumerable<string> modFilePaths, bool deleteModFilesAfter)
         {
-            async UniTask InstallAsync(string modFilePath)
+            // utility method to install a mod and log any exceptions instead of throwing
+            async UniTask InstallWithoutThrowingAsync(string modFilePath)
             {
-                // avoids throwing if one mod fails to install and log the exception instead
                 try
                 {
                     await InstallModAsync(modFilePath, deleteModFilesAfter);
                 }
-                catch (ModInstallationException exception)
+                catch (Exception exception)
                 {
                     Debug.LogError(exception);
                 }
             }
             
-            return UniTask.WhenAll(modFilePaths.Select(InstallAsync));
+            return UniTask.WhenAll(modFilePaths.Select(InstallWithoutThrowingAsync));
         }
 
         public UniTask InstallModsAsync(bool deleteModFilesAfter, params string[] modFilePaths)
@@ -86,12 +89,18 @@ namespace Katas.Modman
 
         public async UniTask InstallModAsync(string modFilePath, bool deleteModFileAfter)
         {
-            await UniTask.SwitchToThreadPool();
-            
             if (Path.GetExtension(modFilePath) != ModFileExtension)
                 return;
-
+            
+            // we want to avoid to override the current installation if it is already loaded
             string modId = Path.GetFileNameWithoutExtension(modFilePath);
+            if (_mods.TryGetValue(modId, out var mod) && mod.IsLoaded)
+                throw new ModInstallationException(modId, "The mod ID is currently loaded. Avoiding to override the current installation...");
+            
+            // install the mod on a separated thread
+            await UniTask.SwitchToThreadPool();
+            
+            // obtain the extract path and extract the mod file
             string extractPath = Path.Combine(InstallationFolder, modId);
             
             try
@@ -105,8 +114,14 @@ namespace Katas.Modman
             }
             catch (Exception exception)
             {
+                await UniTask.SwitchToMainThread();
                 throw new ModInstallationException(modId, exception);
             }
+            
+            Debug.Log($"Successfully installed mod {modId}");
+            
+            // mod was installed, now refresh the folder so the mod's instance gets created and registered
+            await RefreshModFolderAsync(extractPath);
             
             // don't throw if we could not delete the mod file but we successfully installed the mod
             try
@@ -118,10 +133,11 @@ namespace Katas.Modman
             {
                 await UniTask.SwitchToMainThread();
                 Debug.LogWarning($"Could not delete mod file after installation: {modFilePath}\n{exception}");
+                return;
             }
-
+            
+            // make sure that callers stay on the main thread
             await UniTask.SwitchToMainThread();
-            Debug.Log($"Successfully installed mod {modId}");
         }
 
         public async UniTask UninstallModAsync(string id)
@@ -129,86 +145,76 @@ namespace Katas.Modman
             if (!_mods.TryGetValue(id, out var mod))
                 return;
             
-            if (mod.IsContentLoaded || mod.AreAssembliesLoaded)
+            if (mod.IsLoaded || mod.AreAssembliesLoaded)
             {
                 Debug.LogError($"Could not uninstall mod {id}: its content or assemblies are currently loaded...");
                 return;
             }
             
             await UniTask.SwitchToThreadPool();
-            IOUtils.DeleteDirectory(mod.Path);
-            await UniTask.SwitchToMainThread();
+
+            try
+            {
+                await mod.UninstallAsync();
+            }
+            catch (Exception exception)
+            {
+                UniTask.SwitchToMainThread();
+                Debug.LogError($"Could uninstall mod {id}: {exception}");
+                return;
+            }
             
+            await UniTask.SwitchToMainThread();
             _mods.Remove(id);
             Debug.Log($"Successfully uninstalled mod {id}");
         }
 
-        public async UniTask RefreshInstalledModsAsync()
+        public async UniTask<bool> TryLoadAllModsAsync(bool loadAssemblies, List<string> failedModIds)
         {
-            async UniTask<IMod> LoadAsync(string modFolder)
-            {
-                // avoids throwing if one mod fails to be loaded and logs the exception instead
-                try
-                {
-                    return await LoadModFromFolderAsync(modFolder);
-                }
-                catch (ModLoadException exception)
-                {
-                    Debug.LogError(exception);
-                    return null;
-                }
-            }
-            
-            if (!Directory.Exists(InstallationFolder))
-                return;
-            
-            string[] modFolders = Directory.GetDirectories(InstallationFolder);
-            var mods = await UniTask.WhenAll(modFolders.Select(LoadAsync));
-
-            foreach (IMod mod in mods)
-                if (mod is not null)
-                    _mods[mod.Info.ModId] = mod;
-            
-            // TODO: resolve dependency tree
+            // TODO once we have the depencency graph implementation we need to load mods in the correct order
+            await UniTask.WhenAll(_mods.Values.Select(mod => mod.LoadAsync(loadAssemblies)));
+            await UniTask.SwitchToMainThread();
+            return true;
         }
 
-        public UniTask<bool> TryLoadAllModsContentAsync(List<string> failedModIds)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public UniTask<bool> TryLoadAllModsAssembliesAsync(List<string> failedModIds)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public UniTask<bool> TryLoadAllModsAsync(List<string> failedModIds)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public IMod GetInstalledMod(string id)
+        public IMod GetMod(string id)
         {
             return _mods.TryGetValue(id, out var mod) ? mod : null;
         }
-
-        private async UniTask<IMod> LoadModFromFolderAsync(string modFolder)
+        
+        // assumes that the given modFolder is inside of the installation folder. It will create and register the intstance for the mod
+        // if it doesn't exist already. It will do nothing if it already exists. This method will run on a separate thread
+        private async UniTask RefreshModFolderAsync(string modFolder)
         {
-            if (string.IsNullOrEmpty(modFolder) || !Directory.Exists(modFolder))
-                return null;
-            
-            // check if the mod is already loaded
+            // do nothing if the instance already exists
             string id = Path.GetFileName(modFolder);
-            if (_mods.TryGetValue(id, out var mod))
-                return mod;
+            if (_mods.ContainsKey(id))
+                return;
             
-            Debug.Log($"Loading mod {id}...");
+            // create and register the mod instance on a separated thread
             await UniTask.SwitchToThreadPool();
+            var error = await RegisterModInstanceAsync(id);
             
+            if (!string.IsNullOrEmpty(error))
+                Debug.LogError($"Could not register mod's instance {id}: {error}");
+            else
+                Debug.Log($"Successfully registered mod instance {id}");
+        }
+        
+        /// <summary>
+        /// Tries to create and register the mod instance for the given ID. It will look for the mod folder in the installation folder and try to load
+        /// its info file. This method also registers the created instance in the _mods dictionary, overriding any previous instance for the
+        /// same ID.
+        ///
+        /// Returns a non empty error string if the mod instance could not be created and registered.
+        /// </summary>
+        private async UniTask<string> RegisterModInstanceAsync(string id)
+        {
             // check if the info file exists
+            string modFolder = Path.Combine(InstallationFolder, id);
             string infoPath = Path.Combine(modFolder, InfoFile);
             if (!File.Exists(infoPath))
-                throw new ModLoadException(id, $"Could not find the mod's {InfoFile} file");
+                return $"Could not find the mod's {InfoFile} file";
 
             try
             {
@@ -216,14 +222,16 @@ namespace Katas.Modman
                 using StreamReader reader = File.OpenText(infoPath);
                 string json = await reader.ReadToEndAsync();
                 var info = JsonConvert.DeserializeObject<ModInfo>(json);
-                await UniTask.SwitchToMainThread();
                 
-                Debug.Log($"Successfully loaded mod {id}#{info.ModVersion}");
-                return new PlayerMod(modFolder, info);
+                // instantiate and register the mod instance (this will override any previous mod instance with same id)
+                lock (_mods)
+                    _mods[id] = new PlayerMod(modFolder, info);
+                    
+                return null;
             }
             catch (Exception exception)
             {
-                throw new ModLoadException(id, exception);
+                return exception.ToString();
             }
         }
     }

@@ -1,35 +1,37 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Katas.Modman
 {
     public class PlayerMod : IMod
     {
-        public string Path { get; }
+        public readonly string Path;
+        
         public ModInfo Info { get; }
         public ModStatus Status { get; }
-        public bool IsContentLoaded { get; private set; }
+        public bool IsLoaded { get; private set; }
         public bool AreAssembliesLoaded { get; private set; }
+        public IReadOnlyList<Assembly> LoadedAssemblies { get; }
+        
+        private readonly List<Assembly> _loadedAssemblies = new();
 
         public PlayerMod(string path, ModInfo info)
         {
             Path = path;
             Info = info;
         }
-        
-        public UniTask LoadContentAsync()
+
+        public UniTask LoadAsync(bool loadAssemblies)
         {
-            throw new System.NotImplementedException();
+            return default;
         }
 
-        public UniTask LoadAssembliesAsync()
+        public UniTask UninstallAsync()
         {
-            throw new System.NotImplementedException();
-        }
-
-        public UniTask StartAsync()
-        {
-            throw new System.NotImplementedException();
+            IOUtils.DeleteDirectory(Path);
+            return UniTask.CompletedTask;
         }
 
         public UniTask<Sprite> LoadThumbnailAsync()
