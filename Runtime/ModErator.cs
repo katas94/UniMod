@@ -159,7 +159,7 @@ namespace Katas.Modman
             }
             catch (Exception exception)
             {
-                UniTask.SwitchToMainThread();
+                await UniTask.SwitchToMainThread();
                 Debug.LogError($"Could uninstall mod {id}: {exception}");
                 return;
             }
