@@ -22,6 +22,7 @@ namespace Katas.Modman.Editor
         public string modVersion;
         public string displayName;
         public string description;
+        public bool assembliesOnly;
         public ModStartup startup;
         public List<ModDependency> dependencies;
         

@@ -168,31 +168,12 @@ namespace Katas.Modman
 
         public async UniTask UninstallModAsync(string id)
         {
-            if (!_mods.TryGetValue(id, out var mod))
+            if (!_mods.TryGetValue(id, out IMod mod))
                 return;
             
-            if (mod.IsLoaded || mod.AreAssembliesLoaded)
-            {
-                Debug.LogError($"Could not uninstall mod {id}: its content or assemblies are currently loaded...");
-                return;
-            }
-            
-            await UniTask.SwitchToThreadPool();
-
-            try
-            {
-                await mod.UninstallAsync();
-            }
-            catch (Exception exception)
-            {
-                await UniTask.SwitchToMainThread();
-                Debug.LogError($"Could uninstall mod {id}: {exception}");
-                return;
-            }
-            
-            await UniTask.SwitchToMainThread();
-            _mods.Remove(id);
-            Debug.Log($"Successfully uninstalled mod {id}");
+            bool needsRestart = await mod.UninstallAsync();
+            if (!needsRestart)
+                _mods.Remove(id);
         }
 
         public async UniTask<bool> TryLoadAllModsAsync(bool loadAssemblies, List<string> failedModIds)

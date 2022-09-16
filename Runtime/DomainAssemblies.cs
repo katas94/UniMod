@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Katas.Modman
@@ -30,26 +32,42 @@ namespace Katas.Modman
             foreach (Assembly assembly in assemblies)
                 LoadedAssemblies[assembly.FullName] = assembly;
         }
-
+        
         /// <summary>
-        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns true if successful. When returning false, the
-        /// out error parameter will be initialized with an error message.
+        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns the loaded assembly instance if successful.
         /// </summary>
-        public static bool Load(byte[] rawAssembly, out string error)
+        public static Assembly Load(byte[] rawAssembly)
         {
-            return Load(rawAssembly, null, out error);
+            return Load(rawAssembly, out string _);
         }
         
         /// <summary>
-        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns true if successful. When returning false, the
-        /// out error parameter will be initialized with an error message. The rawSymbolStore parameter is optional (can be set to null).
+        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns the loaded assembly instance if successful.
         /// </summary>
-        public static bool Load(byte[] rawAssembly, byte[] rawSymbolStore, out string error)
+        public static Assembly Load(byte[] rawAssembly, out string message)
+        {
+            return Load(rawAssembly, null, out message);
+        }
+        
+        /// <summary>
+        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns the loaded assembly instance if successful.
+        /// The rawSymbolStore parameter is optional (can be set to null).
+        /// </summary>
+        public static Assembly Load(byte[] rawAssembly, byte[] rawSymbolStore)
+        {
+            return Load(rawAssembly, rawSymbolStore, out string _);
+        }
+
+        /// <summary>
+        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns the loaded assembly instance if successful.
+        /// The rawSymbolStore parameter is optional (can be set to null).
+        /// </summary>
+        public static Assembly Load(byte[] rawAssembly, byte[] rawSymbolStore, out string message)
         {
             if (rawAssembly is null)
             {
-                error = "The given raw assembly bytes is null";
-                return false;
+                message = "The given raw assembly is null";
+                return null;
             }
             
             Assembly assembly = null;
@@ -60,24 +78,23 @@ namespace Katas.Modman
             }
             catch (Exception exception)
             {
-                error = exception.ToString();
-                return false;
+                message = exception.ToString();
+                return null;
             }
 
             lock (LoadedAssemblies)
             {
-                if (LoadedAssemblies.ContainsKey(assembly.FullName))
+                if (LoadedAssemblies.TryGetValue(assembly.FullName, out var loadedAssembly))
                 {
-                    error = $"The assembly is already loaded in the AppDomain: {assembly.FullName}";
-                    return false;
+                    message = $"The assembly was already loaded in the AppDomain: {assembly.FullName}";
+                    return loadedAssembly;
                 }
                 
                 LoadedAssemblies[assembly.FullName] = assembly;
             }
             
-            error = null;
-            Debug.Log($"Loaded assembly: {assembly.FullName}");
-            return true;
+            message = null;
+            return assembly;
         }
         
         /// <summary>

@@ -24,12 +24,11 @@ namespace Katas.Modman
         ModInfo Info { get; }
         ModStatus Status { get; }
         bool IsLoaded { get; }
-        bool AreAssembliesLoaded { get; }
         IResourceLocator ResourceLocator { get; }
         IReadOnlyList<Assembly> LoadedAssemblies { get; }
         
         UniTask LoadAsync(bool loadAssemblies);
-        UniTask UninstallAsync();
+        UniTask<bool> UninstallAsync();
         UniTask<Sprite> LoadThumbnailAsync();
     }
 }

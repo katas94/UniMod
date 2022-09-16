@@ -17,8 +17,6 @@ namespace Katas.Modman
         public string DisplayName;
         public string Description;
         public string Platform;
-        public bool DebugBuild;
-        public bool HasAssemblies;
         public Dictionary<string, string> Dependencies;
     }
 }

@@ -111,7 +111,7 @@ namespace Katas.Modman.Editor
             if (buildMode == CodeOptimization.None)
                 return null;
             
-            string defaultName = $"{modId}-{modVersion}-{buildMode}{ModErator.ModFileExtension}";
+            string defaultName = GetDefaultFileOutputName(buildMode);
             string outputPath = EditorUtility.SaveFilePanel("Build mod...", null, defaultName, ModErator.ModFileExtensionNoDot);
             return outputPath;
         }
@@ -128,6 +128,14 @@ namespace Katas.Modman.Editor
             _buildTargetKey = $"mod_config_buildtarget-{guid}";
             _outputPathKey = $"mod_config_outputpath-{guid}";
             _cacheKeysRefreshed = true;
+        }
+
+        private string GetDefaultFileOutputName(CodeOptimization buildMode)
+        {
+            if (!assembliesOnly && ModBuildingUtils.TryGetRuntimePlatformFromBuildTarget(EditorUserBuildSettings.activeBuildTarget, out RuntimePlatform runtimePlatform))
+                return $"{modId}-{modVersion}-{runtimePlatform}-{buildMode}{ModErator.ModFileExtension}";
+            else
+                return $"{modId}-{modVersion}-{buildMode}{ModErator.ModFileExtension}";
         }
     }
 }

@@ -16,90 +16,61 @@ namespace Katas.Modman
         public const string CatalogName = "mod";
         public const string StartupAddress = "__mod_startup";
         public const string AssembliesFolder = "Assemblies";
+        public const string AssembliesOnlyPlatform = "any";
         
         public readonly string ModFolder;
         
         public ModInfo Info { get; }
         public ModStatus Status { get; }
         public bool IsLoaded { get; private set; }
-        public bool AreAssembliesLoaded { get; private set; }
         public IResourceLocator ResourceLocator { get; private set; }
         public IReadOnlyList<Assembly> LoadedAssemblies => _loadedAssemblies;
         
         private readonly List<Assembly> _loadedAssemblies = new();
+        private readonly bool _isAssembliesOnly;
 
         public RuntimeMod(string modFolder, ModInfo info)
         {
             ModFolder = modFolder;
             Info = info;
+            _isAssembliesOnly = Info.Platform == AssembliesOnlyPlatform;
         }
 
         public async UniTask LoadAsync(bool loadAssemblies)
         {
             if (IsLoaded)
                 return;
-            
-            // check if the mod build is compatible with the current platform
-            if (!Enum.TryParse(Info.Platform, false, out RuntimePlatform platform))
-                throw new Exception($"Mod's target platform is unknown: \"{Info.Platform}\"");
-            
-#if UNITY_EDITOR
-            // special case for unity editor (mod builds are never set to any of the Editor platforms)
-            bool isPlatformSupported = Application.platform switch
-            {
-                RuntimePlatform.WindowsEditor => platform == RuntimePlatform.WindowsPlayer,
-                RuntimePlatform.OSXEditor => platform == RuntimePlatform.OSXPlayer,
-                RuntimePlatform.LinuxEditor => platform == RuntimePlatform.LinuxPlayer,
-                _ => false
-            };
-#else
-            bool isPlatformSupported = Application.platform == platform;
-#endif
-            
-            if (!isPlatformSupported)
-                throw new Exception($"Current platform is unsupported: this mod was built for \"{platform}\"");
-            
-            // check if the mod was built for this version of the app
-            if (string.IsNullOrEmpty(Info.AppVersion))
-                Debug.LogWarning("Could not get the app version that this mod was built for. The mod is not guaranteed to work and the application could crash or be unstable.");
-            if (Info.AppVersion != Application.version)
-                Debug.LogWarning($"This mod was built for version {Info.AppVersion}, so it is not guaranteed to work and the application could crash or be unstable.");
 
-            // load mod content catalog
-            string modcatalogPath = Path.Combine(ModFolder, "catalog_" + CatalogName + ".json");
-            ResourceLocator = await Addressables.LoadContentCatalogAsync(modcatalogPath, true);
-            IsLoaded = true;
-            
-            // if we are not loading the assemblies or the mod has no assemblies we are done
-            if (!loadAssemblies || !Info.HasAssemblies)
+            if (_isAssembliesOnly && !loadAssemblies)
             {
-                Debug.Log($"Mod loaded successfully: {Info.ModId}");
+                Debug.LogWarning($"[{Info.ModId}] the mod is assemblies only but it has been specified to not load them. Nothing will be loaded...");
                 return;
             }
             
-            // load all assemblies
-            await LoadAssembliesAsync();
+            // check mod's platform
+            if (!IsPlatformSupported())
+                throw new Exception($"[{Info.ModId}] this mod was built for {Info.Platform} platform");
             
-            // if the mod contains a startup script, then load and execute it
-            if (ResourceLocator.Locate(StartupAddress, typeof(object), out IList<IResourceLocation> locations))
-            {
-                var location = locations.FirstOrDefault();
-                if (location is not null)
-                {
-                    var startup = await Addressables.LoadAssetAsync<ModStartup>(location);
-                    if (startup)
-                        await startup.StartAsync();
-                }
-            }
-
-            if (!Debug.isDebugBuild && Info.DebugBuild)
-                Debug.LogWarning($"{Info.ModId}: using a development build");
+            // check if the mod was built for this version of the app
+            if (string.IsNullOrEmpty(Info.AppVersion))
+                Debug.LogWarning($"[{Info.ModId}] could not get the app version that this mod was built for. The mod is not guaranteed to work and the application could crash or be unstable");
+            if (Info.AppVersion != Application.version)
+                Debug.LogWarning($"[{Info.ModId}] this mod was built for app version {Info.AppVersion}, so it is not guaranteed to work and the application could crash or be unstable");
+            
+            // load mod
+            if (loadAssemblies)
+                await LoadAssembliesAsync();
+            if (!_isAssembliesOnly)
+                await LoadContentAsync();
+            
+            IsLoaded = true;
+            Debug.Log($"[{Info.ModId}] mod loaded!");
         }
 
-        public UniTask UninstallAsync()
+        public UniTask<bool> UninstallAsync()
         {
             IOUtils.DeleteDirectory(ModFolder);
-            return UniTask.CompletedTask;
+            return UniTask.FromResult(true);
         }
 
         public UniTask<Sprite> LoadThumbnailAsync()
@@ -109,75 +80,136 @@ namespace Katas.Modman
 
         private async UniTask LoadAssembliesAsync()
         {
-            // get paths from all mod assembly files
+            // fetch all the assembly file paths from the assemblies folder
             string assembliesFolder = Path.Combine(ModFolder, AssembliesFolder);
+            if (!Directory.Exists(assembliesFolder))
+                return;
+            
             string[] paths = Directory.GetFiles(assembliesFolder, "*.dll");
             
-            // load all assemblies
             try
             {
-                await UniTask.WhenAll(paths.Select(LoadAssemblyAsync));
+                await UniTask.WhenAll(paths.Select(path => LoadAssemblyAsync(path, Debug.isDebugBuild)));
             }
-            catch (Exception)
+            finally
             {
                 await UniTask.SwitchToMainThread();
-                throw;
             }
+        }
+
+        private async UniTask LoadContentAsync()
+        {
+            // load mod content catalog
+            string catalogPath = Path.Combine(ModFolder, "catalog_" + CatalogName + ".json");
+            ResourceLocator = await Addressables.LoadContentCatalogAsync(catalogPath, true);
             
-            await UniTask.SwitchToMainThread();
+            // if the mod loaded any assemblies then check if it contains a startup script
+            if (_loadedAssemblies.Count == 0 || !ResourceLocator.Locate(StartupAddress, typeof(object), out IList<IResourceLocation> locations))
+                return;
+            
+            // load and execute the startup script
+            IResourceLocation location = locations.FirstOrDefault();
+            if (location is not null)
+            {
+                var startup = await Addressables.LoadAssetAsync<ModStartup>(location);
+                if (startup)
+                    await startup.StartAsync();
+            }
         }
 
         // loads the given assembly file
-        private async UniTask LoadAssemblyAsync (string filePath)
+        private async UniTask LoadAssemblyAsync (string filePath, bool loadSymbolStore)
         {
             await UniTask.SwitchToThreadPool();
             
-            // try to load the assembly asset
-            byte[] rawAssembly = null;
-            byte[] rawSymbolStore = null;
+            // try to load the assembly bytes
+            (byte[] assembly, byte[] symbolStore) result = await TryLoadAssemblyBytesAsync(filePath, loadSymbolStore);
+            
+            // trt load the assembly into the AppDomain from the raw bytes
+            Assembly assembly;
+            string message;
+            
+            if (result.symbolStore is null)
+                assembly = DomainAssemblies.Load(result.assembly, out message);
+            else
+                assembly = DomainAssemblies.Load(result.assembly, result.symbolStore, out message);
+
+            if (assembly is null)
+            {
+                Debug.LogError($"[{Info.ModId}] failed to load the assembly: {message}");
+                return;
+            }
+            
+            // check if we have any message from the load operation 
+            if (string.IsNullOrEmpty(message))
+                Debug.Log($"[{Info.ModId}] successfully loaded assembly: {assembly.FullName}");
+            else
+                Debug.LogWarning($"[{Info.ModId}] {message}");
+            
+            _loadedAssemblies.Add(assembly);
+        }
+        
+        private async UniTask<(byte[] assembly, byte[] symbolStore)> TryLoadAssemblyBytesAsync(string filePath, bool loadSymbolStore)
+        {
+            (byte[] assembly, byte[] symbolStore) result = (null, null);
             
             // try to load the raw assembly
             try
             {
-                rawAssembly = await File.ReadAllBytesAsync(filePath);
+                result.assembly = await File.ReadAllBytesAsync(filePath);
+                
+                if (result.assembly is null)
+                    throw new Exception("Unknown error");
             }
             catch (Exception exception)
             {
-                throw new Exception($"Failed to read assembly file: {filePath}\n{exception}");
+                throw new Exception($"[{Info.ModId}] failed to read assembly file: {filePath}\n{exception}");
             }
-            
-            // if debugging is enabled try to also load the symbol store asset
-            string pdbFilePath = null;
-            
-            try
+
+            // try to load the assembly's symbol store file if we are on a development build 
+            if (loadSymbolStore)
             {
-                if (Info.DebugBuild)
+                string pdbFilePath = null;
+                
+                try
                 {
-                    string folderPath = Path.GetDirectoryName(filePath);
+                    string folderPath = Path.GetDirectoryName(filePath) ?? string.Empty;
                     pdbFilePath = Path.GetFileNameWithoutExtension(filePath);
                     pdbFilePath = Path.Combine(folderPath, $"{pdbFilePath}.pdb");
                     
                     if (File.Exists(pdbFilePath))
-                        rawSymbolStore = await File.ReadAllBytesAsync(pdbFilePath);
+                        result.symbolStore = await File.ReadAllBytesAsync(pdbFilePath);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning($"[{Info.ModId}] failed to read the symbol store file: {pdbFilePath}\n{exception}");
                 }
             }
-            catch (Exception exception)
-            {
-                Debug.LogWarning($"Failed to read the symbol store file: {pdbFilePath}\n{exception}");
-            }
-
-            // trt load the assembly from the raw bytes
-            string error;
-            bool assemblyLoadedSuccessfully;
             
-            if (rawSymbolStore is null)
-                assemblyLoadedSuccessfully = DomainAssemblies.Load(rawAssembly, out error);
-            else
-                assemblyLoadedSuccessfully = DomainAssemblies.Load(rawAssembly, rawSymbolStore, out error);
-
-            // check if we successfully loaded
-            if (!assemblyLoadedSuccessfully)
-                Debug.LogError($"Failed to load the assembly: {error}");
+            return result;
+        }
+        
+        private bool IsPlatformSupported()
+        {
+            if (_isAssembliesOnly)
+                return true;
+            
+            // try to get the RuntimePlatform value from the info
+            if (!Enum.TryParse(Info.Platform, false, out RuntimePlatform platform))
+                return false;
+            
+#if UNITY_EDITOR
+            // special case for unity editor (mod builds are never set to any of the Editor platforms)
+            return Application.platform switch
+            {
+                RuntimePlatform.WindowsEditor => platform == RuntimePlatform.WindowsPlayer,
+                RuntimePlatform.OSXEditor => platform == RuntimePlatform.OSXPlayer,
+                RuntimePlatform.LinuxEditor => platform == RuntimePlatform.LinuxPlayer,
+                _ => false
+            };
+#else
+            return Application.platform == platform;
+#endif
         }
     }
 }
