@@ -1,7 +1,7 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 
-namespace Katas.Modman
+namespace Katas.Mango
 {
     public abstract class ModStartup : ScriptableObject
     {

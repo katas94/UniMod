@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
 
-namespace Katas.Modman.Editor
+namespace Katas.Mango.Editor
 {
-    [CreateAssetMenu(fileName = "ModConfig", menuName = "Modman/Mod Config")]
+    [CreateAssetMenu(fileName = "ModConfig", menuName = "Mango Runtime/Mod Config")]
     public sealed partial class ModConfig : ScriptableObject
     {
         [Serializable]

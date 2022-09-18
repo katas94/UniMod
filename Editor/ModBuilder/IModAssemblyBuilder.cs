@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEditor.Compilation;
 
-namespace Katas.Modman.Editor
+namespace Katas.Mango.Editor
 {
     public interface IModAssemblyBuilder
     {

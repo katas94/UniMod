@@ -9,7 +9,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
-namespace Katas.Modman
+namespace Katas.Mango
 {
     public sealed class RuntimeMod : IMod
     {

@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
 
-namespace Katas.Modman.Editor
+namespace Katas.Mango.Editor
 {
     public static class ModBuildingUtils
     {

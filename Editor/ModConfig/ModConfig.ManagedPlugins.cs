@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 
-namespace Katas.Modman.Editor
+namespace Katas.Mango.Editor
 {
     public sealed partial class ModConfig
     {

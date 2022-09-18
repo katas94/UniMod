@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Katas.Modman
+namespace Katas.Mango
 {
     /// <summary>
     /// Structure for the mod's info.json file

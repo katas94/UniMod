@@ -1,5 +1,5 @@
 {
-  "name": "com.katas.modman",
+  "name": "com.katas.mango",
   "version": "0.0.1",
   "unity": "2021.3",
   "unityRelease": "8f1",
@@ -8,13 +8,14 @@
     "com.unity.addressables": "1.19.19",
     "com.cysharp.unitask": "2.3.1"
   },
-  "displayName": "Modman",
-  "description": "Adds support for modding in your project.",
+  "displayName": "Mango",
+  "description": "Adds modding support to your project.",
   "license": "MIT",
   "author": {
     "name": "Pablo Gutierrez Millares"
   },
   "keywords": [
+    "mango",
     "mod",
     "mods",
     "modding"

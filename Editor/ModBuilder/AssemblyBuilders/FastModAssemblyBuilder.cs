@@ -4,7 +4,7 @@ using UnityEditor.Compilation;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
 
-namespace Katas.Modman.Editor
+namespace Katas.Mango.Editor
 {
     /// <summary>
     /// Uses the editor precompiled assemblies under the Library/ScriptAssemblies folder. It is quicker since no build is required.

@@ -7,7 +7,7 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using Object = UnityEngine.Object;
 
-namespace Katas.Modman.Editor
+namespace Katas.Mango.Editor
 {
     /// <summary>
     /// Helper class to perform Addressable content builds for mods. Using this class you can easily add assets to the build
@@ -16,7 +16,7 @@ namespace Katas.Modman.Editor
     /// </summary>
     public sealed class ModContentBuilder
     {
-        private const string ModProfileName = "__Modman_mod_profile";
+        private const string ModProfileName = "__mango_mod_profile";
         
         private AddressableAssetSettings _settings;
         private readonly List<string> _addedGuids = new();

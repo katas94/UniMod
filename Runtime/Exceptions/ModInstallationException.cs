@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Katas.Modman
+namespace Katas.Mango
 {
     public sealed class ModInstallationException : Exception
     {

@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
-namespace Katas.Modman.Editor
+namespace Katas.Mango.Editor
 {
     [CustomEditor(typeof(ModConfig))]
     public sealed class ModConfigEditor : UnityEditor.Editor

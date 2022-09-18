@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Katas.Modman
+namespace Katas.Mango
 {
     /// <summary>
     /// Helper static class to load new assemblies and track loaded assemblies on the current AppDomain.s

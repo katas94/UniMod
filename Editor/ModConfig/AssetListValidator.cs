@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Object = UnityEngine.Object;
 
-namespace Katas.Modman.Editor
+namespace Katas.Mango.Editor
 {
     /// <summary>
     /// Helper class to perform validation of UnityEngine.Object lists in the inspector.
