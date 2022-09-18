@@ -93,20 +93,20 @@ namespace Katas.Modman
             if (!File.Exists(modFilePath))
                 throw new Exception($"Couldn't find mod file: {modFilePath}");
             if (Path.GetExtension(modFilePath) != ModFileExtension)
-                throw new Exception($"\"{modFilePath}\": expeteced \"{ModErator.ModFileExtension}\" file extension");
+                throw new Exception($"\"{modFilePath}\": expected \"{ModErator.ModFileExtension}\" file extension");
             
             // install the mod on a separated thread
             await UniTask.SwitchToThreadPool();
             ZipArchive archive = null;
             string modId = null;
-            string modFolder = null;
+            string modFolder;
 
             try
             {
                 // open the mod zip file and fetch the mod id by reading the name of the root folder
                 archive = ZipFile.Open(modFilePath, ZipArchiveMode.Read);
-                var firstEntryFullName = archive.Entries.FirstOrDefault()?.FullName;
-                modId = firstEntryFullName.Split('/')[0];
+                string firstEntryFullName = archive.Entries.FirstOrDefault()?.FullName;
+                modId = firstEntryFullName?.Split('/')[0];
                 
                 if (string.IsNullOrEmpty(modId))
                     throw new Exception("Couldn't fetch the mod ID from the archive file");
@@ -189,7 +189,7 @@ namespace Katas.Modman
             return _mods.TryGetValue(id, out var mod) ? mod : null;
         }
         
-        // assumes that the given modFolder is inside of the installation folder. It will create and register the intstance for the mod
+        // assumes that the given modFolder is inside of the installation folder. It will create and register the instance for the mod
         // if it doesn't exist already. It will do nothing if it already exists. This method will run on a separate thread
         private async UniTask RefreshModFolderAsync(string modFolder)
         {

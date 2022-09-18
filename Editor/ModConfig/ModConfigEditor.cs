@@ -7,10 +7,10 @@ using UnityEngine;
 namespace Katas.Modman.Editor
 {
     [CustomEditor(typeof(ModConfig))]
-    public class ModConfigEditor : UnityEditor.Editor
+    public sealed class ModConfigEditor : UnityEditor.Editor
     {
         private static readonly List<string> AssemblyNames = new();
-        private static StringBuilder MessageBuilder = new();
+        private static readonly StringBuilder MessageBuilder = new();
         
         private string _includesMessage;
         

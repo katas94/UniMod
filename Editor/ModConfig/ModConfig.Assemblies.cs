@@ -5,9 +5,9 @@ using UnityEditorInternal;
 
 namespace Katas.Modman.Editor
 {
-    public partial class ModConfig
+    public sealed partial class ModConfig
     {
-        private const string ASSEMBLY_DEFINITION_ASSET_FILTER = "t:" + nameof(AssemblyDefinitionAsset);
+        private const string AssemblyDefinitionAssetFilter = "t:" + nameof(AssemblyDefinitionAsset);
         
         private static readonly HashSet<string> Guids = new();
         private static readonly HashSet<BuildTarget> SupportedBuildTargets = new();
@@ -29,8 +29,8 @@ namespace Katas.Modman.Editor
                 return;
             
             // find all assembly definition assets in included and excluded folders
-            var includedGuids = FindAssets(ASSEMBLY_DEFINITION_ASSET_FILTER, folderIncludes, includeAssetsFolder);
-            var excludedGuids = FindAssets(ASSEMBLY_DEFINITION_ASSET_FILTER, folderExcludes, false);
+            var includedGuids = FindAssets(AssemblyDefinitionAssetFilter, folderIncludes, includeAssetsFolder);
+            var excludedGuids = FindAssets(AssemblyDefinitionAssetFilter, folderExcludes, false);
             
             // add included guids from the included folders and specific includes
             Guids.Clear();
@@ -54,31 +54,31 @@ namespace Katas.Modman.Editor
                 
                 // parse the assembly definition (unfortunately this is the only way to fetch the assembly metadata)
                 var assemblyDefinition = AssetDatabase.LoadAssetAtPath<AssemblyDefinitionAsset>(path);
-                var token = JToken.Parse(assemblyDefinition.text);
+                JToken token = JToken.Parse(assemblyDefinition.text);
                 
                 // get the assembly name (this will be the name of the .dll file compiled by Unity)
-                string name = token["name"]?.Value<string>();
-                if (string.IsNullOrEmpty(name))
+                var assemblyName = token["name"]?.Value<string>();
+                if (string.IsNullOrEmpty(assemblyName))
                     continue;
                 
                 // check if the given target platform is supported by the assembly
                 SupportedBuildTargets.Clear();
                 GetAssemblyDefinitionSupportedBuildTargets(token, SupportedBuildTargets);
                 if (SupportedBuildTargets.Contains(buildTarget))
-                    names.Add(name);
+                    names.Add(assemblyName);
             }
         }
         
         private static void GetAssemblyDefinitionSupportedBuildTargets(JToken token, HashSet<BuildTarget> supportedBuildTargets)
         {
-            // as specified in Unity's documentation, the includePlatforms and excludePlatforms arrays cannot be used toguether, so we need to check
+            // as specified in Unity's documentation, the includePlatforms and excludePlatforms arrays cannot be used together, so we need to check
             // which is defined and contains platforms
-            var includedToken = token["includePlatforms"];
-            if (includedToken is JArray includedArray && includedArray.Count > 0)
+            JToken includedToken = token["includePlatforms"];
+            if (includedToken is JArray { Count: > 0 } includedArray)
             {
-                foreach (var platformToken in includedArray)
+                foreach (JToken platformToken in includedArray)
                 {
-                    var buildTarget = GetAssemblyDefinitionPlatformAsBuildTarget(platformToken.Value<string>());
+                    BuildTarget buildTarget = GetAssemblyDefinitionPlatformAsBuildTarget(platformToken.Value<string>());
                     
                     if (buildTarget != BuildTarget.NoTarget)
                         supportedBuildTargets.Add(buildTarget);
@@ -108,16 +108,16 @@ namespace Katas.Modman.Editor
             supportedBuildTargets.Add(BuildTarget.StandaloneWindows64);
             supportedBuildTargets.Add(BuildTarget.XboxOne);
             
-            var excludeToken = token["excludePlatforms"];
-            if (excludeToken is JArray excludedArray && excludedArray.Count > 0)
+            JToken excludeToken = token["excludePlatforms"];
+            if (excludeToken is not JArray { Count: > 0 } excludedArray)
+                return;
+            
+            foreach (JToken platformToken in excludedArray)
             {
-                foreach (var platformToken in excludedArray)
-                {
-                    var buildTarget = GetAssemblyDefinitionPlatformAsBuildTarget(platformToken.Value<string>());
-                    
-                    if (buildTarget != BuildTarget.NoTarget)
-                        supportedBuildTargets.Remove(buildTarget);
-                }
+                BuildTarget buildTarget = GetAssemblyDefinitionPlatformAsBuildTarget(platformToken.Value<string>());
+                
+                if (buildTarget != BuildTarget.NoTarget)
+                    supportedBuildTargets.Remove(buildTarget);
             }
         }
 

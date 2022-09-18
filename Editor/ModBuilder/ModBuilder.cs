@@ -4,9 +4,6 @@ using Cysharp.Threading.Tasks;
 
 namespace Katas.Modman.Editor
 {
-    /// <summary>
-    /// Implement this 
-    /// </summary>
     public abstract class ModBuilder : ScriptableObject
     {
         /// <summary>

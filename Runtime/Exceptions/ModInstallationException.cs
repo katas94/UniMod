@@ -2,7 +2,7 @@
 
 namespace Katas.Modman
 {
-    public class ModInstallationException : Exception
+    public sealed class ModInstallationException : Exception
     {
         public ModInstallationException(string modId, string message)
             : base($"Failed to install mod {modId}: {message}") { }

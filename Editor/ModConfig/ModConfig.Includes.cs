@@ -4,7 +4,7 @@ using UnityEditor;
 
 namespace Katas.Modman.Editor
 {
-    public partial class ModConfig
+    public sealed partial class ModConfig
     {
         private static readonly List<string> TmpList = new();
         
@@ -37,10 +37,10 @@ namespace Katas.Modman.Editor
             // parse paths into the assembly name without extension
             foreach (string path in TmpList)
             {
-                string name = Path.GetFileNameWithoutExtension(path);
+                string assemblyName = Path.GetFileNameWithoutExtension(path);
                 
-                if (!string.IsNullOrEmpty(name))
-                    includes.Add(name);
+                if (!string.IsNullOrEmpty(assemblyName))
+                    includes.Add(assemblyName);
             }
             
             TmpList.Clear();

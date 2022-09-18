@@ -14,7 +14,7 @@ namespace Katas.Modman.Editor
     /// that will not show up on Addressables after the build is finished. It will also setup all the necessary settings for the build
     /// so it works with the RuntimeMod instance and will restore the previous settings after the build.
     /// </summary>
-    public class ModContentBuilder
+    public sealed class ModContentBuilder
     {
         private const string ModProfileName = "__Modman_mod_profile";
         

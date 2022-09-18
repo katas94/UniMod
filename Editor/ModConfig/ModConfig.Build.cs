@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Katas.Modman.Editor
 {
-    public partial class ModConfig
+    public sealed partial class ModConfig
     {
         public CodeOptimization? CachedBuildMode
         {
@@ -21,7 +21,7 @@ namespace Katas.Modman.Editor
                 return value;
             }
 
-            set
+            private set
             {
                 RefreshCacheKeys();
                 PlayerPrefs.SetString(_buildTargetKey, value.ToString());
@@ -35,8 +35,8 @@ namespace Katas.Modman.Editor
                 RefreshCacheKeys();
                 return PlayerPrefs.GetString(_outputPathKey, null);
             }
-            
-            set
+
+            private set
             {
                 RefreshCacheKeys();
                 PlayerPrefs.SetString(_outputPathKey, value);

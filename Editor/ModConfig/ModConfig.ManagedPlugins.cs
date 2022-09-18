@@ -4,9 +4,9 @@ using UnityEditor;
 
 namespace Katas.Modman.Editor
 {
-    public partial class ModConfig
+    public sealed partial class ModConfig
     {
-        private const string PLUGIN_FILTER = "t:" + nameof(DefaultAsset);
+        private const string PluginFilter = "t:" + nameof(DefaultAsset);
         
         private static readonly List<string> ValidFolders = new();
 
@@ -27,8 +27,8 @@ namespace Katas.Modman.Editor
                 return;
             
             // find all default assets in included and excluded folders (plugins doesn't have an specific asset type)
-            var includedGuids = FindAssets(PLUGIN_FILTER, folderIncludes, includeAssetsFolder);
-            var excludedGuids = FindAssets(PLUGIN_FILTER, folderExcludes, false);
+            var includedGuids = FindAssets(PluginFilter, folderIncludes, includeAssetsFolder);
+            var excludedGuids = FindAssets(PluginFilter, folderExcludes, false);
             
             // add included guids from the included folders and specific includes
             Guids.Clear();

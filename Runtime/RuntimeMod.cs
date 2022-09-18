@@ -11,7 +11,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace Katas.Modman
 {
-    public class RuntimeMod : IMod
+    public sealed class RuntimeMod : IMod
     {
         public const string CatalogName = "mod";
         public const string StartupAddress = "__mod_startup";

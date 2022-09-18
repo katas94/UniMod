@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace Katas.Modman.Editor
 {
-    public partial class ModConfig
+    public sealed partial class ModConfig
     {
         public event Action IncludesModified;
         

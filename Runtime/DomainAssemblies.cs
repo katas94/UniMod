@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace Katas.Modman
 {
@@ -70,7 +67,7 @@ namespace Katas.Modman
                 return null;
             }
             
-            Assembly assembly = null;
+            Assembly assembly;
 
             try
             {

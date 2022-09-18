@@ -15,9 +15,9 @@ namespace Katas.Modman.Editor
     ///
     /// Use this builder for fast iteration.
     /// </summary>
-    public class FastModAssemblyBuilder : IModAssemblyBuilder
+    public sealed class FastModAssemblyBuilder : IModAssemblyBuilder
     {
-        public const string LibraryScriptAssembliesPath = "Library/ScriptAssemblies";
+        private const string LibraryScriptAssembliesPath = "Library/ScriptAssemblies";
         
         private readonly List<string> _paths = new();
         private readonly List<string> _tmpList = new();
