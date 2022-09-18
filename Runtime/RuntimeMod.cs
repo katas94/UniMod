@@ -13,6 +13,9 @@ namespace Katas.Modman
 {
     public sealed class RuntimeMod : IMod
     {
+        public const string InfoFile = "info.json";
+        public const string ModFileExtensionNoDot = "mod";
+        public const string ModFileExtension = "." + ModFileExtensionNoDot;
         public const string CatalogName = "mod";
         public const string StartupAddress = "__mod_startup";
         public const string AssembliesFolder = "Assemblies";
@@ -75,7 +78,7 @@ namespace Katas.Modman
 
         public UniTask<Sprite> LoadThumbnailAsync()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         private async UniTask LoadAssembliesAsync()

@@ -11,10 +11,6 @@ namespace Katas.Modman
 {
     public sealed class ModErator : IModErator
     {
-        public const string InfoFile = "info.json";
-        public const string ModFileExtensionNoDot = "mod";
-        public const string ModFileExtension = "." + ModFileExtensionNoDot;
-
         public static readonly string DefaultInstallationFolder = Path.Combine(Application.persistentDataPath, "Mods");
 
         private static ModErator _instance;
@@ -92,8 +88,8 @@ namespace Katas.Modman
                 throw new Exception("The given mod file path cannot be null or empty");
             if (!File.Exists(modFilePath))
                 throw new Exception($"Couldn't find mod file: {modFilePath}");
-            if (Path.GetExtension(modFilePath) != ModFileExtension)
-                throw new Exception($"\"{modFilePath}\": expected \"{ModErator.ModFileExtension}\" file extension");
+            if (Path.GetExtension(modFilePath) != RuntimeMod.ModFileExtension)
+                throw new Exception($"\"{modFilePath}\": expected \"{RuntimeMod.ModFileExtension}\" file extension");
             
             // install the mod on a separated thread
             await UniTask.SwitchToThreadPool();
@@ -219,9 +215,9 @@ namespace Katas.Modman
         {
             // check if the info file exists
             string modFolder = Path.Combine(InstallationFolder, id);
-            string infoPath = Path.Combine(modFolder, InfoFile);
+            string infoPath = Path.Combine(modFolder, RuntimeMod.InfoFile);
             if (!File.Exists(infoPath))
-                return $"Could not find the mod's {InfoFile} file";
+                return $"Could not find the mod's {RuntimeMod.InfoFile} file";
 
             try
             {

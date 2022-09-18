@@ -114,7 +114,7 @@ namespace Katas.Modman.Editor
             }
             
             // make sure the output path has the proper mod extension
-            outputPath = IOUtils.EnsureFileExtension(outputPath, ModErator.ModFileExtensionNoDot);
+            outputPath = IOUtils.EnsureFileExtension(outputPath, RuntimeMod.ModFileExtensionNoDot);
 
             // create the mod info file
             ModInfo info = new ()
@@ -129,7 +129,7 @@ namespace Katas.Modman.Editor
             };
             
             string infoJson = JsonConvert.SerializeObject(info, Formatting.Indented);
-            string infoFilePath = Path.Combine(buildFolder, ModErator.InfoFile);
+            string infoFilePath = Path.Combine(buildFolder, RuntimeMod.InfoFile);
             await File.WriteAllTextAsync(infoFilePath, infoJson);
             
             // overwrite the existing file
