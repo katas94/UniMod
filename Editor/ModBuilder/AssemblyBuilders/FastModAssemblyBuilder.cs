@@ -29,11 +29,11 @@ namespace Katas.UniMod.Editor
         {
             // get managed plugin paths
             _paths.Clear();
-            config.GetIncludedManagedPlugins(buildTarget, _paths);
+            ManagedPluginIncludesUtility.ResolveIncludedSupportedManagedPluginPaths(config.managedPlugins, buildTarget, _paths);
             
             // get user defined assembly names
             _tmpList.Clear();
-            config.GetIncludedAssemblies(buildTarget, _tmpList);
+            AssemblyDefinitionIncludesUtility.ResolveIncludedSupportedAssemblyNames(config.assemblyDefinitions, buildTarget, _tmpList);
             
             // get the paths to the precompiled user defined assemblies
             foreach (string name in _tmpList)
@@ -51,7 +51,7 @@ namespace Katas.UniMod.Editor
             (
                 _paths.Select
                 (
-                    path => ModBuildingUtility.CopyManagedAssemblyToOutputFolder(path, outputFolder, isDebugBuild)
+                    path => ModBuilderUtility.CopyManagedAssemblyToOutputFolder(path, outputFolder, isDebugBuild)
                 )
             );
         }

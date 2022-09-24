@@ -7,7 +7,10 @@ using UnityEngine;
 
 namespace Katas.UniMod.Editor
 {
-    public static class ModBuildingUtility
+    /// <summary>
+    /// Some static utility methods for building a mod.
+    /// </summary>
+    public static class ModBuilderUtility
     {
         /// <summary>
         /// Tries to copy the given managed assembly path into the given output folder. If specified, it will also
@@ -19,22 +22,23 @@ namespace Katas.UniMod.Editor
                 throw new Exception("The given output folder is null/empty or it does not exist");
             if (string.IsNullOrEmpty(dllSrcPath))
                 throw new Exception("The given assembly path is null or empty");
-            if (!File.Exists(dllSrcPath))
-                throw new FileNotFoundException($"Could not find the assembly file at \"{dllSrcPath}\"");
             
             await UniTask.SwitchToThreadPool();
 
             try
             {
+                // check that the assembly exists and it is a valid net managed assembly
+                if (!File.Exists(dllSrcPath))
+                    throw new FileNotFoundException($"Could not find the assembly file at \"{dllSrcPath}\"");
+                if (!IsManagedAssembly(dllSrcPath))
+                    throw new Exception($"\"{dllSrcPath}\" is not a managed assembly");
+                
                 // get the src/dst paths for both the assembly and its pdb (debugging) file
                 string fileName = Path.GetFileName(dllSrcPath);
                 string dllDestPath = Path.Combine(outputFolder, fileName);
                 string pdbSrcPath = Path.ChangeExtension(dllSrcPath, ".pdb");
                 string pdbDestPath = Path.ChangeExtension(dllDestPath, ".pdb");
 
-                // check if the assembly is a valid net managed assembly
-                if (!IsManagedAssembly(dllSrcPath))
-                    throw new Exception($"\"{dllSrcPath}\" is not a managed assembly");
 
                 File.Copy(dllSrcPath, dllDestPath, true);
 

@@ -14,17 +14,18 @@ namespace Katas.UniMod.Editor
         
         private readonly List<T> _list;
         private readonly Func<T, bool> _validator;
-        private readonly List<T> _listCache = new List<T>();
+        private readonly List<T> _listCache = new();
 
-        public AssetListValidator(List<T> list, Func<T, bool> validator)
+        public AssetListValidator(List<T> list, Func<T, bool> validator = null)
         {
             _list = list;
             _validator = validator;
         }
 
-        public void Validate()
+        public void Validate(Func<T, bool> validatorOverride = null)
         {
-            if (_validator is null)
+            Func<T, bool> validator = validatorOverride ?? _validator;
+            if (validator is null)
                 return;
             
             ListChanged = _list.Count != _listCache.Count;
@@ -34,7 +35,7 @@ namespace Katas.UniMod.Editor
                 if (!ListChanged && _list[i] != _listCache[i])
                     ListChanged = true;
                 
-                if (_list[i] != null && !_validator(_list[i]))
+                if (_list[i] != null && !validator(_list[i]))
                     _list[i] = _listCache.Count > i ? _listCache[i] : null;
             }
             

@@ -132,7 +132,7 @@ namespace Katas.UniMod.Editor
 
         private string GetDefaultFileOutputName(CodeOptimization buildMode)
         {
-            if (!assembliesOnly && ModBuildingUtility.TryGetRuntimePlatformFromBuildTarget(EditorUserBuildSettings.activeBuildTarget, out RuntimePlatform runtimePlatform))
+            if (!assembliesOnly && ModBuilderUtility.TryGetRuntimePlatformFromBuildTarget(EditorUserBuildSettings.activeBuildTarget, out RuntimePlatform runtimePlatform))
                 return $"{modId}-{modVersion}-{runtimePlatform}-{buildMode}{UniModConstants.ModFileExtension}";
             else
                 return $"{modId}-{modVersion}-{buildMode}{UniModConstants.ModFileExtension}";

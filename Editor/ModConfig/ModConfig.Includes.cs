@@ -27,12 +27,12 @@ namespace Katas.UniMod.Editor
             
             // get assembly names from the included assembly definitions
             TmpList.Clear();
-            GetIncludedAssemblies(buildTarget, TmpList);
+            AssemblyDefinitionIncludesUtility.ResolveIncludedSupportedAssemblyNames(assemblyDefinitions, buildTarget, TmpList);
             includes.AddRange(TmpList);
 
             // get the managed plugin paths
             TmpList.Clear();
-            GetIncludedManagedPlugins(buildTarget, TmpList);
+            ManagedPluginIncludesUtility.ResolveIncludedSupportedManagedPluginPaths(managedPlugins, buildTarget, TmpList);
             
             // parse paths into the assembly name without extension
             foreach (string path in TmpList)

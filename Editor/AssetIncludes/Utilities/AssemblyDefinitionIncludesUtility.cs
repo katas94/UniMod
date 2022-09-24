@@ -5,48 +5,96 @@ using UnityEditorInternal;
 
 namespace Katas.UniMod.Editor
 {
-    public sealed partial class ModConfig
+    /// <summary>
+    /// Utility methods to resolve assembly definition includes.
+    /// </summary>
+    public static class AssemblyDefinitionIncludesUtility
     {
-        private const string AssemblyDefinitionAssetFilter = "t:" + nameof(AssemblyDefinitionAsset);
-        
         private static readonly HashSet<string> Guids = new();
         private static readonly HashSet<BuildTarget> SupportedBuildTargets = new();
-
-        public List<string> GetIncludedAssemblies(BuildTarget buildTarget)
+        
+        /// <summary>
+        /// Resolves and returns all the included assembly names, excluding those assemblies that are not compatible with the given build target.
+        /// </summary>
+        public static List<string> ResolveIncludedSupportedAssemblyNames(AssetIncludes<AssemblyDefinitionAsset> assetIncludes, BuildTarget buildTarget)
         {
-            var names = new List<string>();
-            GetIncludedAssemblies(buildTarget, names);
+            Guids.Clear();
+            assetIncludes.ResolveIncludedGuids(Guids);
+            var names = new List<string>(Guids.Count);
+            ResolveSupportedAssemblyNames(buildTarget, Guids, names);
             return names;
         }
         
         /// <summary>
-        /// Populates the given list with all the names for the currently included assembly definitions.
-        /// Those included assemblies that don't support the given build target will be excluded from the results.
+        /// Resolves all the included assembly names, excluding those assemblies that are not targeted to the given build target.
+        /// Results will be added to the given names list.
         /// </summary>
-        public void GetIncludedAssemblies(BuildTarget buildTarget, List<string> names)
+        public static void ResolveIncludedSupportedAssemblyNames(
+            AssetIncludes<AssemblyDefinitionAsset> assetIncludes,
+            BuildTarget buildTarget, List<string> names)
         {
             if (names is null)
                 return;
             
-            // find all assembly definition assets in included and excluded folders
-            string[] includedGuids = FindAssets(AssemblyDefinitionAssetFilter, folderIncludes, includeAssetsFolder);
-            string[] excludedGuids = FindAssets(AssemblyDefinitionAssetFilter, folderExcludes, false);
-
-            // add included guids from the included folders and specific includes
             Guids.Clear();
-            Guids.UnionWith(includedGuids);
-            foreach (AssemblyDefinitionAsset asset in assemblyDefinitionIncludes)
-                if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string guid, out long _))
-                    Guids.Add(guid);
+            assetIncludes.ResolveIncludedGuids(Guids);
+            ResolveSupportedAssemblyNames(buildTarget, Guids, names);
+        }
+        
+        /// <summary>
+        /// Resolves and returns all the included assembly names, excluding those assemblies that are not targeted to the given build target.
+        /// </summary>
+        public static List<string> ResolveIncludedSupportedAssemblyNames(
+            BuildTarget buildTarget, bool includeAssetsFolder,
+            IEnumerable<DefaultAsset> folderIncludes, IEnumerable<DefaultAsset> folderExcludes,
+            IEnumerable<AssemblyDefinitionAsset> assetIncludes, IEnumerable<AssemblyDefinitionAsset> assetExcludes)
+        {
+            Guids.Clear();
+            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, Guids);
+            var names = new List<string>(Guids.Count);
+            ResolveSupportedAssemblyNames(buildTarget, Guids, names);
+            return names;
+        }
 
-            // remove the excluded guids from the excluded folders and specific excludes
-            Guids.ExceptWith(excludedGuids);
-            foreach (AssemblyDefinitionAsset asset in assemblyDefinitionExcludes)
-                if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string guid, out long _))
-                    Guids.Remove(guid);
+        /// <summary>
+        /// Resolves all the included assembly names, excluding those assemblies that are not targeted to the given build target.
+        /// Results will be added to the given names list.
+        /// </summary>
+        public static void ResolveIncludedSupportedAssemblyNames(
+            BuildTarget buildTarget, bool includeAssetsFolder,
+            IEnumerable<DefaultAsset> folderIncludes, IEnumerable<DefaultAsset> folderExcludes,
+            IEnumerable<AssemblyDefinitionAsset> assetIncludes, IEnumerable<AssemblyDefinitionAsset> assetExcludes,
+            List<string> names)
+        {
+            if (names is null)
+                return;
             
-            // populate the paths
-            foreach (string guid in Guids)
+            Guids.Clear();
+            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, Guids);
+            ResolveSupportedAssemblyNames(buildTarget, Guids, names);
+        }
+
+        /// <summary>
+        /// Resolves and returns all the assembly names for the given assembly definition GUIDs. Assembly definitions that are not targeted to the
+        /// given build target will be excluded.
+        /// </summary>
+        public static List<string> ResolveSupportedAssemblyNames(BuildTarget buildTarget, IEnumerable<string> guids)
+        {
+            var names = new List<string>();
+            ResolveSupportedAssemblyNames(buildTarget, guids, names);
+            return names;
+        }
+        
+        /// <summary>
+        /// Resolves all the assembly names for the given assembly definition GUIDs. Assembly definitions that are not targeted to the
+        /// given build target will be excluded. The results will be added to the given names list.
+        /// </summary>
+        public static void ResolveSupportedAssemblyNames(BuildTarget buildTarget, IEnumerable<string> guids, List<string> names)
+        {
+            if (names is null)
+                return;
+            
+            foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (string.IsNullOrEmpty(path))
@@ -60,6 +108,13 @@ namespace Katas.UniMod.Editor
                 var assemblyName = token["name"]?.Value<string>();
                 if (string.IsNullOrEmpty(assemblyName))
                     continue;
+
+                // if no build target is specified then return all assemblies
+                if (buildTarget == BuildTarget.NoTarget)
+                {
+                    names.Add(assemblyName);
+                    return;
+                }
                 
                 // check if the given target platform is supported by the assembly
                 SupportedBuildTargets.Clear();
@@ -68,8 +123,12 @@ namespace Katas.UniMod.Editor
                     names.Add(assemblyName);
             }
         }
-        
-        private static void GetAssemblyDefinitionSupportedBuildTargets(JToken token, ISet<BuildTarget> supportedBuildTargets)
+
+        /// <summary>
+        /// Given a Newtonsoft.Json JToken from a deserialized assembly definition file, it will populate the given set with the assembly's supported
+        /// platforms.
+        /// </summary>
+        public static void GetAssemblyDefinitionSupportedBuildTargets(JToken token, ISet<BuildTarget> supportedBuildTargets)
         {
             // as specified in Unity's documentation, the includePlatforms and excludePlatforms arrays cannot be used together, so we need to check
             // which is defined and contains platforms
@@ -121,7 +180,10 @@ namespace Katas.UniMod.Editor
             }
         }
 
-        private static BuildTarget GetAssemblyDefinitionPlatformAsBuildTarget(string platform)
+        /// <summary>
+        /// Given the platform string found on a custom assembly definition, tries to return the equivalent BuildTarget.
+        /// </summary>
+        public static BuildTarget GetAssemblyDefinitionPlatformAsBuildTarget(string platform)
         {
             return platform switch
             {
