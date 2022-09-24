@@ -65,9 +65,10 @@ namespace Katas.UniMod.Editor
 
         private async UniTask BuildContentAndAssembliesAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder)
         {
-            // check if the mod config includes any assemblies
-            List<string> includedAssemblyNames = config.GetAllIncludes(buildTarget);
-            bool hasAssemblies = includedAssemblyNames.Count > 0;
+            // resolve all the included assemblies in the config that are compatible with the build target
+            List<string> assemblyNames = AssemblyDefinitionIncludesUtility.ResolveIncludedSupportedAssemblyNames(config.assemblyDefinitions, buildTarget);
+            List<string> managedPluginPaths = ManagedPluginIncludesUtility.ResolveIncludedSupportedManagedPluginPaths(config.managedPlugins, buildTarget);
+            bool hasAssemblies = assemblyNames.Count > 0 || managedPluginPaths.Count > 0;
             
             if (!hasAssemblies)
             {
@@ -86,7 +87,7 @@ namespace Katas.UniMod.Editor
             // build the assemblies
             string assembliesOutputFolder = Path.Combine(outputFolder, UniModConstants.AssembliesFolder);
             Directory.CreateDirectory(assembliesOutputFolder);
-            await assemblyBuilder.BuildAssembliesAsync(config, buildMode, buildTarget, assembliesOutputFolder);
+            await assemblyBuilder.BuildAssembliesAsync(assemblyNames, managedPluginPaths, buildMode, buildTarget, assembliesOutputFolder);
 
             // also build the content if proceeds
             if (!config.assembliesOnly)

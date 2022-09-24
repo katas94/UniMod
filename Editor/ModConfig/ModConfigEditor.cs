@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
@@ -11,6 +12,7 @@ namespace Katas.UniMod.Editor
     public sealed class ModConfigEditor : UnityEditor.Editor
     {
         private static readonly List<string> AssemblyNames = new();
+        private static readonly List<string> ManagedPluginPaths = new();
         private static readonly StringBuilder MessageBuilder = new();
         
         private string _includesMessage;
@@ -54,7 +56,25 @@ namespace Katas.UniMod.Editor
             
             // get the assembly names included for the current target platform/configuration and display them in a help box
             AssemblyNames.Clear();
-            config.GetAllIncludes(EditorUserBuildSettings.activeBuildTarget, AssemblyNames);
+            AssemblyDefinitionIncludesUtility.ResolveIncludedSupportedAssemblyNames(config.assemblyDefinitions,
+                EditorUserBuildSettings.activeBuildTarget, AssemblyNames);
+            ManagedPluginPaths.Clear();
+            ManagedPluginIncludesUtility.ResolveIncludedSupportedManagedPluginPaths(config.managedPlugins,
+                EditorUserBuildSettings.activeBuildTarget, ManagedPluginPaths);
+            
+            // get all the .dll names in a single list, adding a prefix depending on the assembly type
+            for (int i = 0; i < AssemblyNames.Count; ++i)
+                AssemblyNames[i] = $"Scripting:\t{AssemblyNames[i]}";
+            
+            foreach (string path in ManagedPluginPaths)
+            {
+                string assemblyName = Path.GetFileNameWithoutExtension(path);
+                
+                if (!string.IsNullOrEmpty(assemblyName))
+                    AssemblyNames.Add($"Plugin:\t\t{assemblyName}");
+            }
+            
+            // sort the assemblies list and build the includes message for the inspector
             AssemblyNames.Sort();
             MessageBuilder.Clear();
 

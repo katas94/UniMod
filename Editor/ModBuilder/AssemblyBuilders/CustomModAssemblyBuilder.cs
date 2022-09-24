@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor.Compilation;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
@@ -11,6 +12,7 @@ namespace Katas.UniMod.Editor
     public abstract class CustomModAssemblyBuilder : ScriptableObject, IModAssemblyBuilder
     {
         public abstract bool SupportsBuildTarget (BuildTarget buildTarget);
-        public abstract UniTask BuildAssembliesAsync (ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder);
+        public abstract UniTask BuildAssembliesAsync (IEnumerable<string> assemblyNames, IEnumerable<string> managedPluginPaths,
+            CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder);
     }
 }

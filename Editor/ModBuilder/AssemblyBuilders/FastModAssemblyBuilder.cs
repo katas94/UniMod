@@ -19,41 +19,39 @@ namespace Katas.UniMod.Editor
     {
         private const string LibraryScriptAssembliesPath = "Library/ScriptAssemblies";
         
-        private readonly List<string> _paths = new();
-        private readonly List<string> _tmpList = new();
-        
         public bool SupportsBuildTarget (BuildTarget buildTarget)
             => true;
         
-        public async UniTask BuildAssembliesAsync (ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder)
+        public async UniTask BuildAssembliesAsync (IEnumerable<string> assemblyNames, IEnumerable<string> managedPluginPaths,
+            CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder)
         {
-            // get managed plugin paths
-            _paths.Clear();
-            ManagedPluginIncludesUtility.ResolveIncludedSupportedManagedPluginPaths(config.managedPlugins, buildTarget, _paths);
-            
-            // get user defined assembly names
-            _tmpList.Clear();
-            AssemblyDefinitionIncludesUtility.ResolveIncludedSupportedAssemblyNames(config.assemblyDefinitions, buildTarget, _tmpList);
-            
-            // get the paths to the precompiled user defined assemblies
-            foreach (string name in _tmpList)
+            bool isDebugBuild = buildMode == CodeOptimization.Debug;
+            IEnumerable<string> paths = GetAllAssemblyPaths(assemblyNames, managedPluginPaths);
+            await UniTask.WhenAll
+            (
+                paths.Select
+                (
+                    // copy each assembly to the output folder
+                    path => ModBuilderUtility.CopyManagedAssemblyToOutputFolder(path, outputFolder, isDebugBuild)
+                )
+            );
+        }
+
+        private static IEnumerable<string> GetAllAssemblyPaths(IEnumerable<string> assemblyNames, IEnumerable<string> managedPluginPaths)
+        {
+            // return the paths to the precompiled user defined assemblies
+            foreach (string name in assemblyNames)
             {
                 string path = Path.Combine(LibraryScriptAssembliesPath, name + ".dll");
                 
                 // if the path does not exist it may be that the user defined assembly has no scripts, so we can just skip it
                 if (File.Exists(path))
-                    _paths.Add(path);
+                    yield return path;
             }
             
-            // copy the assemblies to the output folder
-            bool isDebugBuild = buildMode == CodeOptimization.Debug;
-            await UniTask.WhenAll
-            (
-                _paths.Select
-                (
-                    path => ModBuilderUtility.CopyManagedAssemblyToOutputFolder(path, outputFolder, isDebugBuild)
-                )
-            );
+            // return the paths to the managed plugins
+            foreach(string path in managedPluginPaths)
+                yield return path;
         }
     }
 }
