@@ -20,10 +20,10 @@ namespace Katas.UniMod.Editor
     }
     
     /// <summary>
-    /// Builds a mod that can be loaded by the RuntimeMod implementation.
+    /// Builds a mod that can be loaded by the LocalMod implementation.
     /// </summary>
-    [CreateAssetMenu(fileName = "RuntimeModBuilder", menuName = "UniMod/Runtime Mod Builder")]
-    public sealed class RuntimeModBuilder : ModBuilder
+    [CreateAssetMenu(fileName = "LocalModBuilder", menuName = "UniMod/Local Mod Builder")]
+    public sealed class LocalModBuilder : ModBuilder
     {
         public CompressionLevel compressionLevel = CompressionLevel.Optimal;
         public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.PlatformSpecific;
@@ -84,7 +84,7 @@ namespace Katas.UniMod.Editor
                 throw new Exception($"Could not find a mod assembly builder that supports the current build target: {buildTarget}");
             
             // build the assemblies
-            string assembliesOutputFolder = Path.Combine(outputFolder, RuntimeMod.AssembliesFolder);
+            string assembliesOutputFolder = Path.Combine(outputFolder, UniModConstants.AssembliesFolder);
             Directory.CreateDirectory(assembliesOutputFolder);
             await assemblyBuilder.BuildAssembliesAsync(config, buildMode, buildTarget, assembliesOutputFolder);
 
@@ -92,7 +92,7 @@ namespace Katas.UniMod.Editor
             if (!config.assembliesOnly)
             {
                 // include the mod's startup script (its ok if the startup script is null)
-                _contentBuilder.AddAsset(config.startup, RuntimeMod.StartupAddress);
+                _contentBuilder.AddAsset(config.startup, UniModConstants.StartupAddress);
                 BuildContent(config.modId, outputFolder);
             }
         }
@@ -103,18 +103,18 @@ namespace Katas.UniMod.Editor
             string platform;
             
             if (config.assembliesOnly)
-                platform = RuntimeMod.AssembliesOnlyPlatform;
+                platform = UniModConstants.AssembliesOnlyPlatform;
             else
             {
                 // try to get the build target's equivalent runtime platform value
-                if (!ModBuildingUtils.TryGetRuntimePlatformFromBuildTarget(buildTarget, out RuntimePlatform runtimePlatform))
+                if (!ModBuildingUtility.TryGetRuntimePlatformFromBuildTarget(buildTarget, out RuntimePlatform runtimePlatform))
                     throw new Exception($"Couldn't get the equivalent runtime platform value for the current active build target: {buildTarget}");
                 
                 platform = runtimePlatform.ToString();
             }
             
             // make sure the output path has the proper mod extension
-            outputPath = IOUtils.EnsureFileExtension(outputPath, RuntimeMod.ModFileExtensionNoDot);
+            outputPath = IOUtils.EnsureFileExtension(outputPath, UniModConstants.ModFileExtensionNoDot);
 
             // create the mod info file
             ModInfo info = new ()
@@ -129,7 +129,7 @@ namespace Katas.UniMod.Editor
             };
             
             string infoJson = JsonConvert.SerializeObject(info, Formatting.Indented);
-            string infoFilePath = Path.Combine(buildFolder, RuntimeMod.InfoFile);
+            string infoFilePath = Path.Combine(buildFolder, UniModConstants.InfoFile);
             await File.WriteAllTextAsync(infoFilePath, infoJson);
             
             // overwrite the existing file

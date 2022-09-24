@@ -27,19 +27,19 @@ namespace Katas.UniMod.Editor
                 return;
             
             // find all default assets in included and excluded folders (plugins doesn't have an specific asset type)
-            var includedGuids = FindAssets(PluginFilter, folderIncludes, includeAssetsFolder);
-            var excludedGuids = FindAssets(PluginFilter, folderExcludes, false);
+            string[] includedGuids = FindAssets(PluginFilter, folderIncludes, includeAssetsFolder);
+            string[] excludedGuids = FindAssets(PluginFilter, folderExcludes, false);
             
             // add included guids from the included folders and specific includes
             Guids.Clear();
             Guids.UnionWith(includedGuids);
-            foreach (var asset in managedPluginIncludes)
+            foreach (DefaultAsset asset in managedPluginIncludes)
                 if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string guid, out long _))
                     Guids.Add(guid);
 
             // remove the excluded guids from the excluded folders and specific excludes
             Guids.ExceptWith(excludedGuids);
-            foreach (var asset in managedPluginExcludes)
+            foreach (DefaultAsset asset in managedPluginExcludes)
                 if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string guid, out long _))
                     Guids.Remove(guid);
             

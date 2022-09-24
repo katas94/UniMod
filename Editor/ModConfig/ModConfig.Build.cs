@@ -94,7 +94,7 @@ namespace Katas.UniMod.Editor
             await BuildModAsync(buildMode.Value, outputPath);
         }
         
-        private CodeOptimization DisplayBuildModeDialog()
+        private static CodeOptimization DisplayBuildModeDialog()
         {
             int option = EditorUtility.DisplayDialogComplex("Build mode", "Select a build mode", "Release", "Cancel", "Debug");
 
@@ -112,7 +112,7 @@ namespace Katas.UniMod.Editor
                 return null;
             
             string defaultName = GetDefaultFileOutputName(buildMode);
-            string outputPath = EditorUtility.SaveFilePanel("Build mod...", null, defaultName, RuntimeMod.ModFileExtensionNoDot);
+            string outputPath = EditorUtility.SaveFilePanel("Build mod...", null, defaultName, UniModConstants.ModFileExtensionNoDot);
             return outputPath;
         }
         
@@ -132,10 +132,10 @@ namespace Katas.UniMod.Editor
 
         private string GetDefaultFileOutputName(CodeOptimization buildMode)
         {
-            if (!assembliesOnly && ModBuildingUtils.TryGetRuntimePlatformFromBuildTarget(EditorUserBuildSettings.activeBuildTarget, out RuntimePlatform runtimePlatform))
-                return $"{modId}-{modVersion}-{runtimePlatform}-{buildMode}{RuntimeMod.ModFileExtension}";
+            if (!assembliesOnly && ModBuildingUtility.TryGetRuntimePlatformFromBuildTarget(EditorUserBuildSettings.activeBuildTarget, out RuntimePlatform runtimePlatform))
+                return $"{modId}-{modVersion}-{runtimePlatform}-{buildMode}{UniModConstants.ModFileExtension}";
             else
-                return $"{modId}-{modVersion}-{buildMode}{RuntimeMod.ModFileExtension}";
+                return $"{modId}-{modVersion}-{buildMode}{UniModConstants.ModFileExtension}";
         }
     }
 }

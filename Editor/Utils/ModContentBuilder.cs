@@ -11,8 +11,8 @@ namespace Katas.UniMod.Editor
 {
     /// <summary>
     /// Helper class to perform Addressable content builds for mods. Using this class you can easily add assets to the build
-    /// that will not show up on Addressables after the build is finished. It will also setup all the necessary settings for the build
-    /// so it works with the RuntimeMod instance and will restore the previous settings after the build.
+    /// that will not show up on Addressables after the build is finished. It will also setup all the necessary settings for
+    /// the build and will restore the previous settings after the build.
     /// </summary>
     public sealed class ModContentBuilder
     {
@@ -91,7 +91,7 @@ namespace Katas.UniMod.Editor
             string buildPath, string loadPath, out string profileId)
         {
             // prepare the settings for the build
-            _settings.OverridePlayerVersion = RuntimeMod.CatalogName;
+            _settings.OverridePlayerVersion = UniModConstants.CatalogName;
             _settings.BuildRemoteCatalog = true;
             _settings.RemoteCatalogBuildPath = _settings.DefaultGroup.GetSchema<BundledAssetGroupSchema>().BuildPath;
             _settings.RemoteCatalogLoadPath = _settings.DefaultGroup.GetSchema<BundledAssetGroupSchema>().LoadPath;

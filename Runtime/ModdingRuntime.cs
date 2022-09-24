@@ -9,12 +9,12 @@ using UnityEngine;
 
 namespace Katas.UniMod
 {
-    public sealed class ModErator : IModErator
+    public sealed class ModdingRuntime : IModdingRuntime
     {
         public static readonly string DefaultInstallationFolder = Path.Combine(Application.persistentDataPath, "Mods");
 
-        private static ModErator _instance;
-        public static ModErator Instance => _instance ?? new ModErator();
+        private static ModdingRuntime _instance;
+        public static ModdingRuntime Instance => _instance ?? new ModdingRuntime();
 
         public IEnumerable<string> InstalledModIds => _mods.Keys;
         public IEnumerable<IMod> InstalledMods => _mods.Values;
@@ -22,10 +22,10 @@ namespace Katas.UniMod
         
         private readonly Dictionary<string, IMod> _mods = new();
         
-        public ModErator(string installationFolder = null)
+        public ModdingRuntime(string installationFolder = null)
         {
             if (_instance is not null)
-                throw new Exception("[UniMod] There can only be one ModErator instance");
+                throw new Exception("[UniMod] There can only be one ModdingRuntime instance");
             
             InstallationFolder = installationFolder ?? DefaultInstallationFolder;
             _instance = this;
@@ -88,8 +88,8 @@ namespace Katas.UniMod
                 throw new Exception("The given mod file path cannot be null or empty");
             if (!File.Exists(modFilePath))
                 throw new Exception($"Couldn't find mod file: {modFilePath}");
-            if (Path.GetExtension(modFilePath) != RuntimeMod.ModFileExtension)
-                throw new Exception($"\"{modFilePath}\": expected \"{RuntimeMod.ModFileExtension}\" file extension");
+            if (Path.GetExtension(modFilePath) != UniModConstants.ModFileExtension)
+                throw new Exception($"\"{modFilePath}\": expected \"{UniModConstants.ModFileExtension}\" file extension");
             
             // install the mod on a separated thread
             await UniTask.SwitchToThreadPool();
@@ -108,7 +108,7 @@ namespace Katas.UniMod
                     throw new Exception("Couldn't fetch the mod ID from the archive file");
 
                 // we want to avoid to override the current installation if it is already loaded
-                if (_mods.TryGetValue(modId, out var mod) && mod.IsLoaded)
+                if (_mods.TryGetValue(modId, out IMod mod) && mod.IsLoaded)
                     throw new ModInstallationException(modId, "The mod ID is currently loaded. Avoiding to override the current installation...");
 
                 // check that the extract path is ready and perform the extraction
@@ -182,7 +182,7 @@ namespace Katas.UniMod
 
         public IMod GetMod(string id)
         {
-            return _mods.TryGetValue(id, out var mod) ? mod : null;
+            return _mods.TryGetValue(id, out IMod mod) ? mod : null;
         }
         
         // assumes that the given modFolder is inside of the installation folder. It will create and register the instance for the mod
@@ -196,7 +196,7 @@ namespace Katas.UniMod
             
             // create and register the mod instance on a separated thread
             await UniTask.SwitchToThreadPool();
-            var error = await RegisterModInstanceAsync(id);
+            string error = await RegisterModInstanceAsync(id);
             
             if (!string.IsNullOrEmpty(error))
                 Debug.LogError($"Could not register mod's instance {id}: {error}");
@@ -215,9 +215,9 @@ namespace Katas.UniMod
         {
             // check if the info file exists
             string modFolder = Path.Combine(InstallationFolder, id);
-            string infoPath = Path.Combine(modFolder, RuntimeMod.InfoFile);
+            string infoPath = Path.Combine(modFolder, UniModConstants.InfoFile);
             if (!File.Exists(infoPath))
-                return $"Could not find the mod's {RuntimeMod.InfoFile} file";
+                return $"Could not find the mod's {UniModConstants.InfoFile} file";
 
             try
             {
@@ -228,7 +228,7 @@ namespace Katas.UniMod
                 
                 // instantiate and register the mod instance (this will override any previous mod instance with same id)
                 lock (_mods)
-                    _mods[id] = new RuntimeMod(modFolder, info);
+                    _mods[id] = new LocalMod(modFolder, info);
                     
                 return null;
             }

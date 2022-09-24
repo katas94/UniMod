@@ -11,16 +11,11 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace Katas.UniMod
 {
-    public sealed class RuntimeMod : IMod
+    /// <summary>
+    /// A mod installed locally.
+    /// </summary>
+    public sealed class LocalMod : IMod
     {
-        public const string InfoFile = "info.json";
-        public const string ModFileExtensionNoDot = "mod";
-        public const string ModFileExtension = "." + ModFileExtensionNoDot;
-        public const string CatalogName = "mod";
-        public const string StartupAddress = "__mod_startup";
-        public const string AssembliesFolder = "Assemblies";
-        public const string AssembliesOnlyPlatform = "any";
-        
         public readonly string ModFolder;
         
         public ModInfo Info { get; }
@@ -32,11 +27,11 @@ namespace Katas.UniMod
         private readonly List<Assembly> _loadedAssemblies = new();
         private readonly bool _isAssembliesOnly;
 
-        public RuntimeMod(string modFolder, ModInfo info)
+        public LocalMod(string modFolder, ModInfo info)
         {
             ModFolder = modFolder;
             Info = info;
-            _isAssembliesOnly = Info.Platform == AssembliesOnlyPlatform;
+            _isAssembliesOnly = Info.Platform == UniModConstants.AssembliesOnlyPlatform;
         }
 
         public async UniTask LoadAsync(bool loadAssemblies)
@@ -84,7 +79,7 @@ namespace Katas.UniMod
         private async UniTask LoadAssembliesAsync()
         {
             // fetch all the assembly file paths from the assemblies folder
-            string assembliesFolder = Path.Combine(ModFolder, AssembliesFolder);
+            string assembliesFolder = Path.Combine(ModFolder, UniModConstants.AssembliesFolder);
             if (!Directory.Exists(assembliesFolder))
                 return;
             
@@ -103,11 +98,11 @@ namespace Katas.UniMod
         private async UniTask LoadContentAsync()
         {
             // load mod content catalog
-            string catalogPath = Path.Combine(ModFolder, "catalog_" + CatalogName + ".json");
+            string catalogPath = Path.Combine(ModFolder, "catalog_" + UniModConstants.CatalogName + ".json");
             ResourceLocator = await Addressables.LoadContentCatalogAsync(catalogPath, true);
             
             // if the mod loaded any assemblies then check if it contains a startup script
-            if (_loadedAssemblies.Count == 0 || !ResourceLocator.Locate(StartupAddress, typeof(object), out IList<IResourceLocation> locations))
+            if (_loadedAssemblies.Count == 0 || !ResourceLocator.Locate(UniModConstants.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
                 return;
             
             // load and execute the startup script
@@ -169,24 +164,24 @@ namespace Katas.UniMod
                 throw new Exception($"[{Info.ModId}] failed to read assembly file: {filePath}\n{exception}");
             }
 
-            // try to load the assembly's symbol store file if we are on a development build 
-            if (loadSymbolStore)
+            if (!loadSymbolStore)
+                return result;
+            
+            // try to load the assembly's symbol store file
+            string pdbFilePath = null;
+            
+            try
             {
-                string pdbFilePath = null;
+                string folderPath = Path.GetDirectoryName(filePath) ?? string.Empty;
+                pdbFilePath = Path.GetFileNameWithoutExtension(filePath);
+                pdbFilePath = Path.Combine(folderPath, $"{pdbFilePath}.pdb");
                 
-                try
-                {
-                    string folderPath = Path.GetDirectoryName(filePath) ?? string.Empty;
-                    pdbFilePath = Path.GetFileNameWithoutExtension(filePath);
-                    pdbFilePath = Path.Combine(folderPath, $"{pdbFilePath}.pdb");
-                    
-                    if (File.Exists(pdbFilePath))
-                        result.symbolStore = await File.ReadAllBytesAsync(pdbFilePath);
-                }
-                catch (Exception exception)
-                {
-                    Debug.LogWarning($"[{Info.ModId}] failed to read the symbol store file: {pdbFilePath}\n{exception}");
-                }
+                if (File.Exists(pdbFilePath))
+                    result.symbolStore = await File.ReadAllBytesAsync(pdbFilePath);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[{Info.ModId}] failed to read the symbol store file: {pdbFilePath}\n{exception}");
             }
             
             return result;

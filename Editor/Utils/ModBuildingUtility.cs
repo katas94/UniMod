@@ -3,33 +3,31 @@ using System.IO;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
-using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace Katas.UniMod.Editor
 {
-    public static class ModBuildingUtils
+    public static class ModBuildingUtility
     {
         /// <summary>
-        /// Tries to copy the given assembly into the given output folder. If the build mode is Debug, then it will also
+        /// Tries to copy the given managed assembly path into the given output folder. If specified, it will also
         /// try to copy the pdb file (if any).
         /// </summary>
-        public static async UniTask CopyAssemblyToOutputFolder (string path, string outputFolder, CodeOptimization buildMode)
+        public static async UniTask CopyManagedAssemblyToOutputFolder (string dllSrcPath, string outputFolder, bool tryCopyPdbToo)
         {
             if (string.IsNullOrEmpty(outputFolder) || !Directory.Exists(outputFolder))
                 throw new Exception("The given output folder is null/empty or it does not exist");
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(dllSrcPath))
                 throw new Exception("The given assembly path is null or empty");
-            if (!File.Exists(path))
-                throw new FileNotFoundException($"Could not find the assembly file at \"{path}\"");
+            if (!File.Exists(dllSrcPath))
+                throw new FileNotFoundException($"Could not find the assembly file at \"{dllSrcPath}\"");
             
             await UniTask.SwitchToThreadPool();
 
             try
             {
                 // get the src/dst paths for both the assembly and its pdb (debugging) file
-                string fileName = Path.GetFileName(path);
-                string dllSrcPath = path;
+                string fileName = Path.GetFileName(dllSrcPath);
                 string dllDestPath = Path.Combine(outputFolder, fileName);
                 string pdbSrcPath = Path.ChangeExtension(dllSrcPath, ".pdb");
                 string pdbDestPath = Path.ChangeExtension(dllDestPath, ".pdb");
@@ -40,8 +38,8 @@ namespace Katas.UniMod.Editor
 
                 File.Copy(dllSrcPath, dllDestPath, true);
 
-                // copy pdb file only if in debug mode and the file exists. Some assemblies may not come with a pdb file so we are not requiring it
-                if (buildMode == CodeOptimization.Debug && File.Exists(pdbSrcPath))
+                // copy pdb file if requested and the file exists. Some assemblies may not come with a pdb file so we won't throw if not found
+                if (tryCopyPdbToo && File.Exists(pdbSrcPath))
                     File.Copy(pdbSrcPath, pdbDestPath, true);
             }
             finally

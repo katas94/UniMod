@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 
 namespace Katas.UniMod
 {
-    public interface IModErator
+    public interface IModdingRuntime
     {
         IEnumerable<string> InstalledModIds { get; }
         IEnumerable<IMod> InstalledMods { get; }

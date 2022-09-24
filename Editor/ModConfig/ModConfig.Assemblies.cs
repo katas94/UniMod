@@ -29,19 +29,19 @@ namespace Katas.UniMod.Editor
                 return;
             
             // find all assembly definition assets in included and excluded folders
-            var includedGuids = FindAssets(AssemblyDefinitionAssetFilter, folderIncludes, includeAssetsFolder);
-            var excludedGuids = FindAssets(AssemblyDefinitionAssetFilter, folderExcludes, false);
-            
+            string[] includedGuids = FindAssets(AssemblyDefinitionAssetFilter, folderIncludes, includeAssetsFolder);
+            string[] excludedGuids = FindAssets(AssemblyDefinitionAssetFilter, folderExcludes, false);
+
             // add included guids from the included folders and specific includes
             Guids.Clear();
             Guids.UnionWith(includedGuids);
-            foreach (var asset in assemblyDefinitionIncludes)
+            foreach (AssemblyDefinitionAsset asset in assemblyDefinitionIncludes)
                 if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string guid, out long _))
                     Guids.Add(guid);
-            
+
             // remove the excluded guids from the excluded folders and specific excludes
             Guids.ExceptWith(excludedGuids);
-            foreach (var asset in assemblyDefinitionExcludes)
+            foreach (AssemblyDefinitionAsset asset in assemblyDefinitionExcludes)
                 if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string guid, out long _))
                     Guids.Remove(guid);
             
@@ -69,7 +69,7 @@ namespace Katas.UniMod.Editor
             }
         }
         
-        private static void GetAssemblyDefinitionSupportedBuildTargets(JToken token, HashSet<BuildTarget> supportedBuildTargets)
+        private static void GetAssemblyDefinitionSupportedBuildTargets(JToken token, ISet<BuildTarget> supportedBuildTargets)
         {
             // as specified in Unity's documentation, the includePlatforms and excludePlatforms arrays cannot be used together, so we need to check
             // which is defined and contains platforms

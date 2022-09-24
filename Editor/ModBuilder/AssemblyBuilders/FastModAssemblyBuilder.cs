@@ -46,7 +46,14 @@ namespace Katas.UniMod.Editor
             }
             
             // copy the assemblies to the output folder
-            await UniTask.WhenAll(_paths.Select(path => ModBuildingUtils.CopyAssemblyToOutputFolder(path, outputFolder, buildMode)));
+            bool isDebugBuild = buildMode == CodeOptimization.Debug;
+            await UniTask.WhenAll
+            (
+                _paths.Select
+                (
+                    path => ModBuildingUtility.CopyManagedAssemblyToOutputFolder(path, outputFolder, isDebugBuild)
+                )
+            );
         }
     }
 }

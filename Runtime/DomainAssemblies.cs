@@ -24,7 +24,7 @@ namespace Katas.UniMod
         static DomainAssemblies()
         {
             // get all currently loaded assemblies on this domain and map them by their full name
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
             
             foreach (Assembly assembly in assemblies)
                 LoadedAssemblies[assembly.FullName] = assembly;
@@ -81,7 +81,7 @@ namespace Katas.UniMod
 
             lock (LoadedAssemblies)
             {
-                if (LoadedAssemblies.TryGetValue(assembly.FullName, out var loadedAssembly))
+                if (LoadedAssemblies.TryGetValue(assembly.FullName, out Assembly loadedAssembly))
                 {
                     message = $"The assembly was already loaded in the AppDomain: {assembly.FullName}";
                     return loadedAssembly;
@@ -99,7 +99,7 @@ namespace Katas.UniMod
         /// </summary>
         public static Assembly Get(string fullName)
         {
-            return LoadedAssemblies.TryGetValue(fullName, out var assembly) ? assembly : null;
+            return LoadedAssemblies.TryGetValue(fullName, out Assembly assembly) ? assembly : null;
         }
         
         /// <summary>

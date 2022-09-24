@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace Katas.UniMod.Editor
@@ -17,9 +18,8 @@ namespace Katas.UniMod.Editor
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-            
-            var config = target as ModConfig;
-            if (config is null)
+
+            if (target is not ModConfig config)
                 return;
             
             // this prevents inspector lagging if there is a lot of included assemblies (since it would fetch them on each inspector frame update)
@@ -36,8 +36,8 @@ namespace Katas.UniMod.Editor
             EditorGUILayout.HelpBox(_includesMessage, MessageType.Info, true);
             
             // display rebuild cached info and rebuild button (if there is any cached info)
-            var cachedBuildMode = config.CachedBuildMode;
-            var cachedOutputPath = config.CachedBuildOutputPath;
+            CodeOptimization? cachedBuildMode = config.CachedBuildMode;
+            string cachedOutputPath = config.CachedBuildOutputPath;
             if (cachedBuildMode is null || string.IsNullOrEmpty(cachedOutputPath))
                 return;
             
@@ -49,8 +49,7 @@ namespace Katas.UniMod.Editor
 
         private void UpdateIncludesMessage()
         {
-            var config = target as ModConfig;
-            if (config is null)
+            if (target is not ModConfig config)
                 return;
             
             // get the assembly names included for the current target platform/configuration and display them in a help box
