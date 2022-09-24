@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 using UnityEditor.AddressableAssets.Build;
 using CompressionLevel = System.IO.Compression.CompressionLevel;
 
-namespace Katas.Mango.Editor
+namespace Katas.UniMod.Editor
 {
     public enum ModAssemblyBuilderType
     {
@@ -22,7 +22,7 @@ namespace Katas.Mango.Editor
     /// <summary>
     /// Builds a mod that can be loaded by the RuntimeMod implementation.
     /// </summary>
-    [CreateAssetMenu(fileName = "RuntimeModBuilder", menuName = "Mango Runtime/Runtime Mod Builder")]
+    [CreateAssetMenu(fileName = "RuntimeModBuilder", menuName = "UniMod/Runtime Mod Builder")]
     public sealed class RuntimeModBuilder : ModBuilder
     {
         public CompressionLevel compressionLevel = CompressionLevel.Optimal;

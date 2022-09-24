@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Katas.Mango
+namespace Katas.UniMod
 {
     /// <summary>
     /// Structure for the mod's info.json file

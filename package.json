@@ -1,21 +1,20 @@
 {
-  "name": "com.katas.mango",
+  "name": "com.katas.unimod",
   "version": "0.0.1",
   "unity": "2021.3",
-  "unityRelease": "8f1",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "3.0.2",
     "com.unity.addressables": "1.19.19",
     "com.cysharp.unitask": "2.3.1"
   },
-  "displayName": "Mango",
-  "description": "Adds modding support to your project.",
+  "displayName": "UniMod",
+  "description": "Adds modding support to your Unity project.",
   "license": "MIT",
   "author": {
     "name": "Pablo Gutierrez Millares"
   },
   "keywords": [
-    "mango",
+    "unimod",
     "mod",
     "mods",
     "modding"

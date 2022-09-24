@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
-namespace Katas.Mango
+namespace Katas.UniMod
 {
     public interface IModErator
     {

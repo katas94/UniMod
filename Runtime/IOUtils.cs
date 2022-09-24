@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Katas.Mango
+namespace Katas.UniMod
 {
     public static class IOUtils
     {

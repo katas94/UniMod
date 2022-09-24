@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets.ResourceLocators;
 
-namespace Katas.Mango
+namespace Katas.UniMod
 {
     public enum ModStatus
     {
@@ -13,7 +13,7 @@ namespace Katas.Mango
         UnsupportedApp,
         UnsupportedAppVersion,
         UnsupportedPlatform,
-        UnsupportedMangoVersion
+        UnsupportedUniModVersion
     }
     
     /// <summary>

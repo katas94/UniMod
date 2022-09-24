@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
-namespace Katas.Mango.Editor
+namespace Katas.UniMod.Editor
 {
     /// <summary>
     /// Extend this class to create custom assembly builders that can be configured in the ModBuilder.

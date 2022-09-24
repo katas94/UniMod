@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Katas.Mango
+namespace Katas.UniMod
 {
     public sealed class ModInstallationException : Exception
     {

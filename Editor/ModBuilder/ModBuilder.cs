@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor.Compilation;
 using Cysharp.Threading.Tasks;
 
-namespace Katas.Mango.Editor
+namespace Katas.UniMod.Editor
 {
     public abstract class ModBuilder : ScriptableObject
     {

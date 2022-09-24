@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 
-namespace Katas.Mango
+namespace Katas.UniMod
 {
     public sealed class ModErator : IModErator
     {
@@ -25,7 +25,7 @@ namespace Katas.Mango
         public ModErator(string installationFolder = null)
         {
             if (_instance is not null)
-                throw new Exception("[Mango] There can only be one ModErator instance");
+                throw new Exception("[UniMod] There can only be one ModErator instance");
             
             InstallationFolder = installationFolder ?? DefaultInstallationFolder;
             _instance = this;
