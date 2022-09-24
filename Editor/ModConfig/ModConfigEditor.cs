@@ -34,19 +34,21 @@ namespace Katas.UniMod.Editor
             
             GUILayout.Space(8);
             if (GUILayout.Button("Build"))
-                config.BuildModWithGuiAsync(tryRebuild: false).Forget();
+                config.BuildWithGuiAsync(defaultToCachedParameters: false).Forget();
             EditorGUILayout.HelpBox(_includesMessage, MessageType.Info, true);
             
             // display rebuild cached info and rebuild button (if there is any cached info)
-            CodeOptimization? cachedBuildMode = config.CachedBuildMode;
-            string cachedOutputPath = config.CachedBuildOutputPath;
+            CodeOptimization? cachedBuildMode = config.GetCachedBuildMode();
+            string cachedOutputPath = config.GetCachedBuildOutputPath();
             if (cachedBuildMode is null || string.IsNullOrEmpty(cachedOutputPath))
                 return;
             
             GUILayout.Space(16);
             if (GUILayout.Button("Rebuild"))
-                config.BuildModWithGuiAsync(tryRebuild: true).Forget();
-            EditorGUILayout.HelpBox($"\nRebuild parameters:\n\n\tBuild mode: {config.CachedBuildMode}\n\tOutput path: {config.CachedBuildOutputPath}\n", MessageType.Info, true);
+                config.BuildWithGuiAsync(defaultToCachedParameters: true).Forget();
+            EditorGUILayout.HelpBox(
+                $"\nRebuild parameters:\n\n\tBuild mode: {config.GetCachedBuildMode()}\n\tOutput path: {config.GetCachedBuildOutputPath()}\n",
+                MessageType.Info, true);
         }
 
         private void UpdateIncludesMessage()

@@ -108,7 +108,7 @@ namespace Katas.UniMod.Editor
             else
             {
                 // try to get the build target's equivalent runtime platform value
-                if (!ModBuilderUtility.TryGetRuntimePlatformFromBuildTarget(buildTarget, out RuntimePlatform runtimePlatform))
+                if (!UniModEditorUtility.TryGetRuntimePlatformFromBuildTarget(buildTarget, out RuntimePlatform runtimePlatform))
                     throw new Exception($"Couldn't get the equivalent runtime platform value for the current active build target: {buildTarget}");
                 
                 platform = runtimePlatform.ToString();

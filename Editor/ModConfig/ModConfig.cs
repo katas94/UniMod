@@ -7,7 +7,7 @@ using UnityEditorInternal;
 namespace Katas.UniMod.Editor
 {
     [CreateAssetMenu(fileName = "ModConfig", menuName = "UniMod/Mod Config")]
-    public sealed partial class ModConfig : ScriptableObject
+    public sealed class ModConfig : ScriptableObject
     {
         [Serializable]
         public struct ModDependency

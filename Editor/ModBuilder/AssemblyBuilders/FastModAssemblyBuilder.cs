@@ -32,7 +32,7 @@ namespace Katas.UniMod.Editor
                 paths.Select
                 (
                     // copy each assembly to the output folder
-                    path => ModBuilderUtility.CopyManagedAssemblyToOutputFolder(path, outputFolder, isDebugBuild)
+                    path => UniModEditorUtility.CopyManagedAssemblyToOutputFolder(path, outputFolder, isDebugBuild)
                 )
             );
         }

@@ -4,13 +4,14 @@ using System.Reflection;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Katas.UniMod.Editor
 {
     /// <summary>
-    /// Some static utility methods for building a mod.
+    /// Some mixed utility methods for the UniMod editor classes.
     /// </summary>
-    public static class ModBuilderUtility
+    public static class UniModEditorUtility
     {
         /// <summary>
         /// Tries to copy the given managed assembly path into the given output folder. If specified, it will also
@@ -105,6 +106,17 @@ namespace Katas.UniMod.Editor
             
             runtimePlatform = default;
             return false;
+        }
+        
+        /// <summary>
+        /// Gets a unique key for the given asset creating a composition of the given key with the asset GUID.
+        /// </summary>
+        public static string GetUniqueKeyForAsset(Object asset, string key)
+        {
+            if (asset && AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string guid, out long _))
+                return $"{guid}-{key}";
+            
+            return null;
         }
     }
 }
