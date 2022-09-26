@@ -31,7 +31,7 @@ namespace Katas.UniMod
         {
             ModFolder = modFolder;
             Info = info;
-            _isAssembliesOnly = Info.Platform == UniModConstants.AssembliesOnlyPlatform;
+            _isAssembliesOnly = Info.Platform == UniModSpecification.AssembliesOnlyPlatform;
         }
 
         public async UniTask LoadAsync(bool loadAssemblies)
@@ -79,7 +79,7 @@ namespace Katas.UniMod
         private async UniTask LoadAssembliesAsync()
         {
             // fetch all the assembly file paths from the assemblies folder
-            string assembliesFolder = Path.Combine(ModFolder, UniModConstants.AssembliesFolder);
+            string assembliesFolder = Path.Combine(ModFolder, UniModSpecification.AssembliesFolder);
             if (!Directory.Exists(assembliesFolder))
                 return;
             
@@ -98,11 +98,11 @@ namespace Katas.UniMod
         private async UniTask LoadContentAsync()
         {
             // load mod content catalog
-            string catalogPath = Path.Combine(ModFolder, "catalog_" + UniModConstants.CatalogName + ".json");
+            string catalogPath = Path.Combine(ModFolder, "catalog_" + UniModSpecification.CatalogName + ".json");
             ResourceLocator = await Addressables.LoadContentCatalogAsync(catalogPath, true);
             
             // if the mod loaded any assemblies then check if it contains a startup script
-            if (_loadedAssemblies.Count == 0 || !ResourceLocator.Locate(UniModConstants.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
+            if (_loadedAssemblies.Count == 0 || !ResourceLocator.Locate(UniModSpecification.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
                 return;
             
             // load and execute the startup script
