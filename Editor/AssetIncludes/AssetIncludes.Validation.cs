@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 
 namespace Katas.UniMod.Editor
@@ -21,6 +22,12 @@ namespace Katas.UniMod.Editor
         /// </summary>
         public void Validate(Func<T, bool> assetValidator = null)
         {
+            // make sure that the lists are initialized
+            folderIncludes ??= new List<DefaultAsset>();
+            folderExcludes ??= new List<DefaultAsset>();
+            assetIncludes ??= new List<T>();
+            assetExcludes ??= new List<T>();
+            
             // initialize list validators if they are not yet
             _folderIncludesValidator ??= new AssetListValidator<DefaultAsset>(folderIncludes, IsFolder);
             _folderExcludesValidator ??= new AssetListValidator<DefaultAsset>(folderExcludes, IsFolder);
