@@ -43,7 +43,8 @@ namespace Katas.UniMod
             }
             catch (Exception exception)
             {
-                _exceptions.Add(exception);
+                lock(_exceptions)
+                    _exceptions.Add(exception);
             }
         }
     }
