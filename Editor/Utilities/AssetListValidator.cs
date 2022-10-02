@@ -7,7 +7,7 @@ namespace Katas.UniMod.Editor
     /// <summary>
     /// Helper class to perform validation of UnityEngine.Object lists in the inspector.
     /// </summary>
-    internal sealed class AssetListValidator<T>
+    public sealed class AssetListValidator<T>
         where T : Object
     {
         public bool ListChanged { get; private set; }

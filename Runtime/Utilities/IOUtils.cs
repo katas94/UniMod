@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Katas.UniMod
 {
-    public static class IOUtils
+    internal static class IOUtils
     {
         /// <summary>
         /// Returns all file paths of files with the given extension (without dot) under the given root folder. If the recurse parameter

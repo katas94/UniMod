@@ -5,9 +5,9 @@ using System.Reflection;
 namespace Katas.UniMod
 {
     /// <summary>
-    /// Helper static class to load new assemblies and track loaded assemblies on the current AppDomain.s
+    /// Helper static class to load new assemblies and track loaded assemblies on the current AppDomain
     /// </summary>
-    public static class DomainAssemblies
+    internal static class DomainAssemblies
     {
         /// <summary>
         /// All currently loaded assembly full names.
