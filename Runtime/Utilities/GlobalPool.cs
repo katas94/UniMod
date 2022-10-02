@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Katas.UniMod
@@ -14,10 +15,15 @@ namespace Katas.UniMod
         {
             return Pool.Value.Pick();
         }
-    
+
         public static void Release(T instance)
         {
             Pool.Value.Release(instance);
+        }
+
+        public static void Release(IEnumerable<T> instances)
+        {
+            Pool.Value.Release(instances);
         }
 
         public static void Clear()

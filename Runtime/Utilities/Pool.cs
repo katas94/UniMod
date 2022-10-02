@@ -19,6 +19,12 @@ namespace Katas.UniMod
                 _pool.Push(instance);
         }
 
+        public void Release(IEnumerable<T> instances)
+        {
+            foreach (T instance in instances)
+                Release(instance);
+        }
+
         public void Clear()
         {
             foreach (T instance in _pool)
