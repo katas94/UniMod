@@ -5,9 +5,11 @@ namespace Katas.UniMod
 {
     public interface IModSource
     {
-        UniTask FetchIdsAsync(ICollection<string> modIds);
-        UniTask<IMod> FetchModAsync(string modId);
-        UniTask FetchModsAsync(IEnumerable<string> modIds, ICollection<IMod> results);
-        UniTask FetchAllModsAsync(ICollection<IMod> results);
+        UniTask FetchAsync();
+        
+        UniTask GetAllIdsAsync(ICollection<string> results);
+        UniTask<IMod> GetModAsync(string modId);
+        UniTask GetModsAsync(IEnumerable<string> modIds, ICollection<IMod> results);
+        UniTask GetAllModsAsync(ICollection<IMod> results);
     }
 }

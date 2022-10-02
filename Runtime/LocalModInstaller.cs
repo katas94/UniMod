@@ -28,8 +28,7 @@ namespace Katas.UniMod
         public async UniTask DownloadAndInstallModsAsync(IEnumerable<string> modUrls, CancellationToken cancellationToken = default)
         {
             // prepare all the install tasks for concurrent execution
-            List<UniTask> tasks = GlobalPool<List<UniTask>>.Pick();
-            tasks.Clear();
+            List<UniTask> tasks = ListPool<UniTask>.Pick();
             IEnumerator<string> enumerator = modUrls.GetEnumerator();
             while(enumerator.MoveNext())
                 tasks.Add(DownloadAndInstallModAsync(enumerator.Current, cancellationToken));
@@ -41,8 +40,7 @@ namespace Katas.UniMod
             }
             finally
             {
-                tasks.Clear();
-                GlobalPool<List<UniTask>>.Release(tasks);
+                ListPool<UniTask>.Release(tasks);
             }
         }
 
@@ -81,8 +79,7 @@ namespace Katas.UniMod
         public async UniTask InstallModsAsync(IEnumerable<string> modFilePaths, bool deleteModFilesAfter = false)
         {
             // prepare all the install tasks for concurrent execution
-            List<UniTask> tasks = GlobalPool<List<UniTask>>.Pick();
-            tasks.Clear();
+            List<UniTask> tasks = ListPool<UniTask>.Pick();
             IEnumerator<string> enumerator = modFilePaths.GetEnumerator();
             while(enumerator.MoveNext())
                 tasks.Add(InstallModAsync(enumerator.Current, deleteModFilesAfter));
@@ -94,8 +91,7 @@ namespace Katas.UniMod
             }
             finally
             {
-                tasks.Clear();
-                GlobalPool<List<UniTask>>.Release(tasks);
+                ListPool<UniTask>.Release(tasks);
             }
         }
 

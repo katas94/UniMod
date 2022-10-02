@@ -12,43 +12,62 @@ namespace Katas.UniMod
     public class LocalModSource : IModSource
     {
         public readonly string InstallationFolder;
+        
+        private readonly HashSet<string> _modIds;
+        private readonly Dictionary<string, LocalMod> _mods;
 
         public LocalModSource(string installationFolder)
         {
             InstallationFolder = installationFolder;
+            _modIds = new HashSet<string>();
+            _mods = new Dictionary<string, LocalMod>();
         }
         
-        public UniTask FetchIdsAsync(ICollection<string> modIds)
+        public UniTask FetchAsync()
         {
             if (!Directory.Exists(InstallationFolder))
                 return UniTask.CompletedTask;
             
+            _modIds.Clear();
             string[] modFolders = Directory.GetDirectories(InstallationFolder);
 
             foreach (string modFolder in modFolders)
             {
                 string modId = Path.GetFileName(modFolder);
                 if (!string.IsNullOrEmpty(modId))
-                    modIds.Add(modId);
+                    _modIds.Add(modId);
             }
+
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask GetAllIdsAsync(ICollection<string> results)
+        {
+            foreach (string modId in _modIds)
+                results.Add(modId);
             
             return UniTask.CompletedTask;
         }
 
-        public async UniTask<IMod> FetchModAsync(string modId)
+        public async UniTask<IMod> GetModAsync(string modId)
         {
-            if (!Directory.Exists(InstallationFolder))
-                throw new Exception($"No installation directory found: {InstallationFolder}");
             if (string.IsNullOrEmpty(modId))
                 throw new Exception("Null or empty mod ID");
+            if (!_modIds.Contains(modId))
+                throw new Exception($"Couldn't find mod ID {modId}");
+            
+            if (_mods.TryGetValue(modId, out LocalMod mod))
+                return mod;
 
             try
             {
-                return await CreateLocalModAsync(modId);
+                mod = await CreateLocalModAsync(modId);
+                _mods[modId] = mod;
+                return mod;
             }
             catch (Exception exception)
             {
-                throw new Exception($"Failed to fetch mod with ID: {modId}", exception);
+                throw new Exception($"Failed to get mod with ID: {modId}", exception);
             }
             finally
             {
@@ -56,12 +75,9 @@ namespace Katas.UniMod
             }
         }
 
-        public async UniTask FetchModsAsync(IEnumerable<string> modIds, ICollection<IMod> results)
+        public async UniTask GetModsAsync(IEnumerable<string> modIds, ICollection<IMod> results)
         {
-            if (!Directory.Exists(InstallationFolder))
-                throw new Exception($"No installation directory found: {InstallationFolder}");
-            
-            (IMod[] mods, Exception exception) = await UniTaskUtility.WhenAllNoThrow(modIds.Select(FetchModAsync));
+            (IMod[] mods, Exception exception) = await UniTaskUtility.WhenAllNoThrow(modIds.Select(GetModAsync));
             
             foreach (IMod mod in mods)
                 if (mod is not null)
@@ -71,25 +87,11 @@ namespace Katas.UniMod
                 throw exception;
         }
 
-        public async UniTask FetchAllModsAsync(ICollection<IMod> results)
+        public UniTask GetAllModsAsync(ICollection<IMod> results)
         {
-            if (!Directory.Exists(InstallationFolder))
-                return;
-            
-            List<string> modIds = GlobalPool<List<string>>.Pick();
-
-            try
-            {
-                await FetchIdsAsync(modIds);
-                await FetchModsAsync(modIds, results);
-            }
-            finally
-            {
-                modIds.Clear();
-                GlobalPool<List<string>>.Release(modIds);
-            }
+            return GetModsAsync(_modIds, results);
         }
-
+        
         // Tries to create and return a LocalMod instance from the mod on the installation folder matching the given ID.
         // This method runs, returns and throws on a background thread.
         private async UniTask<LocalMod> CreateLocalModAsync(string modId)
