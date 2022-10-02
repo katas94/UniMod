@@ -1,10 +1,22 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace Katas.UniMod
 {
-    public interface IModInstaller
+    public interface ILocalModInstaller
     {
+        /// <summary>
+        /// Downloads and installs all the mods provided by the given URLs.
+        /// </summary>
+        UniTask DownloadAndInstallModsAsync(IEnumerable<string> modUrls, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Downloads and installs the mod provided by the given URL.
+        /// </summary>
+        UniTask DownloadAndInstallModAsync(string modUrl, CancellationToken cancellationToken = default, IProgress<float> progress = null);
+
         /// <summary>
         /// Installs all the mods found under a folder. Any previous installations will be overwritten.
         /// </summary>
