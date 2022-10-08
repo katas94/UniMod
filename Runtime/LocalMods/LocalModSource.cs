@@ -11,13 +11,15 @@ namespace Katas.UniMod
     /// </summary>
     public class LocalModSource : IModSource
     {
+        public readonly IModContext Context;
         public readonly string InstallationFolder;
         
         private readonly HashSet<string> _modIds;
         private readonly Dictionary<string, LocalMod> _mods;
 
-        public LocalModSource(string installationFolder)
+        public LocalModSource(IModContext context, string installationFolder)
         {
+            Context = context;
             InstallationFolder = installationFolder;
             _modIds = new HashSet<string>();
             _mods = new Dictionary<string, LocalMod>();
@@ -114,7 +116,7 @@ namespace Katas.UniMod
                 var info = JsonConvert.DeserializeObject<ModInfo>(json);
                 
                 // instantiate and register the mod instance
-                return new LocalMod(modFolder, info);
+                return new LocalMod(Context, modFolder, info);
             }
             catch (Exception exception)
             {

@@ -21,6 +21,8 @@ namespace Katas.UniMod
     /// </summary>
     public interface IMod
     {
+        IModContext Context { get; }
+        
         ModInfo Info { get; }
         ModStatus Status { get; }
         bool IsLoaded { get; }

@@ -15,7 +15,7 @@ namespace Katas.UniMod
         
         private const string ModsFolderName = "UniMod-Mods";
         private const string AddressablesLoadPath = "{{UnityEngine.Application.persistentDataPath}}/" + ModsFolderName +"/";
-        public static readonly string ModsFolderPath = Path.Combine(Application.persistentDataPath, ModsFolderName);
+        public static readonly string LocalInstallationFolder = Path.Combine(Application.persistentDataPath, ModsFolderName);
 
         public static string GetAddressablesModLoadPath(string modId)
         {

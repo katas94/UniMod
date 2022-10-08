@@ -15,8 +15,8 @@ namespace Katas.UniMod
     /// </summary>
     public class LocalModInstaller : ILocalModInstaller
     {
-        public readonly string InstallationFolder;
-
+        public string InstallationFolder { get; }
+        
         public LocalModInstaller(string installationFolder)
         {
             InstallationFolder = installationFolder;

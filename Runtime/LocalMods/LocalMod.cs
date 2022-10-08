@@ -17,7 +17,8 @@ namespace Katas.UniMod
     public sealed class LocalMod : IMod
     {
         public readonly string ModFolder;
-        
+
+        public IModContext Context { get; }
         public ModInfo Info { get; }
         public ModStatus Status { get; }
         public bool IsLoaded { get; private set; }
@@ -27,8 +28,9 @@ namespace Katas.UniMod
         private readonly List<Assembly> _loadedAssemblies = new();
         private readonly bool _isAssembliesOnly;
 
-        public LocalMod(string modFolder, ModInfo info)
+        public LocalMod(IModContext context, string modFolder, ModInfo info)
         {
+            Context = context;
             ModFolder = modFolder;
             Info = info;
             _isAssembliesOnly = Info.Platform == UniModSpecification.AssembliesOnlyPlatform;

@@ -8,6 +8,11 @@ namespace Katas.UniMod
     public interface ILocalModInstaller
     {
         /// <summary>
+        /// The folder were all the mods are installed to.
+        /// </summary>
+        string InstallationFolder { get; }
+        
+        /// <summary>
         /// Downloads and installs all the mods provided by the given URLs.
         /// </summary>
         UniTask DownloadAndInstallModsAsync(IEnumerable<string> modUrls, CancellationToken cancellationToken = default);
