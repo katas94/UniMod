@@ -29,8 +29,7 @@ namespace Katas.UniMod
         IResourceLocator ResourceLocator { get; }
         IReadOnlyList<Assembly> LoadedAssemblies { get; }
         
-        UniTask LoadAsync(bool loadAssemblies);
-        UniTask<bool> UninstallAsync();
+        UniTask LoadAsync();
         UniTask<Sprite> LoadThumbnailAsync();
     }
 }

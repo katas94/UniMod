@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
 
 namespace Katas.UniMod
 {
@@ -31,66 +32,26 @@ namespace Katas.UniMod
         }
         
         /// <summary>
-        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns the loaded assembly instance if successful.
+        /// Tries to load the given raw assembly bytes into the current AppDomain.
         /// </summary>
-        public static Assembly Load(byte[] rawAssembly)
-        {
-            return Load(rawAssembly, out string _);
-        }
-        
-        /// <summary>
-        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns the loaded assembly instance if successful.
-        /// </summary>
-        public static Assembly Load(byte[] rawAssembly, out string message)
-        {
-            return Load(rawAssembly, null, out message);
-        }
-        
-        /// <summary>
-        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns the loaded assembly instance if successful.
-        /// The rawSymbolStore parameter is optional (can be set to null).
-        /// </summary>
-        public static Assembly Load(byte[] rawAssembly, byte[] rawSymbolStore)
-        {
-            return Load(rawAssembly, rawSymbolStore, out string _);
-        }
-
-        /// <summary>
-        /// Tries to load the given raw assembly bytes into the current AppDomain. Returns the loaded assembly instance if successful.
-        /// The rawSymbolStore parameter is optional (can be set to null).
-        /// </summary>
-        public static Assembly Load(byte[] rawAssembly, byte[] rawSymbolStore, out string message)
+        public static Assembly Load(byte[] rawAssembly, byte[] rawSymbolStore = null)
         {
             if (rawAssembly is null)
-            {
-                message = "The given raw assembly is null";
-                return null;
-            }
+                throw new NullReferenceException("The given raw assembly is null");
             
-            Assembly assembly;
-
-            try
-            {
-                assembly = rawSymbolStore is null ? Assembly.Load(rawAssembly) : Assembly.Load(rawAssembly, rawSymbolStore);
-            }
-            catch (Exception exception)
-            {
-                message = exception.ToString();
-                return null;
-            }
+            Assembly assembly = rawSymbolStore is null ? Assembly.Load(rawAssembly) : Assembly.Load(rawAssembly, rawSymbolStore);
 
             lock (LoadedAssemblies)
             {
                 if (LoadedAssemblies.TryGetValue(assembly.FullName, out Assembly loadedAssembly))
                 {
-                    message = $"The assembly was already loaded in the AppDomain: {assembly.FullName}";
+                    Debug.LogWarning($"The assembly was already loaded in the AppDomain: {assembly.FullName}");
                     return loadedAssembly;
                 }
                 
                 LoadedAssemblies[assembly.FullName] = assembly;
             }
             
-            message = null;
             return assembly;
         }
         

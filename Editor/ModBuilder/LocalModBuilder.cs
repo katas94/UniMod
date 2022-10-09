@@ -53,7 +53,12 @@ namespace Katas.UniMod.Editor
             {
                 // build mod and create the output archive file
                 BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
-                await BuildContentAndAssembliesAsync(config, buildMode, buildTarget, tmpBuildFolder);
+
+                if (config.type is ModType.ContentAndAssemblies or ModType.Assemblies)
+                    await BuildAssembliesAsync(config, buildMode, buildTarget, tmpBuildFolder);
+                if (config.type is ModType.ContentAndAssemblies or ModType.Content)
+                    BuildContent(config, tmpBuildFolder);
+
                 await CreateModFileFromBuildAsync(config, tmpBuildFolder, buildTarget, outputPath);
             }
             finally
@@ -63,22 +68,11 @@ namespace Katas.UniMod.Editor
             }
         }
 
-        private async UniTask BuildContentAndAssembliesAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder)
+        private async UniTask BuildAssembliesAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder)
         {
             // resolve all the included assemblies in the config that are compatible with the build target
             List<string> assemblyNames = AssemblyDefinitionIncludesUtility.ResolveIncludedSupportedAssemblyNames(config.assemblyDefinitions, buildTarget);
             List<string> managedPluginPaths = ManagedPluginIncludesUtility.ResolveIncludedSupportedManagedPluginPaths(config.managedPlugins, buildTarget);
-            bool hasAssemblies = assemblyNames.Count > 0 || managedPluginPaths.Count > 0;
-            
-            if (!hasAssemblies)
-            {
-                if (config.assembliesOnly)
-                    throw new Exception("The mod is configured as an assemblies only mod but it has no included assemblies for the current build target");
-                
-                // if mod doesnt have assemblies then we just build the content
-                BuildContent(config.modId, outputFolder);
-                return;
-            }
             
             // try to get an assembly builder for the target platform
             if (!TryGetModAssemblyBuilder(buildTarget, out IModAssemblyBuilder assemblyBuilder))
@@ -88,14 +82,17 @@ namespace Katas.UniMod.Editor
             string assembliesOutputFolder = Path.Combine(outputFolder, UniModSpecification.AssembliesFolder);
             Directory.CreateDirectory(assembliesOutputFolder);
             await assemblyBuilder.BuildAssembliesAsync(assemblyNames, managedPluginPaths, buildMode, buildTarget, assembliesOutputFolder);
-
-            // also build the content if proceeds
-            if (!config.assembliesOnly)
-            {
-                // include the mod's startup script (its ok if the startup script is null)
+        }
+        
+        private void BuildContent(ModConfig config, string outputFolder)
+        {
+            if (config.startup)
                 _contentBuilder.AddAsset(config.startup, UniModSpecification.StartupAddress);
-                BuildContent(config.modId, outputFolder);
-            }
+            
+            AddressablesPlayerBuildResult result = _contentBuilder.BuildContent(config.modId, outputFolder);
+            
+            if (!string.IsNullOrEmpty(result.Error))
+                throw new Exception($"Failed to build Addressables content.\nError: {result.Error}");
         }
 
         private async UniTask CreateModFileFromBuildAsync(ModConfig config, string buildFolder, BuildTarget buildTarget, string outputPath)
@@ -103,8 +100,9 @@ namespace Katas.UniMod.Editor
             // get the mod's supported platform
             string platform;
             
-            if (config.assembliesOnly)
-                platform = UniModSpecification.AssembliesOnlyPlatform;
+            // currently we are only supporting managed assemblies so an assemblies only mod supports any platform
+            if (config.type is ModType.Assemblies)
+                platform = UniModSpecification.AnyPlatform;
             else
             {
                 // try to get the build target's equivalent runtime platform value
@@ -124,6 +122,7 @@ namespace Katas.UniMod.Editor
                 AppVersion = config.appVersion,
                 ModId = config.modId,
                 ModVersion = config.modVersion,
+                Type = config.type,
                 DisplayName = config.displayName,
                 Description = config.description,
                 Platform = platform,
@@ -139,14 +138,6 @@ namespace Katas.UniMod.Editor
             
             // compress all mod contents into the final mod file
             ZipFile.CreateFromDirectory(buildFolder, outputPath, compressionLevel, true);
-        }
-        
-        private void BuildContent(string modId, string outputFolder)
-        {
-            AddressablesPlayerBuildResult result = _contentBuilder.BuildContent(modId, outputFolder);
-            
-            if (!string.IsNullOrEmpty(result.Error))
-                throw new Exception($"Failed to build Addressables content.\nError: {result.Error}");
         }
         
         // tries to get a mod assembly builder for the given build target, based on the current configured mob assembly builder type and custom builders.

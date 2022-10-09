@@ -10,7 +10,7 @@ namespace Katas.UniMod.Editor
     public sealed class ModConfig : ScriptableObject
     {
         [Serializable]
-        public struct ModDependency
+        public struct ModEntry
         {
             public string id;
             public string version;
@@ -21,11 +21,11 @@ namespace Katas.UniMod.Editor
         public string appVersion;
         public string modId;
         public string modVersion;
+        public ModType type;
         public string displayName;
         public string description;
-        public bool assembliesOnly;
         public ModStartup startup;
-        public List<ModDependency> dependencies;
+        public List<ModEntry> dependencies;
         
         [Header("Includes")][Space(5)]
         public AssetIncludes<AssemblyDefinitionAsset> assemblyDefinitions;
