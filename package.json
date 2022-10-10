@@ -1,6 +1,6 @@
 {
   "name": "com.katas.unimod",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "unity": "2021.3",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "3.0.2",
