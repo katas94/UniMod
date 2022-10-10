@@ -58,18 +58,27 @@ namespace Katas.UniMod
 
         public async UniTask RefreshAsync()
         {
-            // install and delete any mod files added in the installation folder
-            await _installer.InstallModsAsync(InstallationFolder, true);
-            // fetch from all sources
-            await _sources.FetchAsync();
+            await RefreshLocalInstallations(); // installs and deletes any mod files added in the installation folder
+            await FetchFromAllSources();
             
             // get all mods from the sources after the fetch and reconstruct the map
             _mods.Clear();
             _modsMap.Clear();
-            await _sources.GetAllModsAsync(_mods);
-            
-            foreach (IMod mod in _mods)
-                _modsMap[mod.Info.ModId] = mod;
+
+            try
+            {
+                await _sources.GetAllModsAsync(_mods);
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("[UniModContext] there were some errors while trying to get mods from the sources", exception);
+            }
+            finally
+            {
+                foreach (IMod mod in _mods)
+                    if (mod is not null)
+                        _modsMap[mod.Info.ModId] = mod;
+            }
         }
 
         #region WRAPPERS
@@ -105,5 +114,29 @@ namespace Katas.UniMod
         public UniTask InstallModAsync(byte[] modBuffer)
             => _installer.InstallModAsync(modBuffer);
         #endregion
+
+        private async UniTask RefreshLocalInstallations()
+        {
+            try
+            {
+                await _installer.InstallModsAsync(InstallationFolder, true);
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("[UniModContext] there were some errors while trying to refresh the local installation folder", exception);
+            }
+        }
+        
+        private async UniTask FetchFromAllSources()
+        {
+            try
+            {
+                await _sources.FetchAsync();
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("[UniModContext] there were some errors while trying to fetch from mod sources", exception);
+            }
+        }
     }
 }
