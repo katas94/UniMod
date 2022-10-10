@@ -1,0 +1,1833 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Semver</name>
+    </assembly>
+    <members>
+        <member name="T:Semver.Comparers.ISemVersionComparer">
+            <summary>
+            An interface that combines equality and order comparison for the <see cref="T:Semver.SemVersion"/>
+            class.
+            </summary>
+            <remarks>
+            This interface provides a type for the <see cref="P:Semver.SemVersion.PrecedenceComparer"/> and
+            <see cref="P:Semver.SemVersion.SortOrderComparer"/> so that separate properties aren't needed for the
+            <see cref="T:System.Collections.Generic.IEqualityComparer`1"/> and <see cref="T:System.Collections.Generic.IComparer`1"/> of <see cref="T:Semver.SemVersion"/>.
+            </remarks>
+        </member>
+        <member name="T:Semver.MetadataIdentifier">
+             <summary>
+             An individual metadata identifier for a semantic version.
+             </summary>
+             <remarks>
+             <para>The metadata for a semantic version is composed of dot ('<c>.</c>') separated identifiers.
+             A valid identifier is a non-empty string of ASCII alphanumeric and hyphen characters
+             (<c>[0-9A-Za-z-]</c>). Metadata identifiers are compared lexically in ASCII sort order.</para>
+            
+             <para>Because <see cref="T:Semver.MetadataIdentifier"/> is a struct, the default value is a
+             <see cref="T:Semver.MetadataIdentifier"/> with a <see langword="null"/> value. However, the
+             <see cref="N:Semver"/> namespace types do not accept and will not return such a
+             <see cref="T:Semver.MetadataIdentifier"/>.</para>
+            
+             <para>Invalid metadata identifiers including arbitrary Unicode characters and empty string can
+             currently be produced by the <see cref="M:Semver.SemVersion.#ctor(System.Int32,System.Int32,System.Int32,System.String,System.String)"/>
+             constructor. Such identifiers are compared via an ordinal string comparision.</para>
+             </remarks>
+        </member>
+        <member name="P:Semver.MetadataIdentifier.Value">
+            <summary>
+            The string value of the metadata identifier.
+            </summary>
+            <value>The string value of this metadata identifier or <see langword="null"/> if this is
+            a default <see cref="T:Semver.MetadataIdentifier"/>.</value>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.CreateLoose(System.String)">
+            <summary>
+            Construct a potentially invalid <see cref="T:Semver.MetadataIdentifier"/>.
+            </summary>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="value"/> parameter is <see langword="null"/>.</exception>
+            <remarks>This should only be used by the <see cref="T:Semver.SemVersion"/> constructor that
+            still accepts illegal values.</remarks>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.CreateUnsafe(System.String)">
+            <summary>
+            Constructs a <see cref="T:Semver.MetadataIdentifier"/> without checking that any of the invariants
+            hold. Used by the parser for performance.
+            </summary>
+            <remarks>This is a create method rather than a constructor to clearly indicate uses
+            of it. The other constructors have not been hidden behind create methods because only
+            constructors are visible to the package users. So they see a class consistently
+            using constructors without any create methods.</remarks>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.#ctor(System.String,Semver.Utility.UnsafeOverload)">
+            <summary>
+            Private constructor used by <see cref="M:Semver.MetadataIdentifier.CreateUnsafe(System.String)"/>.
+            </summary>
+            <param name="value">The value for the identifier. Not validated.</param>
+            <param name="_">Unused parameter that differentiates this from the
+            constructor that performs validation.</param>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.#ctor(System.String)">
+            <summary>
+            Constructs a valid <see cref="T:Semver.MetadataIdentifier"/>.
+            </summary>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="value"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">The <paramref name="value"/> is empty or contains invalid characters
+            (i.e. characters that are not ASCII alphanumerics or hyphens).</exception>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.#ctor(System.String,System.String)">
+            <summary>
+            Constructs a valid <see cref="T:Semver.MetadataIdentifier"/>.
+            </summary>
+            <remarks>
+            Internal constructor allows changing the parameter name to enable methods using this
+            as part of their metadata identifier validation to match the parameter name to their
+            parameter name.
+            </remarks>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.Equals(Semver.MetadataIdentifier)">
+            <summary>
+            Determines whether two identifiers are equal.
+            </summary>
+            <returns><see langword="true"/> if <paramref name="value"/> is equal to the this identifier;
+            otherwise <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.Equals(System.Object)">
+            <summary>Determines whether the given object is equal to this identifier.</summary>
+            <returns><see langword="true"/> if <paramref name="value"/> is equal to the this identifier;
+            otherwise <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.GetHashCode">
+            <summary>Gets a hash code for this identifier.</summary>
+            <returns>A hash code for this identifier.</returns>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.op_Equality(Semver.MetadataIdentifier,Semver.MetadataIdentifier)">
+            <summary>
+            Determines whether two identifiers are equal.
+            </summary>
+            <returns><see langword="true"/> if the value of <paramref name="left"/> is the same as
+            the value of <paramref name="right"/>; otherwise <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.op_Inequality(Semver.MetadataIdentifier,Semver.MetadataIdentifier)">
+            <summary>
+            Determines whether two identifiers are <em>not</em> equal.
+            </summary>
+            <returns><see langword="true"/> if the value of <paramref name="left"/> is different
+            from the value of <paramref name="right"/>; otherwise <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.CompareTo(Semver.MetadataIdentifier)">
+            <summary>
+            Compares two identifiers and indicates whether this instance precedes, follows, or is
+            equal to the other in sort order.
+            </summary>
+            <returns>
+            An integer that indicates whether this instance precedes, follows, or is equal to
+            <paramref name="value"/> in sort order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                     <term>-1</term>
+                     <description>This instance precedes <paramref name="value"/>.</description>
+                </item>
+                <item>
+                     <term>0</term>
+                     <description>This instance is equal to <paramref name="value"/>.</description>
+                </item>
+                <item>
+                     <term>1</term>
+                     <description>This instance follows <paramref name="value"/>.</description>
+                </item>
+            </list>
+            </returns>
+            <remarks>Identifiers are compared lexically in ASCII sort order. Invalid identifiers are
+            compared via an ordinal string comparision.</remarks>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.CompareTo(System.Object)">
+            <summary>
+            Compares this identifier to an <see cref="T:System.Object"/> and indicates whether this instance
+            precedes, follows, or is equal to the object in sort order.
+            </summary>
+            <returns>
+            An integer that indicates whether this instance precedes, follows, or is equal to
+            <paramref name="value"/> in sort order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                     <term>-1</term>
+                     <description>This instance precedes <paramref name="value"/>.</description>
+                </item>
+                <item>
+                     <term>0</term>
+                     <description>This instance is equal to <paramref name="value"/>.</description>
+                </item>
+                <item>
+                     <term>1</term>
+                     <description>This instance follows <paramref name="value"/> or <paramref name="value"/>
+                                    is <see langword="null"/>.</description>
+                </item>
+            </list>
+            </returns>
+            <exception cref="T:System.ArgumentException"><paramref name="value"/> is not a <see cref="T:Semver.MetadataIdentifier"/>.</exception>
+            <remarks>Identifiers are compared lexically in ASCII sort order. Invalid identifiers are
+            compared via an ordinal string comparision.</remarks>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.op_Implicit(Semver.MetadataIdentifier)~System.String">
+            <summary>
+            Converts this identifier into an equivalent string value.
+            </summary>
+            <returns>The string value of this identifier or <see langword="null"/> if this is
+            a default <see cref="T:Semver.MetadataIdentifier"/></returns>
+        </member>
+        <member name="M:Semver.MetadataIdentifier.ToString">
+            <summary>
+            Converts this identifier into an equivalent string value.
+            </summary>
+            <returns>The string value of this identifier or <see langword="null"/> if this is
+            a default <see cref="T:Semver.MetadataIdentifier"/></returns>
+        </member>
+        <member name="T:Semver.PrereleaseIdentifier">
+             <summary>
+             An individual prerelease identifier for a semantic version.
+             </summary>
+             <remarks>
+             <para>The prerelease portion of a semantic version is composed of dot ('<c>.</c>') separated identifiers.
+             A prerelease identifier is either an alphanumeric or numeric identifier. A valid numeric
+             identifier is composed of ASCII digits (<c>[0-9]</c>) without leading zeros. A valid
+             alphanumeric identifier is a non-empty string of ASCII alphanumeric and hyphen characters
+             (<c>[0-9A-Za-z-]</c>) with at least one non-digit character. Prerelease identifiers are
+             compared first by whether they are numeric or alphanumeric. Numeric identifiers have lower
+             precedence than alphanumeric identifiers. Numeric identifiers are compared to each other
+             numerically. Alphanumeric identifiers are compared to each other lexically in ASCII sort
+             order.</para>
+            
+             <para>Because <see cref="T:Semver.PrereleaseIdentifier"/> is a struct, the default value is a
+             <see cref="T:Semver.PrereleaseIdentifier"/> with a <see langword="null"/> value. However, the
+             <see cref="N:Semver"/> namespace types do not accept and will not return such a
+             <see cref="T:Semver.PrereleaseIdentifier"/>.</para>
+            
+             <para>Invalid prerelease identifiers including arbitrary Unicode characters, empty string,
+             and numeric identifiers with leading zero can currently be produced by the
+             <see cref="M:Semver.SemVersion.#ctor(System.Int32,System.Int32,System.Int32,System.String,System.String)"/> constructor and the obsolete
+             <see cref="M:Semver.SemVersion.Parse(System.String,System.Boolean)"/> and
+             <see cref="M:Semver.SemVersion.TryParse(System.String,Semver.SemVersion@,System.Boolean)"/> methods. Such alphanumeric
+             identifiers are compared via an ordinal string comparision. Numeric identifiers with
+             leading zeros are considered equal (e.g. '<c>15</c>' is equal to '<c>015</c>').
+             </para>
+             </remarks>
+        </member>
+        <member name="P:Semver.PrereleaseIdentifier.Value">
+            <summary>
+            The string value of the prerelease identifier even if it is a numeric identifier.
+            </summary>
+            <value>The string value of this prerelease identifier even if it is a numeric identifier
+            or <see langword="null"/> if this is a default <see cref="T:Semver.PrereleaseIdentifier"/>.</value>
+            <remarks>Invalid numeric prerelease identifiers with leading zeros will have a string
+            value including the leading zeros. This can be used to distinguish invalid numeric
+            identifiers with different numbers of leading zeros.</remarks>
+        </member>
+        <member name="P:Semver.PrereleaseIdentifier.NumericValue">
+            <summary>
+            The numeric value of the prerelease identifier if it is a numeric identifier, otherwise
+            <see langword="null"/>.
+            </summary>
+            <value>The numeric value of the prerelease identifier if it is a numeric identifier,
+            otherwise <see langword="null"/>.</value>
+            <remarks>The numeric value of a prerelease identifier will never be negative.</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.CreateLoose(System.String)">
+            <summary>
+            Construct a potentially invalid <see cref="T:Semver.PrereleaseIdentifier"/>.
+            </summary>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="value"/> parameter is <see langword="null"/>.</exception>
+            <remarks>This should be used only by the <see cref="T:Semver.SemVersion"/> constructor that
+            still accepts illegal values.</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.CreateUnsafe(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Construct a <see cref="T:Semver.PrereleaseIdentifier"/> without checking that any of the invariants
+            hold. Used by the parser for performance.
+            </summary>
+            <remarks>This is a create method rather than a constructor to clearly indicate uses
+            of it. The other constructors have not been hidden behind create methods because only
+            constructors are visible to the package users. So they see a class consistently
+            using constructors without any create methods.</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.#ctor(System.String,System.Nullable{System.Int32})">
+            <summary>
+            Private constructor used by <see cref="M:Semver.PrereleaseIdentifier.CreateUnsafe(System.String,System.Nullable{System.Int32})"/>.
+            </summary>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.#ctor(System.String,System.Boolean)">
+            <summary>
+            Constructs a valid <see cref="T:Semver.PrereleaseIdentifier"/>.
+            </summary>
+            <param name="value">The string value of this prerelease identifier.</param>
+            <param name="allowLeadingZeros">Whether to allow leading zeros in the <paramref name="value"/>
+            parameter. If <see langword="true"/>, leading zeros will be allowed on numeric identifiers
+            but will be removed.</param>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="value"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">The <paramref name="value"/> is empty or contains invalid characters
+            (i.e. characters that are not ASCII alphanumerics or hyphens) or has leading zeros for
+            a numeric identifier when <paramref name="allowLeadingZeros"/> is <see langword="false"/>.</exception>
+            <exception cref="T:System.OverflowException">The numeric identifier value is too large for <see cref="T:System.Int32"/>.</exception>
+            <remarks>Because a valid numeric identifier does not have leading zeros, this constructor
+            will never create a <see cref="T:Semver.PrereleaseIdentifier"/> with leading zeros even if
+            <paramref name="allowLeadingZeros"/> is <see langword="true"/>. Any leading zeros will
+            be removed.</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.#ctor(System.String,System.Boolean,System.String)">
+            <summary>
+            Constructs a valid <see cref="T:Semver.PrereleaseIdentifier"/>.
+            </summary>
+            <remarks>
+            Internal constructor allows changing the parameter name to enable methods using this
+            as part of their prerelease identifier validation to match the parameter name to their
+            parameter name.
+            </remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.#ctor(System.Int32)">
+            <summary>
+            Construct a valid numeric <see cref="T:Semver.PrereleaseIdentifier"/> from an integer value.
+            </summary>
+            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="value"/> is negative.</exception>
+            <param name="value">The non-negative value of this identifier.</param>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.Equals(Semver.PrereleaseIdentifier)">
+            <summary>
+            Determines whether two identifiers are equal.
+            </summary>
+            <returns><see langword="true"/> if <paramref name="value"/> is equal to the this identifier;
+            otherwise <see langword="false"/>.</returns>
+            <remarks>Numeric identifiers with leading zeros are considered equal (e.g. '<c>15</c>'
+            is equal to '<c>015</c>').</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.Equals(System.Object)">
+            <summary>Determines whether the given object is equal to this identifier.</summary>
+            <returns><see langword="true"/> if <paramref name="value"/> is equal to the this identifier;
+            otherwise <see langword="false"/>.</returns>
+            <remarks>Numeric identifiers with leading zeros are considered equal (e.g. '<c>15</c>'
+            is equal to '<c>015</c>').</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.GetHashCode">
+            <summary>Gets a hash code for this identifier.</summary>
+            <returns>A hash code for this identifier.</returns>
+            <remarks>Numeric identifiers with leading zeros are have the same hash code (e.g.
+            '<c>15</c>' has the same hash code as '<c>015</c>').</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.op_Equality(Semver.PrereleaseIdentifier,Semver.PrereleaseIdentifier)">
+            <summary>
+            Determines whether two identifiers are equal.
+            </summary>
+            <returns><see langword="true"/> if the value of <paramref name="left"/> is the same as
+            the value of <paramref name="right"/>; otherwise <see langword="false"/>.</returns>
+            <remarks>Numeric identifiers with leading zeros are considered equal (e.g. '<c>15</c>'
+            is equal to '<c>015</c>').</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.op_Inequality(Semver.PrereleaseIdentifier,Semver.PrereleaseIdentifier)">
+            <summary>
+            Determines whether two identifiers are <em>not</em> equal.
+            </summary>
+            <returns><see langword="true"/> if the value of <paramref name="left"/> is different
+            from the value of <paramref name="right"/>; otherwise <see langword="false"/>.</returns>
+            <remarks>Numeric identifiers with leading zeros are considered equal (e.g. '<c>15</c>'
+            is equal to '<c>015</c>').</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.CompareTo(Semver.PrereleaseIdentifier)">
+            <summary>
+            Compares two identifiers and indicates whether this instance precedes, follows, or is
+            equal to the other in precedence order.
+            </summary>
+            <returns>
+            An integer that indicates whether this instance precedes, follows, or is equal to
+            <paramref name="value"/> in precedence order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                     <term>-1</term>
+                     <description>This instance precedes <paramref name="value"/>.</description>
+                </item>
+                <item>
+                     <term>0</term>
+                     <description>This instance is equal to <paramref name="value"/>.</description>
+                </item>
+                <item>
+                     <term>1</term>
+                     <description>This instance follows <paramref name="value"/>.</description>
+                </item>
+            </list>
+            </returns>
+            <remarks>Numeric identifiers have lower precedence than alphanumeric identifiers.
+            Numeric identifiers are compared numerically. Numeric identifiers with leading zeros are
+            considered equal (e.g. '<c>15</c>' is equal to '<c>015</c>'). Alphanumeric identifiers are
+            compared lexically in ASCII sort order. Invalid alphanumeric identifiers are
+            compared via an ordinal string comparision.</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.CompareTo(System.Object)">
+            <summary>
+            Compares this identifier to an <see cref="T:System.Object"/> and indicates whether this instance
+            precedes, follows, or is equal to the object in precedence order.
+            </summary>
+            <returns>
+            An integer that indicates whether this instance precedes, follows, or is equal to
+            <paramref name="value"/> in precedence order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                     <term>-1</term>
+                     <description>This instance precedes <paramref name="value"/>.</description>
+                </item>
+                <item>
+                     <term>0</term>
+                     <description>This instance is equal to <paramref name="value"/>.</description>
+                </item>
+                <item>
+                     <term>1</term>
+                     <description>This instance follows <paramref name="value"/> or <paramref name="value"/>
+                                    is <see langword="null"/>.</description>
+                </item>
+            </list>
+            </returns>
+            <exception cref="T:System.ArgumentException"><paramref name="value"/> is not a <see cref="T:Semver.PrereleaseIdentifier"/>.</exception>
+            <remarks>Numeric identifiers have lower precedence than alphanumeric identifiers.
+            Numeric identifiers are compared numerically. Numeric identifiers with leading zeros are
+            considered equal (e.g. '<c>15</c>' is equal to '<c>015</c>'). Alphanumeric identifiers are
+            compared lexically in ASCII sort order. Invalid alphanumeric identifiers are
+            compared via an ordinal string comparision.</remarks>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.op_Implicit(Semver.PrereleaseIdentifier)~System.String">
+            <summary>
+            Converts this identifier into an equivalent string value.
+            </summary>
+            <returns>The string value of this identifier or <see langword="null"/> if this is
+            a default <see cref="T:Semver.PrereleaseIdentifier"/></returns>
+        </member>
+        <member name="M:Semver.PrereleaseIdentifier.ToString">
+            <summary>
+            Converts this identifier into an equivalent string value.
+            </summary>
+            <returns>The string value of this identifier or <see langword="null"/> if this is
+            a default <see cref="T:Semver.PrereleaseIdentifier"/></returns>
+        </member>
+        <member name="T:Semver.SemVersion">
+            <summary>
+            A semantic version number. Conforms with v2.0.0 of semantic versioning
+            (<a href="https://semver.org">semver.org</a>).
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersion.ParseFailedException">
+            <remarks>
+            This exception is used with the <see cref="M:Semver.SemVersionParser.Parse(System.String,Semver.SemVersionStyles,System.Exception,System.Int32,Semver.SemVersion@)"/>
+            method to indicate parse failure without constructing a new exception.
+            This exception should never be thrown or exposed outside of this
+            package.
+            </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Deserialize a <see cref="T:Semver.SemVersion"/>.
+            </summary>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="info"/> parameter is null.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Populates a <see cref="T:System.Runtime.Serialization.SerializationInfo"/> with the data needed to serialize the target object.
+            </summary>
+            <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> to populate with data.</param>
+            <param name="context">The destination (see <see cref="T:System.Runtime.Serialization.SerializationInfo"/>) for this serialization.</param>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Int32)">
+            <summary>
+            Constructs a new instance of the <see cref="T:Semver.SemVersion" /> class.
+            </summary>
+            <param name="major">The major version number.</param>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Constructs a new instance of the <see cref="T:Semver.SemVersion" /> class.
+            </summary>
+            <param name="major">The major version number.</param>
+            <param name="minor">The minor version number.</param>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Constructs a new instance of the <see cref="T:Semver.SemVersion" /> class.
+            </summary>
+            <param name="major">The major version number.</param>
+            <param name="minor">The minor version number.</param>
+            <param name="patch">The patch version number.</param>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Int32,System.Int32,System.Int32,System.String,System.String)">
+            <summary>
+            Constructs a new instance of the <see cref="T:Semver.SemVersion" /> class.
+            </summary>
+            <param name="major">The major version number.</param>
+            <param name="minor">The minor version number.</param>
+            <param name="patch">The patch version number.</param>
+            <param name="prerelease">The prerelease portion (e.g. "alpha.5").</param>
+            <param name="build">The build metadata (e.g. "nightly.232").</param>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Int32,System.Int32,System.Int32,System.Collections.Generic.IEnumerable{Semver.PrereleaseIdentifier},System.Collections.Generic.IEnumerable{Semver.MetadataIdentifier})">
+            <summary>
+            Constructs a new instance of the <see cref="T:Semver.SemVersion" /> class.
+            </summary>
+            <param name="major">The major version number.</param>
+            <param name="minor">The minor version number.</param>
+            <param name="patch">The patch version number.</param>
+            <param name="prerelease">The prerelease identifiers.</param>
+            <param name="metadata">The build metadata identifiers.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">A <paramref name="major"/>,
+            <paramref name="minor"/>, or <paramref name="patch"/> version number is negative.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease or metadata identifier has the default value.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Int32,System.Int32,System.Int32,System.Collections.Generic.IEnumerable{System.String},System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Constructs a new instance of the <see cref="T:Semver.SemVersion" /> class.
+            </summary>
+            <param name="major">The major version number.</param>
+            <param name="minor">The minor version number.</param>
+            <param name="patch">The patch version number.</param>
+            <param name="prerelease">The prerelease identifiers.</param>
+            <param name="metadata">The build metadata identifiers.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">A <paramref name="major"/>,
+            <paramref name="minor"/>, or <paramref name="patch"/> version number is negative.</exception>
+            <exception cref="T:System.ArgumentNullException">One of the prerelease or metadata identifiers is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens) or has leading
+            zeros for a numeric identifier. Or, a metadata identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens).</exception>
+            <exception cref="T:System.OverflowException">A numeric prerelease identifier value is too large
+            for <see cref="T:System.Int32"/>.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.ParsedFrom(System.Int32,System.Int32,System.Int32,System.String,System.String,System.Boolean)">
+            <summary>
+            Create a new instance of the <see cref="T:Semver.SemVersion" /> class. Parses prerelease
+            and metadata identifiers from dot separated strings. If parsing is not needed, use a
+            constructor instead.
+            </summary>
+            <param name="major">The major version number.</param>
+            <param name="minor">The minor version number.</param>
+            <param name="patch">The patch version number.</param>
+            <param name="prerelease">The prerelease portion (e.g. "alpha.5").</param>
+            <param name="metadata">The build metadata (e.g. "nightly.232").</param>
+            <param name="allowLeadingZeros">Allow leading zeros in numeric prerelease identifiers. Leading
+            zeros will be removed.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">A <paramref name="major"/>,
+            <paramref name="minor"/>, or <paramref name="patch"/> version number is negative.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens) or has leading
+            zeros for a numeric identifier when <paramref name="allowLeadingZeros"/> is
+            <see langword="false"/>. Or, a metadata identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens).</exception>
+            <exception cref="T:System.OverflowException">A numeric prerelease identifier value is too large
+            for <see cref="T:System.Int32"/>.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Version)">
+            <summary>
+            Constructs a new instance of the <see cref="T:Semver.SemVersion"/> class from
+            a <see cref="T:System.Version"/>.
+            </summary>
+            <param name="version"><see cref="T:System.Version"/> used to initialize
+            the major, minor, and patch version numbers and the build metadata.</param>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="version"/> is null.</exception>
+            <remarks>Constructs a <see cref="T:Semver.SemVersion"/> with the same major and
+            minor version numbers. The patch version number will be the fourth component
+            of the <paramref name="version"/>. The build meta data will contain the third component
+            of the <paramref name="version"/> if it is greater than zero.</remarks>
+        </member>
+        <member name="M:Semver.SemVersion.#ctor(System.Int32,System.Int32,System.Int32,System.String,System.Collections.Generic.IReadOnlyList{Semver.PrereleaseIdentifier},System.String,System.Collections.Generic.IReadOnlyList{Semver.MetadataIdentifier})">
+            <summary>
+            Construct a <see cref="T:Semver.SemVersion"/> from its proper parts.
+            </summary>
+            <remarks>Parameter validation is not performed. The <paramref name="major"/>,
+            <paramref name="minor"/>, and <paramref name="patch"/> version numbers must not be
+            negative. The <paramref name="prereleaseIdentifiers"/> and
+            <paramref name="metadataIdentifiers"/> must not be <see langword="null"/> or
+            contain invalid values and must be immutable. The <paramref name="prerelease"/>
+            and <paramref name="metadata"/> must not be null and must be equal to the
+            corresponding identifiers.</remarks>
+        </member>
+        <member name="M:Semver.SemVersion.FromVersion(System.Version)">
+            <summary>
+            Converts a <see cref="T:System.Version"/> into the equivalent semantic version.
+            </summary>
+            <param name="version">The version to be converted to a semantic version.</param>
+            <returns>The equivalent semantic version.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="version"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="version"/> has a revision number greater than zero.</exception>
+            <remarks>
+            <see cref="T:System.Version"/> numbers have the form <em>major</em>.<em>minor</em>[.<em>build</em>[.<em>revision</em>]]
+            where square brackets ('[' and ']')  indicate optional components. The first three parts
+            are converted to the major, minor, and patch version numbers of a semantic version. If the
+            build component is not defined (-1), the patch number is assumed to be zero.
+            <see cref="T:System.Version"/> numbers with a revision greater than zero cannot be converted to
+            semantic versions. An <see cref="T:System.ArgumentException"/> is thrown when this method is called
+            with such a <see cref="T:System.Version"/>.
+            </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.ToVersion">
+            <summary>
+            Converts this semantic version to a <see cref="T:System.Version"/>.
+            </summary>
+            <returns>The equivalent <see cref="T:System.Version"/>.</returns>
+            <exception cref="T:System.InvalidOperationException">The semantic version is a prerelease version
+            or has build metadata or has a negative major, minor, or patch version number.</exception>
+            <remarks>
+            A semantic version of the form <em>major</em>.<em>minor</em>.<em>patch</em>
+            is converted to a <see cref="T:System.Version"/> of the form
+            <em>major</em>.<em>minor</em>.<em>build</em> where the build number is the
+            patch version of the semantic version. Prerelease versions and build metadata
+            are not representable in a <see cref="T:System.Version"/>. This method throws
+            an <see cref="T:System.InvalidOperationException"/> if the semantic version is a
+            prerelease version or has build metadata.
+            </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.Parse(System.String,Semver.SemVersionStyles,System.Int32)">
+            <summary>
+            Converts the string representation of a semantic version to its <see cref="T:Semver.SemVersion"/> equivalent.
+            </summary>
+            <param name="version">The version string.</param>
+            <param name="style">A bitwise combination of enumeration values that indicates the style
+            elements that can be present in <paramref name="version"/>. The preferred value to use
+            is <see cref="F:Semver.SemVersionStyles.Strict"/>.</param>
+            <param name="maxLength">The maximum length of <paramref name="version"/> that should be
+            parsed. This prevents attacks using very long version strings.</param>
+            <exception cref="T:System.ArgumentException"><paramref name="style"/> is not a valid
+            <see cref="T:Semver.SemVersionStyles"/> value.</exception>
+            <exception cref="T:System.ArgumentNullException"><paramref name="version"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.FormatException">The <paramref name="version"/> is invalid or not in a
+            format compliant with <paramref name="style"/>.</exception>
+            <exception cref="T:System.OverflowException">A numeric part of <paramref name="version"/> is too
+            large for an <see cref="T:System.Int32"/>.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.Parse(System.String,System.Boolean)">
+            <summary>
+            Converts the string representation of a semantic version to its <see cref="T:Semver.SemVersion"/> equivalent.
+            </summary>
+            <param name="version">The version string.</param>
+            <param name="strict">If set to <see langword="true"/>, minor and patch version are required;
+            otherwise they are optional.</param>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="version"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">The <paramref name="version"/> has an invalid format.</exception>
+            <exception cref="T:System.InvalidOperationException">The <paramref name="version"/> is missing minor
+            or patch version numbers when <paramref name="strict"/> is <see langword="true"/>.</exception>
+            <exception cref="T:System.OverflowException">The major, minor, or patch version number is larger
+            than <see cref="F:System.Int32.MaxValue"/>.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.TryParse(System.String,Semver.SemVersionStyles,Semver.SemVersion@,System.Int32)">
+            <summary>
+            Converts the string representation of a semantic version to its <see cref="T:Semver.SemVersion"/>
+            equivalent. The return value indicates whether the conversion succeeded.
+            </summary>
+            <param name="version">The version string.</param>
+            <param name="style">A bitwise combination of enumeration values that indicates the style
+            elements that can be present in <paramref name="version"/>. The preferred value to use
+            is <see cref="F:Semver.SemVersionStyles.Strict"/>.</param>4
+            <param name="semver">When this method returns, contains a <see cref="T:Semver.SemVersion"/> instance equivalent
+            to the version string passed in, if the version string was valid, or <see langword="null"/> if the
+            version string was invalid.</param>
+            <param name="maxLength">The maximum length of <paramref name="version"/> that should be
+            parsed. This prevents attacks using very long version strings.</param>
+        </member>
+        <member name="M:Semver.SemVersion.TryParse(System.String,Semver.SemVersion@,System.Boolean)">
+            <summary>
+            Converts the string representation of a semantic version to its <see cref="T:Semver.SemVersion"/>
+            equivalent. The return value indicates whether the conversion succeeded.
+            </summary>
+            <param name="version">The version string.</param>
+            <param name="semver">When this method returns, contains a <see cref="T:Semver.SemVersion"/> instance equivalent
+            to the version string passed in, if the version string was valid, or <see langword="null"/> if the
+            version string was invalid.</param>
+            <param name="strict">If set to <see langword="true"/>, minor and patch version numbers are required;
+            otherwise they are optional.</param>
+            <returns><see langword="false"/> when a invalid version string is passed, otherwise <see langword="true"/>.</returns>
+        </member>
+        <member name="M:Semver.SemVersion.Compare(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Compares two versions and indicates whether the first precedes, follows, or is
+            equal to the other in the sort order. Note that sort order is more specific than precedence order.
+            </summary>
+            <returns>
+            An integer that indicates whether <paramref name="versionA" /> precedes, follows, or
+            is equal to <paramref name="versionB" /> in the sort order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                    <term>Less than zero</term>
+                    <description><paramref name="versionA" /> precedes <paramref name="versionB" /> in the sort order.</description>
+                </item>
+                <item>
+                    <term>Zero</term>
+                    <description><paramref name="versionA" /> is equal to <paramref name="versionB" />.</description>
+                </item>
+                <item>
+                    <term>Greater than zero</term>
+                    <description>
+                        <paramref name="versionA" /> follows <paramref name="versionB" /> in the sort order
+                        or <paramref name="versionB" /> is <see langword="null" />.
+                    </description>
+                </item>
+            </list>
+            </returns>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.Change(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.String)">
+            <summary>
+            Make a copy of the current instance with changed properties.
+            </summary>
+            <param name="major">The value to replace the major version number or
+            <see langword="null"/> to leave it unchanged.</param>
+            <param name="minor">The value to replace the minor version number or
+            <see langword="null"/> to leave it unchanged.</param>
+            <param name="patch">The value to replace the patch version number or
+            <see langword="null"/> to leave it unchanged.</param>
+            <param name="prerelease">The value to replace the prerelease portion
+            or <see langword="null"/> to leave it unchanged.</param>
+            <param name="build">The value to replace the build metadata or <see langword="null"/>
+            to leave it unchanged.</param>
+            <returns>The new version with changed properties.</returns>
+            <remarks>
+            The change method is intended to be called using named argument syntax, passing only
+            those fields to be changed.
+            </remarks>
+            <example>
+            To change only the patch version:
+            <code>var changedVersion = version.Change(patch: 4);</code>
+            </example>
+        </member>
+        <member name="M:Semver.SemVersion.With(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.Collections.Generic.IEnumerable{Semver.PrereleaseIdentifier},System.Collections.Generic.IEnumerable{Semver.MetadataIdentifier})">
+            <summary>
+            Creates a copy of the current instance with multiple changed properties. If changing only
+            one property use one of the more specific <c>WithX()</c> methods.
+            </summary>
+            <param name="major">The value to replace the major version number or <see langword="null"/> to leave it unchanged.</param>
+            <param name="minor">The value to replace the minor version number or <see langword="null"/> to leave it unchanged.</param>
+            <param name="patch">The value to replace the patch version number or <see langword="null"/> to leave it unchanged.</param>
+            <param name="prerelease">The value to replace the prerelease identifiers or <see langword="null"/> to leave it unchanged.</param>
+            <param name="metadata">The value to replace the build metadata identifiers or <see langword="null"/> to leave it unchanged.</param>
+            <returns>The new version with changed properties.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">A <paramref name="major"/>,
+            <paramref name="minor"/>, or <paramref name="patch"/> version number is negative.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease or metadata identifier has the default value.</exception>
+            <exception cref="T:System.OverflowException">A numeric prerelease identifier value is too large
+            for <see cref="T:System.Int32"/>.</exception>
+            <remarks>
+            The <see cref="M:Semver.SemVersion.With(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.Collections.Generic.IEnumerable{Semver.PrereleaseIdentifier},System.Collections.Generic.IEnumerable{Semver.MetadataIdentifier})"/> method is intended to be called using named argument syntax, passing only
+            those fields to be changed.
+            </remarks>
+            <example>
+            To change the minor and patch versions:
+            <code>var modifiedVersion = version.With(minor: 2, patch: 4);</code>
+            </example>
+        </member>
+        <member name="M:Semver.SemVersion.WithParsedFrom(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.String,System.Boolean)">
+            <summary>
+            Creates a copy of the current instance with multiple changed properties. Parses prerelease
+            and metadata identifiers from dot separated strings. Use <see cref="M:Semver.SemVersion.With(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.Collections.Generic.IEnumerable{Semver.PrereleaseIdentifier},System.Collections.Generic.IEnumerable{Semver.MetadataIdentifier})"/> instead if
+            parsing is not needed. If changing only one property use one of the more specific
+            <c>WithX()</c> methods.
+            </summary>
+            <param name="major">The value to replace the major version number or <see langword="null"/> to leave it unchanged.</param>
+            <param name="minor">The value to replace the minor version number or <see langword="null"/> to leave it unchanged.</param>
+            <param name="patch">The value to replace the patch version number or <see langword="null"/> to leave it unchanged.</param>
+            <param name="prerelease">The value to replace the prerelease identifiers or <see langword="null"/> to leave it unchanged.</param>
+            <param name="metadata">The value to replace the build metadata identifiers or <see langword="null"/> to leave it unchanged.</param>
+            <param name="allowLeadingZeros">Allow leading zeros in numeric prerelease identifiers. Leading
+            zeros will be removed.</param>
+            <returns>The new version with changed properties.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">A <paramref name="major"/>,
+            <paramref name="minor"/>, or <paramref name="patch"/> version number is negative.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens) or has leading
+            zeros for a numeric identifier when <paramref name="allowLeadingZeros"/> is
+            <see langword="false"/>. Or, a metadata identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens).</exception>
+            <exception cref="T:System.OverflowException">A numeric prerelease identifier value is too large
+            for <see cref="T:System.Int32"/>.</exception>
+            <remarks>
+            The <see cref="M:Semver.SemVersion.WithParsedFrom(System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.String,System.Boolean)"/> method is intended to be called using named argument
+            syntax, passing only those fields to be changed.
+            </remarks>
+            <example>
+            To change the patch version and prerelease identifiers version:
+            <code>var modifiedVersion = version.WithParsedFrom(patch: 4, prerelease: "alpha.5");</code>
+            </example>
+        </member>
+        <member name="M:Semver.SemVersion.WithMajor(System.Int32)">
+            <summary>
+            Creates a copy of the current instance with a different major version number.
+            </summary>
+            <param name="major">The value to replace the major version number.</param>
+            <returns>The new version with the different major version number.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="major"/> is negative.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithMinor(System.Int32)">
+            <summary>
+            Creates a copy of the current instance with a different minor version number.
+            </summary>
+            <param name="minor">The value to replace the minor version number.</param>
+            <returns>The new version with the different minor version number.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="minor"/> is negative.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithPatch(System.Int32)">
+            <summary>
+            Creates a copy of the current instance with a different patch version number.
+            </summary>
+            <param name="patch">The value to replace the patch version number.</param>
+            <returns>The new version with the different patch version number.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="patch"/> is negative.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithPrereleaseParsedFrom(System.String,System.Boolean)">
+            <summary>
+            Creates a copy of the current instance with a different prerelease portion.
+            </summary>
+            <param name="prerelease">The value to replace the prerelease portion.</param>
+            <param name="allowLeadingZeros">Whether to allow leading zeros in the prerelease identifiers.
+            If <see langword="true"/>, leading zeros will be allowed on numeric identifiers
+            but will be removed.</param>
+            <returns>The new version with the different prerelease identifiers.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="prerelease"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens) or has leading
+            zeros for a numeric identifier when <paramref name="allowLeadingZeros"/> is <see langword="false"/>.</exception>
+            <exception cref="T:System.OverflowException">A numeric prerelease identifier value is too large
+            for <see cref="T:System.Int32"/>.</exception>
+            <remarks>Because a valid numeric identifier does not have leading zeros, this constructor
+            will never create a <see cref="T:Semver.PrereleaseIdentifier"/> with leading zeros even if
+            <paramref name="allowLeadingZeros"/> is <see langword="true"/>. Any leading zeros will
+            be removed.</remarks>
+        </member>
+        <member name="M:Semver.SemVersion.WithPrerelease(System.String,System.String[])">
+            <summary>
+            Creates a copy of the current instance with different prerelease identifiers.
+            </summary>
+            <param name="prereleaseIdentifier">The first identifier to replace the existing
+            prerelease identifiers.</param>
+            <param name="prereleaseIdentifiers">The rest of the identifiers to replace the
+            existing prerelease identifiers.</param>
+            <returns>The new version with the different prerelease identifiers.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="prereleaseIdentifier"/> or
+            <paramref name="prereleaseIdentifiers"/> is <see langword="null"/> or one of the
+            prerelease identifiers is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens) or has leading
+            zeros for a numeric identifier.</exception>
+            <exception cref="T:System.OverflowException">A numeric prerelease identifier value is too large
+            for <see cref="T:System.Int32"/>.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithPrerelease(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Creates a copy of the current instance with different prerelease identifiers.
+            </summary>
+            <param name="prereleaseIdentifiers">The identifiers to replace the prerelease identifiers.</param>
+            <returns>The new version with the different prerelease identifiers.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="prereleaseIdentifiers"/> is
+            <see langword="null"/> or one of the prerelease identifiers is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens) or has leading
+            zeros for a numeric identifier.</exception>
+            <exception cref="T:System.OverflowException">A numeric prerelease identifier value is too large
+            for <see cref="T:System.Int32"/>.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithPrerelease(Semver.PrereleaseIdentifier,Semver.PrereleaseIdentifier[])">
+            <summary>
+            Creates a copy of the current instance with different prerelease identifiers.
+            </summary>
+            <param name="prereleaseIdentifier">The first identifier to replace the existing
+            prerelease identifiers.</param>
+            <param name="prereleaseIdentifiers">The rest of the identifiers to replace the
+            existing prerelease identifiers.</param>
+            <returns>The new version with the different prerelease identifiers.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="prereleaseIdentifiers"/> is
+            <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease identifier has the default value.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithPrerelease(System.Collections.Generic.IEnumerable{Semver.PrereleaseIdentifier})">
+            <summary>
+            Creates a copy of the current instance with different prerelease identifiers.
+            </summary>
+            <param name="prereleaseIdentifiers">The identifiers to replace the prerelease identifiers.</param>
+            <returns>The new version with the different prerelease identifiers.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="prereleaseIdentifiers"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A prerelease identifier has the default value.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithoutPrerelease">
+            <summary>
+            Creates a copy of the current instance without prerelease identifiers.
+            </summary>
+            <returns>The new version without prerelease identifiers.</returns>
+        </member>
+        <member name="M:Semver.SemVersion.WithMetadataParsedFrom(System.String)">
+            <summary>
+            Creates a copy of the current instance with different build metadata.
+            </summary>
+            <param name="metadata">The value to replace the build metadata.</param>
+            <returns>The new version with the different build metadata.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="metadata"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A metadata identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens).</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithMetadata(System.String,System.String[])">
+            <summary>
+            Creates a copy of the current instance with different build metadata identifiers.
+            </summary>
+            <param name="metadataIdentifier">The first identifier to replace the existing
+            build metadata identifiers.</param>
+            <param name="metadataIdentifiers">The rest of the build metadata identifiers to replace the
+            existing build metadata identifiers.</param>
+            <returns>The new version with the different build metadata identifiers.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="metadataIdentifier"/> or
+            <paramref name="metadataIdentifiers"/> is <see langword="null"/> or one of the metadata
+            identifiers is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A metadata identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens).</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithMetadata(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Creates a copy of the current instance with different build metadata identifiers.
+            </summary>
+            <param name="metadataIdentifiers">The identifiers to replace the build metadata identifiers.</param>
+            <returns>The new version with the different build metadata identifiers.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="metadataIdentifiers"/> is
+            <see langword="null"/> or one of the metadata identifiers is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A metadata identifier is empty or contains invalid
+            characters (i.e. characters that are not ASCII alphanumerics or hyphens).</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithMetadata(Semver.MetadataIdentifier,Semver.MetadataIdentifier[])">
+            <summary>
+            Creates a copy of the current instance with different build metadata identifiers.
+            </summary>
+            <param name="metadataIdentifier">The first identifier to replace the existing
+            build metadata identifiers.</param>
+            <param name="metadataIdentifiers">The rest of the identifiers to replace the
+            existing build metadata identifiers.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="metadataIdentifiers"/> is
+            <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A metadata identifier has the default value.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithMetadata(System.Collections.Generic.IEnumerable{Semver.MetadataIdentifier})">
+            <summary>
+            Creates a copy of the current instance with different build metadata identifiers.
+            </summary>
+            <param name="metadataIdentifiers">The identifiers to replace the build metadata identifiers.</param>
+            <returns>The new version with the different build metadata identifiers.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="metadataIdentifiers"/> is
+            <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">A metadata identifier has the default value.</exception>
+        </member>
+        <member name="M:Semver.SemVersion.WithoutMetadata">
+            <summary>
+            Creates a copy of the current instance without build metadata.
+            </summary>
+            <returns>The new version without build metadata.</returns>
+        </member>
+        <member name="M:Semver.SemVersion.WithoutPrereleaseOrMetadata">
+            <summary>
+            Creates a copy of the current instance without prerelease identifiers or build metadata.
+            </summary>
+            <returns>The new version without prerelease identifiers or build metadata.</returns>
+        </member>
+        <member name="P:Semver.SemVersion.Major">
+            <summary>The major version number.</summary>
+            <value>The major version number.</value>
+            <remarks>An increase in the major version number indicates a backwards
+            incompatible change.</remarks>
+        </member>
+        <member name="P:Semver.SemVersion.Minor">
+            <summary>The minor version number.</summary>
+            <value>The minor version number.</value>
+            <remarks>An increase in the minor version number indicates backwards
+            compatible changes.</remarks>
+        </member>
+        <member name="P:Semver.SemVersion.Patch">
+            <summary>The patch version number.</summary>
+            <value>The patch version number.</value>
+            <remarks>An increase in the patch version number indicates backwards
+            compatible bug fixes.</remarks>
+        </member>
+        <member name="P:Semver.SemVersion.Prerelease">
+            <summary>
+            The prerelease identifiers for this version.
+            </summary>
+            <value>
+            The prerelease identifiers for this version or empty string if this is a release version.
+            </value>
+            <remarks>
+            <para> A prerelease version is denoted by appending a hyphen ('<c>-</c>') and a series
+            of dot separated identifiers immediately following the patch version number. Each
+            prerelease identifier may be numeric or alphanumeric. Valid numeric identifiers consist
+            of ASCII digits (<c>[0-9]</c>) without leading zeros. Valid alphanumeric identifiers are
+            non-empty strings of ASCII alphanumeric and hyphen characters (<c>[0-9A-Za-z-]</c>) with
+            at least one non-digit character.</para>
+
+            <para>Prerelease versions have lower precedence than release versions. Prerelease
+            version precedence is determined by comparing each prerelease identifier in order from
+            left to right. Numeric identifiers have lower precedence than alphanumeric identifiers.
+            Numeric identifiers are compared numerically. Alphanumeric identifiers are compared
+            lexically in ASCII sort order.</para>
+        </remarks>
+        </member>
+        <member name="P:Semver.SemVersion.PrereleaseIdentifiers">
+            <summary>
+            The prerelease identifiers for this version.
+            </summary>
+            <value>
+            The prerelease identifiers for this version or empty if this is a release version.
+            </value>
+            <remarks>
+            <para> A prerelease version is denoted by appending a hyphen ('<c>-</c>') and a series
+            of dot separated identifiers immediately following the patch version number. Each
+            prerelease identifier may be numeric or alphanumeric. Valid numeric identifiers consist
+            of ASCII digits (<c>[0-9]</c>) without leading zeros. Valid alphanumeric identifiers are
+            non-empty strings of ASCII alphanumeric and hyphen characters (<c>[0-9A-Za-z-]</c>) with
+            at least one non-digit character.</para>
+
+            <para>Prerelease versions have lower precedence than release versions. Prerelease
+            version precedence is determined by comparing each prerelease identifier in order from
+            left to right. Numeric identifiers have lower precedence than alphanumeric identifiers.
+            Numeric identifiers are compared numerically. Alphanumeric identifiers are compared
+            lexically in ASCII sort order.</para>
+        </remarks>
+        </member>
+        <member name="P:Semver.SemVersion.IsPrerelease">
+            <summary>Whether this is a prerelease version.</summary>
+            <value>Whether this is a prerelease version. A semantic version with
+            prerelease identifiers is a prerelease version.</value>
+            <remarks>When this is <see langword="true"/>, the <see cref="P:Semver.SemVersion.Prerelease"/>
+            and <see cref="P:Semver.SemVersion.PrereleaseIdentifiers"/> properties are non-empty. When
+            this is <see langword="false"/>, the <see cref="P:Semver.SemVersion.Prerelease"/> property
+            will be an empty string and the <see cref="P:Semver.SemVersion.PrereleaseIdentifiers"/> will
+            be an empty collection.</remarks>
+        </member>
+        <member name="P:Semver.SemVersion.IsRelease">
+            <summary>Whether this is a release version.</summary>
+            <value>Whether this is a release version. A semantic version without
+            prerelease identifiers is a release version.</value>
+            <remarks>When this is <see langword="true"/>, the <see cref="P:Semver.SemVersion.Prerelease"/>
+            property will be an empty string and the <see cref="P:Semver.SemVersion.PrereleaseIdentifiers"/>
+            will be an empty collection. When this is <see langword="false"/>,
+            the <see cref="P:Semver.SemVersion.Prerelease"/> and <see cref="P:Semver.SemVersion.PrereleaseIdentifiers"/>
+            properties are non-empty.</remarks>
+        </member>
+        <member name="P:Semver.SemVersion.Build">
+            <summary>The build metadata for this version.</summary>
+            <value>
+            The build metadata for this version or empty string if there is no build metadata.
+            </value>
+            <remarks>
+            <para> The build metadata is a series of dot separated identifiers separated from the
+            rest of the version number with a plus sign ('<c>+</c>'). Valid metadata identifiers are
+            non-empty and consist of ASCII alphanumeric characters and hyphens (<c>[0-9A-Za-z-]</c>).</para>
+
+            <para> The metadata does not affect precedence. Two version numbers differing only in
+            build metadata have the same precedence. However, metadata does affect sort order. An
+            otherwise identical version without metadata sorts before one that has metadata.</para>
+        </remarks>
+        </member>
+        <member name="P:Semver.SemVersion.Metadata">
+            <summary>The build metadata for this version.</summary>
+            <value>The build metadata for this version or empty string if there
+            is no metadata.</value>
+            <remarks>
+            <para> The build metadata is a series of dot separated identifiers separated from the
+            rest of the version number with a plus sign ('<c>+</c>'). Valid metadata identifiers are
+            non-empty and consist of ASCII alphanumeric characters and hyphens (<c>[0-9A-Za-z-]</c>).</para>
+
+            <para> The metadata does not affect precedence. Two version numbers differing only in
+            build metadata have the same precedence. However, metadata does affect sort order. An
+            otherwise identical version without metadata sorts before one that has metadata.</para>
+        </remarks>
+        </member>
+        <member name="P:Semver.SemVersion.MetadataIdentifiers">
+            <summary>The build metadata identifiers for this version.</summary>
+            <value>The build metadata identifiers for this version or empty if there
+            is no metadata.</value>
+            <remarks>
+            <para> The build metadata is a series of dot separated identifiers separated from the
+            rest of the version number with a plus sign ('<c>+</c>'). Valid metadata identifiers are
+            non-empty and consist of ASCII alphanumeric characters and hyphens (<c>[0-9A-Za-z-]</c>).</para>
+
+            <para> The metadata does not affect precedence. Two version numbers differing only in
+            build metadata have the same precedence. However, metadata does affect sort order. An
+            otherwise identical version without metadata sorts before one that has metadata.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.ToString">
+            <summary>
+            Converts this version to an equivalent string value.
+            </summary>
+            <returns>
+            The <see cref="T:System.String" /> equivalent of this version.
+            </returns>
+        </member>
+        <member name="M:Semver.SemVersion.Equals(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Determines whether two semantic versions are equal.
+            </summary>
+            <returns><see langword="true"/> if the two values are equal, otherwise <see langword="false"/>.</returns>
+            <remarks>Two versions are equal if every part of the version numbers are equal. Thus two
+            versions with the same precedence may not be equal.</remarks>
+        </member>
+        <member name="M:Semver.SemVersion.Equals(System.Object)">
+            <summary>Determines whether the given object is equal to this version.</summary>
+            <returns><see langword="true"/> if <paramref name="obj"/> is equal to the this version;
+            otherwise <see langword="false"/>.</returns>
+            <remarks>Two versions are equal if every part of the version numbers are equal. Thus two
+            versions with the same precedence may not be equal.</remarks>
+        </member>
+        <member name="M:Semver.SemVersion.Equals(Semver.SemVersion)">
+            <summary>
+            Determines whether two semantic versions are equal.
+            </summary>
+            <returns><see langword="true"/> if <paramref name="other"/> is equal to the this version;
+            otherwise <see langword="false"/>.</returns>
+            <remarks>Two versions are equal if every part of the version numbers are equal. Thus two
+            versions with the same precedence may not be equal.</remarks>
+        </member>
+        <member name="M:Semver.SemVersion.PrecedenceEquals(Semver.SemVersion)">
+            <summary>
+            Determines whether two semantic versions have the same precedence. Versions that differ
+            only by build metadata have the same precedence.
+            </summary>
+            <param name="other">The semantic version to compare to.</param>
+            <returns><see langword="true"/> if the version precedences are equal, otherwise
+            <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Semver.SemVersion.PrecedenceEquals(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Determines whether two semantic versions have the same precedence. Versions that differ
+            only by build metadata have the same precedence.
+            </summary>
+            <returns><see langword="true"/> if the version precedences are equal, otherwise
+            <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Semver.SemVersion.PrecedenceMatches(Semver.SemVersion)">
+            <summary>
+            Determines whether two semantic versions have the same precedence. Versions
+            that differ only by build metadata have the same precedence.
+            </summary>
+            <param name="other">The semantic version to compare to.</param>
+            <returns><see langword="true"/> if the version precedences are equal.</returns>
+        </member>
+        <member name="M:Semver.SemVersion.GetHashCode">
+            <summary>
+            Gets a hash code for this instance.
+            </summary>
+            <returns>
+            A hash code for this instance, suitable for use in hashing algorithms
+            and data structures like a hash table.
+            </returns>
+            <remarks>Two versions are equal if every part of the version numbers are equal. Thus two
+            versions with the same precedence may not have the same hash code.</remarks>
+        </member>
+        <member name="M:Semver.SemVersion.op_Equality(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Determines whether two semantic versions are equal.
+            </summary>
+            <returns><see langword="true"/> if the two values are equal, otherwise <see langword="false"/>.</returns>
+            <remarks>Two versions are equal if every part of the version numbers are equal. Thus two
+            versions with the same precedence may not be equal.</remarks>
+        </member>
+        <member name="M:Semver.SemVersion.op_Inequality(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Determines whether two semantic versions are <em>not</em> equal.
+            </summary>
+            <returns><see langword="true"/> if the two values are <em>not</em> equal, otherwise <see langword="false"/>.</returns>
+            <remarks>Two versions are equal if every part of the version numbers are equal. Thus two
+            versions with the same precedence may not be equal.</remarks>
+        </member>
+        <member name="P:Semver.SemVersion.PrecedenceComparer">
+            <summary>
+            An <see cref="T:System.Collections.Generic.IEqualityComparer`1" /> and <see cref="T:System.Collections.Generic.IComparer`1" />
+            that compares <see cref="T:Semver.SemVersion" /> by precedence. This can be used for sorting,
+            binary search, and using <see cref="T:Semver.SemVersion" /> as a dictionary key.
+            </summary>
+            <value>A precedence comparer that implements <see cref="T:System.Collections.Generic.IEqualityComparer`1" /> and
+            <see cref="T:System.Collections.Generic.IComparer`1" /> for <see cref="T:Semver.SemVersion" />.</value>
+            <remarks>
+            <para>Precedence order is determined by comparing the major, minor, patch, and prerelease
+            portion in order from left to right. Versions that differ only by build metadata have the
+            same precedence. The major, minor, and patch version numbers are compared numerically. A
+            prerelease version precedes a release version.</para>
+
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="P:Semver.SemVersion.SortOrderComparer">
+            <summary>
+            An <see cref="T:System.Collections.Generic.IEqualityComparer`1" /> and <see cref="T:System.Collections.Generic.IComparer`1" />
+            that compares <see cref="T:Semver.SemVersion" /> by sort order. This can be used for sorting,
+            binary search, and using <see cref="T:Semver.SemVersion" /> as a dictionary key.
+            </summary>
+            <value>A sort order comparer that implements <see cref="T:System.Collections.Generic.IEqualityComparer`1" /> and
+            <see cref="T:System.Collections.Generic.IComparer`1" /> for <see cref="T:Semver.SemVersion" />.</value>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.ComparePrecedenceTo(Semver.SemVersion)">
+            <summary>
+            Compares two versions and indicates whether this instance precedes, follows, or is in the same
+            position as the other in the precedence order. Versions that differ only by build metadata
+            have the same precedence.
+            </summary>
+            <returns>
+            An integer that indicates whether this instance precedes, follows, or is in the same
+            position as <paramref name="other" /> in the precedence order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                    <term>-1</term>
+                    <description>This instance precedes <paramref name="other" /> in the precedence order.</description>
+                </item>
+                <item>
+                    <term>0</term>
+                    <description>This instance has the same precedence as <paramref name="other" />.</description>
+                </item>
+                <item>
+                    <term>1</term>
+                    <description>
+                        This instance follows <paramref name="other" /> in the precedence order
+                        or <paramref name="other" /> is <see langword="null" />.
+                    </description>
+                </item>
+            </list>
+            </returns>
+            <remarks>
+            <para>Precedence order is determined by comparing the major, minor, patch, and prerelease
+            portion in order from left to right. Versions that differ only by build metadata have the
+            same precedence. The major, minor, and patch version numbers are compared numerically. A
+            prerelease version precedes a release version.</para>
+
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.CompareSortOrderTo(Semver.SemVersion)">
+            <summary>
+            Compares two versions and indicates whether this instance precedes, follows, or is equal
+            to the other in the sort order. Note that sort order is more specific than precedence order.
+            </summary>
+            <returns>
+            An integer that indicates whether this instance precedes, follows, or is equal to the
+            other in the sort order.
+            <list type="table">
+            	<listheader>
+            		<term>Value</term>
+            		<description>Condition</description>
+            	</listheader>
+            	<item>
+            		<term>-1</term>
+            		<description>This instance precedes the other in the sort order.</description>
+            	</item>
+            	<item>
+            		<term>0</term>
+            		<description>This instance is equal to the other.</description>
+            	</item>
+            	<item>
+            		<term>1</term>
+            		<description>
+            			This instance follows the other in the sort order
+            			or the other is <see langword="null" />.
+            		</description>
+            	</item>
+            </list>
+            </returns>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.ComparePrecedence(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Compares two versions and indicates whether the first precedes, follows, or is in the same
+            position as the second in the precedence order. Versions that differ only by build metadata
+            have the same precedence.
+            </summary>
+            <returns>
+            An integer that indicates whether <paramref name="left" /> precedes, follows, or is in the same
+            position as <paramref name="right" /> in the precedence order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                    <term>-1</term>
+                    <description>
+                        <paramref name="left" /> precedes <paramref name="right" /> in the precedence
+                        order or <paramref name="left" /> is <see langword="null" />.</description>
+                </item>
+                <item>
+                    <term>0</term>
+                    <description><paramref name="left" /> has the same precedence as <paramref name="right" />.</description>
+                </item>
+                <item>
+                    <term>1</term>
+                    <description>
+                        <paramref name="left" /> follows <paramref name="right" /> in the precedence order
+                        or <paramref name="right" /> is <see langword="null" />.
+                    </description>
+                </item>
+            </list>
+            </returns>
+            <remarks>
+            <para>Precedence order is determined by comparing the major, minor, patch, and prerelease
+            portion in order from left to right. Versions that differ only by build metadata have the
+            same precedence. The major, minor, and patch version numbers are compared numerically. A
+            prerelease version precedes a release version.</para>
+
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.CompareSortOrder(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Compares two versions and indicates whether the first precedes, follows, or is equal to
+            the second in the sort order. Note that sort order is more specific than precedence order.
+            </summary>
+            <returns>
+            An integer that indicates whether <paramref name="left" /> precedes, follows, or is equal
+            to <paramref name="right" /> in the sort order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                    <term>-1</term>
+                    <description>
+                        <paramref name="left" /> precedes <paramref name="right" /> in the sort
+                        order or <paramref name="left" /> is <see langword="null" />.</description>
+                </item>
+                <item>
+                    <term>0</term>
+                    <description><paramref name="left" /> is equal to <paramref name="right" />.</description>
+                </item>
+                <item>
+                    <term>1</term>
+                    <description>
+                        <paramref name="left" /> follows <paramref name="right" /> in the sort order
+                        or <paramref name="right" /> is <see langword="null" />.
+                    </description>
+                </item>
+            </list>
+            </returns>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.CompareTo(System.Object)">
+            <summary>
+            Compares this version to an <see cref="T:System.Object" /> and indicates whether this instance
+            precedes, follows, or is equal to the object in the sort order. Note that sort order
+            is more specific than precedence order.
+            </summary>
+            <returns>
+            An integer that indicates whether this instance precedes, follows, or is equal to
+            the other in the sort order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                    <term>Less than zero</term>
+                    <description>This instance precedes the other in the sort order.</description>
+                </item>
+                <item>
+                    <term>Zero</term>
+                    <description>This instance is equal to the other.</description>
+                </item>
+                <item>
+                    <term>Greater than zero</term>
+                    <description>
+                        This instance follows the other in the sort order
+                        or the other is <see langword="null" />.
+                    </description>
+                </item>
+            </list>
+        </returns>
+            <exception cref="T:System.InvalidCastException">The <paramref name="obj" /> is not a <see cref="T:Semver.SemVersion" />.</exception>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.CompareTo(Semver.SemVersion)">
+            <summary>
+            Compares two versions and indicates whether this instance precedes, follows, or is
+            equal to the other in the sort order. Note that sort order is more specific than precedence order.
+            </summary>
+            <returns>
+            An integer that indicates whether this instance precedes, follows, or is equal to
+            the other in the sort order.
+            <list type="table">
+                <listheader>
+                    <term>Value</term>
+                    <description>Condition</description>
+                </listheader>
+                <item>
+                    <term>Less than zero</term>
+                    <description>This instance precedes the other in the sort order.</description>
+                </item>
+                <item>
+                    <term>Zero</term>
+                    <description>This instance is equal to the other.</description>
+                </item>
+                <item>
+                    <term>Greater than zero</term>
+                    <description>
+                        This instance follows the other in the sort order
+                        or the other is <see langword="null" />.
+                    </description>
+                </item>
+            </list>
+        </returns>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.CompareByPrecedence(Semver.SemVersion)">
+             <summary>
+             Compares two versions and indicates whether this instance precedes, follows, or is in the same
+             position as the other in the precedence order. Versions that differ only by build metadata
+             have the same precedence.
+             </summary>
+             <returns>
+             An integer that indicates whether this instance precedes, follows, or is in the same
+             position as <paramref name="other"/> in the precedence order.
+             <list type="table">
+                 <listheader>
+                     <term>Value</term>
+                     <description>Condition</description>
+                 </listheader>
+                 <item>
+                     <term>Less than zero</term>
+                     <description>This instance precedes <paramref name="other"/> in the precedence order.</description>
+                 </item>
+                 <item>
+                     <term>Zero</term>
+                     <description>This instance has the same precedence as <paramref name="other"/>.</description>
+                 </item>
+                 <item>
+                     <term>Greater than zero</term>
+                     <description>
+                         This instance follows <paramref name="other"/> in the precedence order
+                         or <paramref name="other"/> is <see langword="null" />.
+                     </description>
+                 </item>
+             </list>
+             </returns>
+             <remarks>
+             <para>Precedence order is determined by comparing the major, minor, patch, and prerelease
+             portion in order from left to right. Versions that differ only by build metadata have the
+             same precedence. The major, minor, and patch version numbers are compared numerically. A
+             prerelease version precedes a release version.</para>
+            
+             <para>The prerelease portion is compared by comparing each prerelease identifier from
+             left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+             identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+             in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+             if all the preceding identifiers are equal.</para>
+             </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.op_GreaterThan(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Compares two versions by sort order. Note that sort order is more specific than precedence order.
+            </summary>
+            <returns><see langword="true" /> if <paramref name="left" /> follows <paramref name="right" />
+            in the sort order; otherwise <see langword="false" />.</returns>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.op_GreaterThanOrEqual(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Compares two versions by sort order. Note that sort order is more specific than precedence order.
+            </summary>
+            <returns><see langword="true" /> if <paramref name="left" /> follows or is equal to
+            <paramref name="right" /> in the sort order; otherwise <see langword="false" />.</returns>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.op_LessThan(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Compares two versions by sort order. Note that sort order is more specific than precedence order.
+            </summary>
+            <returns><see langword="true" /> if <paramref name="left" /> precedes <paramref name="right" />
+            in the sort order; otherwise <see langword="false" />.</returns>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.op_LessThanOrEqual(Semver.SemVersion,Semver.SemVersion)">
+            <summary>
+            Compares two versions by sort order. Note that sort order is more specific than precedence order.
+            </summary>
+            <returns><see langword="true" /> if <paramref name="left" /> precedes or is equal to
+            <paramref name="right" /> in the sort order; otherwise <see langword="false" />.</returns>
+            <remarks>
+            <para>Sort order is consistent with precedence order, but provides an order for versions
+            with the same precedence. Sort order is determined by comparing the major, minor,
+            patch, prerelease portion, and build metadata in order from left to right. The major,
+            minor, and patch version numbers are compared numerically. A prerelease version precedes
+            a release version.</para>
+            <para>The prerelease portion is compared by comparing each prerelease identifier from
+            left to right. Numeric prerelease identifiers precede alphanumeric identifiers. Numeric
+            identifiers are compared numerically. Alphanumeric identifiers are compared lexically
+            in ASCII sort order. A longer series of prerelease identifiers follows a shorter series
+            if all the preceding identifiers are equal.</para>
+            <para>Otherwise equal versions without build metadata precede those with metadata. The
+            build metadata is compared by comparing each metadata identifier. Identifiers are
+            compared lexically in ASCII sort order. A longer series of metadata identifiers follows
+            a shorter series if all the preceding identifiers are equal.</para>
+        </remarks>
+        </member>
+        <member name="M:Semver.SemVersion.op_Implicit(System.String)~Semver.SemVersion">
+            <summary>
+            Implicit conversion from <see cref="T:System.String"/> to <see cref="T:Semver.SemVersion"/>.
+            </summary>
+            <param name="version">The semantic version.</param>
+            <returns>The <see cref="T:Semver.SemVersion"/> object.</returns>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="version"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">The version number has an invalid format.</exception>
+            <exception cref="T:System.OverflowException">The major, minor, or patch version number is larger than <see cref="F:System.Int32.MaxValue"/>.</exception>
+        </member>
+        <member name="T:Semver.SemVersionParser">
+            <summary>
+            Parsing for <see cref="T:Semver.SemVersion"/>
+            </summary>
+            <remarks>The new parsing code was complex enough that is made sense to break out into its
+            own class.</remarks>
+        </member>
+        <member name="M:Semver.SemVersionParser.Parse(System.String,Semver.SemVersionStyles,System.Exception,System.Int32,Semver.SemVersion@)">
+            <summary>
+            The internal method that all parsing is based on. Because this is called by both
+            <see cref="M:Semver.SemVersion.Parse(System.String,Semver.SemVersionStyles,System.Int32)"/> and
+            <see cref="M:Semver.SemVersion.TryParse(System.String,Semver.SemVersionStyles,Semver.SemVersion@,System.Int32)"/>
+            it does not throw exceptions, but instead returns the exception that should be thrown
+            by the parse method. For performance when used from try parse, all exception construction
+            and message formatting can be avoided by passing in an exception which will be returned
+            when parsing fails.
+            </summary>
+            <remarks>This does not validate the <paramref name="style"/> or <paramref name="maxLength"/>
+            parameter values. That must be done in the calling method.</remarks>
+        </member>
+        <member name="T:Semver.SemVersionStyles">
+             <summary>
+             <para>Determines the styles that are allowed in version strings passed to the
+             <see cref="M:Semver.SemVersion.Parse(System.String,Semver.SemVersionStyles,System.Int32)"/> and
+             <see cref="M:Semver.SemVersion.TryParse(System.String,Semver.SemVersionStyles,Semver.SemVersion@,System.Int32)"/>
+             methods. These styles only affect which strings are accepted when parsing. The
+             constructed version numbers are valid semantic versions without any of the
+             optional features in the original string.</para>
+            
+             <para>This enumeration supports a bitwise combination of its member values.</para>
+             </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.Strict">
+            <summary>
+            Accept version strings strictly conforming to the SemVer 2.0 spec.
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.AllowLeadingZeros">
+             <summary>
+             <para>Allow leading zeros on major, minor, patch, and prerelease version numbers.</para>
+            
+             <para>Leading zeros will be removed from the constructed version number.</para>
+             </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.AllowLeadingWhitespace">
+            <summary>
+            Allow leading whitespace. When combined with leading "v", the whitespace
+            must come before the "v".
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.AllowTrailingWhitespace">
+            <summary>
+            Allow trailing whitespace.
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.AllowWhitespace">
+            <summary>
+            Allow leading and/or trailing whitespace. When combined with leading "v",
+            the leading whitespace must come before the "v".
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.AllowLowerV">
+            <summary>
+            Allow a leading lowercase "v".
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.AllowUpperV">
+            <summary>
+            Allow a leading uppercase "V".
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.AllowV">
+            <summary>
+            Allow a leading "v" or "V".
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.OptionalPatch">
+            <summary>
+            Patch version number is optional.
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.OptionalMinorPatch">
+            <summary>
+            Minor and patch version numbers are optional.
+            </summary>
+        </member>
+        <member name="F:Semver.SemVersionStyles.Any">
+             <summary>
+             <para>Accept any version string format supported.</para>
+            
+             <para>The formats accepted by this style will change if/when more formats are supported.</para>
+             </summary>
+        </member>
+        <member name="M:Semver.SemVersionStylesExtensions.HasStyle(Semver.SemVersionStyles,Semver.SemVersionStyles)">
+            <summary>
+            The <see cref="M:System.Enum.HasFlag(System.Enum)"/> method is surprisingly slow. This provides
+            a fast alternative for the <see cref="T:Semver.SemVersionStyles"/> enum.
+            </summary>
+        </member>
+        <member name="M:Semver.Utility.CharExtensions.IsDigit(System.Char)">
+            <summary>
+            Is this character an ASCII digit '0' through '9'
+            </summary>
+        </member>
+        <member name="M:Semver.Utility.CharExtensions.IsAlphaOrHyphen(System.Char)">
+            <summary>
+            Is this character and ASCII alphabetic character or hyphen [A-Za-z-]
+            </summary>
+        </member>
+        <member name="T:Semver.Utility.CombinedHashCode">
+            <summary>
+            Combine hash codes in a good way since <c>System.HashCode</c> isn't available.
+            </summary>
+            <remarks>Algorithm based on HashHelpers previously used in the core CLR.
+            https://github.com/dotnet/coreclr/blob/456afea9fbe721e57986a21eb3b4bb1c9c7e4c56/src/System.Private.CoreLib/shared/System/Numerics/Hashing/HashHelpers.cs
+            </remarks>
+        </member>
+        <member name="T:Semver.Utility.IdentifierString">
+            <summary>
+            Methods for working with the strings that make up identifiers
+            </summary>
+        </member>
+        <member name="M:Semver.Utility.IdentifierString.Compare(System.String,System.String)">
+            <summary>
+            Compare two strings as they should be compared as identifiers.
+            </summary>
+            <remarks>This enforces ordinal comparision. It also fixes a technically
+            correct but odd thing where the comparision result can be a number
+            other than -1, 0, or 1.</remarks>
+        </member>
+        <member name="M:Semver.Utility.IntExtensions.DecimalDigits(System.Int32)">
+            <summary>
+            The number of digits in a non-negative number. Returns 1 for all
+            negative numbers. That is ok because we are using it to calculate
+            string length for a <see cref="T:System.Text.StringBuilder"/> for numbers that
+            aren't supposed to be negative, but when they are it is just a little
+            slower.
+            </summary>
+            <remarks>
+            This approach is based on https://stackoverflow.com/a/51099524/268898
+            where the poster offers performance benchmarks showing this is the
+            fastest way to get a number of digits.
+            </remarks>
+        </member>
+        <member name="T:Semver.Utility.ReadOnlyList`1">
+            <summary>
+            Internal helper for efficiently creating empty read only lists
+            </summary>
+        </member>
+        <member name="M:Semver.Utility.StringExtensions.IsDigits(System.String)">
+            <summary>
+            Is this string composed entirely of ASCII digits '0' to '9'?
+            </summary>
+        </member>
+        <member name="M:Semver.Utility.StringExtensions.IsAlphanumericOrHyphens(System.String)">
+            <summary>
+            Is this string composed entirely of ASCII alphanumeric characters and hyphens?
+            </summary>
+        </member>
+        <member name="M:Semver.Utility.StringExtensions.SplitAndMapToReadOnlyList``1(System.String,System.Char,System.Func{System.String,``0})">
+            <summary>
+            Split a string, map the parts, and return a read only list of the values.
+            </summary>
+            <remarks>Splitting a string, mapping the result and storing into a <see cref="T:System.Collections.Generic.IReadOnlyList`1"/>
+            is a common operation in this package. This method optimizes that. It avoids the
+            performance overhead of:
+            <list type="bullet">
+              <item><description>Constructing the params array for <see cref="M:System.String.Split(System.Char[])"/></description></item>
+              <item><description>Constructing the intermediate <see cref="T:string[]"/> returned by <see cref="M:System.String.Split(System.Char[])"/></description></item>
+              <item><description><see cref="M:System.Linq.Enumerable.Select``2(System.Collections.Generic.IEnumerable{``0},System.Func{``0,``1})"/></description></item>
+              <item><description>Not allocating list capacity based on the size</description></item>
+            </list>
+            Benchmarking shows this to be 30%+ faster and that may not reflect the whole benefit
+            since it doesn't fully account for reduced allocations.
+            </remarks>
+        </member>
+        <member name="M:Semver.Utility.StringExtensions.TrimLeadingZeros(System.String)">
+            <summary>
+            Trim leading zeros from a numeric string. If the string consists of all zeros, return
+            <c>"0"</c>.
+            </summary>
+            <remarks>The standard <see cref="M:System.String.TrimStart(System.Char[])"/> method handles all zeros
+            by returning <c>""</c>. This efficiently handles the kind of trimming needed.</remarks>
+        </member>
+        <member name="T:Semver.Utility.UnsafeOverload">
+            <summary>
+            Struct used as a marker to differentiate constructor overloads that would
+            otherwise be the same as safe overloads.
+            </summary>
+        </member>
+    </members>
+</doc>
