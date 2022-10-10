@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
+using Semver;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.ResourceLocations;
@@ -12,7 +13,11 @@ namespace Katas.UniMod
 {
     public static class UniModUtility
     {
-        public static bool IsPlatformSupported(string platform)
+        /// <summary>
+        /// Given a platform string which can be UniMod.AnyPlatform or a RuntimePlatform enum serialization, checks if the current runtime
+        /// platform is compatible.
+        /// </summary>
+        public static bool IsPlatformCompatible(string platform)
         {
             if (platform == UniMod.AnyPlatform)
                 return true;
@@ -34,7 +39,36 @@ namespace Katas.UniMod
             return Application.platform == runtimePlatform;
 #endif
         }
+
+        /// <summary>
+        /// Whether or not the given version string is compliant with the Semantic Versioning 2.0.0 standard.
+        /// </summary>
+        public static bool IsSemanticVersion(string version)
+        {
+            return SemVersion.TryParse(version, SemVersionStyles.Strict, out _);
+        }
+
+        /// <summary>
+        /// Whether the given target semantic version is compatible with the given current one or not.
+        /// </summary>
+        public static bool IsTargetSemanticVersionCompatibleWith(string targetVersion, string currentVersion, bool treatNonCompliantVersionsAsCompatible = false)
+        {
+            if (!SemVersion.TryParse(targetVersion, SemVersionStyles.Strict, out SemVersion target))
+                return treatNonCompliantVersionsAsCompatible;
+            if (!SemVersion.TryParse(currentVersion, SemVersionStyles.Strict, out SemVersion current))
+                return treatNonCompliantVersionsAsCompatible;
+            
+            return IsTargetSemanticVersionCompatibleWith(target, current);
+        }
         
+        /// <summary>
+        /// Whether the given target semantic version is compatible with the given current one or not.
+        /// </summary>
+        public static bool IsTargetSemanticVersionCompatibleWith(SemVersion target, SemVersion current)
+        {
+            return target.Major == current.Minor && target.Patch <= current.Patch;
+        }
+
         /// <summary>
         /// Loads into the application domain all the assemblies found in the given folder. Symbol store files will also be loaded if present and running
         /// a debug build. If a results collection is given, it will be populated with the loaded assemblies.

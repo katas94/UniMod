@@ -18,7 +18,7 @@ namespace Katas.UniMod
 
         public IModContext Context { get; }
         public ModInfo Info { get; }
-        public ModStatus Status { get; }
+        public ModIncompatibilities Incompatibilities { get; }
         public bool IsLoaded { get; private set; }
         public IResourceLocator ResourceLocator { get; private set; }
         public IReadOnlyList<Assembly> LoadedAssemblies => _loadedAssemblies;
@@ -31,6 +31,7 @@ namespace Katas.UniMod
             Context = context;
             ModFolder = modFolder;
             Info = info;
+            Incompatibilities = Context.CompatibilityChecker.GetIncompatibilities(Info.Target);
         }
 
         public async UniTask LoadAsync()
@@ -75,7 +76,7 @@ namespace Katas.UniMod
             }
             
             // check mod's platform
-            if (!UniModUtility.IsPlatformSupported(Info.Target.Platform))
+            if (!UniModUtility.IsPlatformCompatible(Info.Target.Platform))
                 throw CreateLoadFailedException($"This mod was built for {Info.Target.Platform} platform");
             
             // check if the mod was built for this version of the app

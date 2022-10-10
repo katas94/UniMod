@@ -11,6 +11,7 @@ namespace Katas.UniMod
     public class UniModContext : IModContext
     {
         public IReadOnlyList<IMod> Mods { get; }
+        public IModCompatibilityChecker CompatibilityChecker { get; }
         public IReadOnlyList<IModSource> Sources { get; }
         public string InstallationFolder { get; }
 
@@ -22,24 +23,39 @@ namespace Katas.UniMod
         /// <summary>
         /// Creates a UniMod instance with a default configuration. You will probably want to use this in most cases.
         /// </summary>
-        public static UniModContext CreateDefaultContext()
+        public static UniModContext CreateDefaultContext(string targetId, string targetVersion)
         {
             string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
-            var context = new UniModContext(installer);
+            var compatibilityChecker = new UniModCompatibilityChecker(targetId, targetVersion);
+            var context = new UniModContext(installer, compatibilityChecker);
+            var localModSource = new LocalModSource(context, installationFolder);
+            context.AddSource(localModSource);
+            
+            return context;
+        }
+        
+        /// <summary>
+        /// Creates a UniMod instance with a default configuration and defining your own compatibility checker. You will probably want to use this in most cases.
+        /// </summary>
+        public static UniModContext CreateDefaultContext(IModCompatibilityChecker compatibilityChecker)
+        {
+            string installationFolder = UniMod.LocalInstallationFolder;
+            var installer = new LocalModInstaller(installationFolder);
+            var context = new UniModContext(installer, compatibilityChecker);
             var localModSource = new LocalModSource(context, installationFolder);
             context.AddSource(localModSource);
             
             return context;
         }
 
-        public UniModContext(ILocalModInstaller installer)
-            : this(installer, Array.Empty<IModSource>()) { }
+        public UniModContext(ILocalModInstaller installer, IModCompatibilityChecker compatibilityChecker)
+            : this(installer, compatibilityChecker, Array.Empty<IModSource>()) { }
 
-        public UniModContext(ILocalModInstaller installer, params IModSource[] sources)
-            : this(installer, sources as IEnumerable<IModSource>) { }
+        public UniModContext(ILocalModInstaller installer, IModCompatibilityChecker compatibilityChecker, params IModSource[] sources)
+            : this(installer, compatibilityChecker, sources as IEnumerable<IModSource>) { }
         
-        public UniModContext(ILocalModInstaller installer, IEnumerable<IModSource> sources)
+        public UniModContext(ILocalModInstaller installer, IModCompatibilityChecker compatibilityChecker, IEnumerable<IModSource> sources)
         {
             _mods = new List<IMod>();
             _modsMap = new Dictionary<string, IMod>();
@@ -48,6 +64,7 @@ namespace Katas.UniMod
             InstallationFolder = _installer.InstallationFolder;
             
             Mods = _mods.AsReadOnly();
+            CompatibilityChecker = compatibilityChecker;
             Sources = _sources.Sources;
         }
         

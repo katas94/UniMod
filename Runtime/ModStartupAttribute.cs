@@ -8,6 +8,6 @@ namespace Katas.UniMod
     /// been executed. If you declare multiple ModStartup methods, the order of execution will not be guaranteed.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public class ModStartupAttribute : Attribute
+    public sealed class ModStartupAttribute : Attribute
     { }
 }

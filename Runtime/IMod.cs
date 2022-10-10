@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -6,14 +7,15 @@ using UnityEngine.AddressableAssets.ResourceLocators;
 
 namespace Katas.UniMod
 {
-    public enum ModStatus
+    [Flags]
+    public enum ModIncompatibilities
     {
-        Ok,
-        MissingDependencies,
-        UnsupportedApp,
-        UnsupportedAppVersion,
-        UnsupportedPlatform,
-        UnsupportedUniModVersion
+        None          = 0,
+        Other         = 1 << 0,
+        UniModVersion = 1 << 1,
+        Target        = 1 << 2,
+        TargetVersion = 1 << 3,
+        Platform      = 1 << 4
     }
     
     /// <summary>
@@ -24,7 +26,7 @@ namespace Katas.UniMod
         IModContext Context { get; }
         
         ModInfo Info { get; }
-        ModStatus Status { get; }
+        ModIncompatibilities Incompatibilities { get; }
         bool IsLoaded { get; }
         IResourceLocator ResourceLocator { get; }
         IReadOnlyList<Assembly> LoadedAssemblies { get; }
