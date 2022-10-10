@@ -79,7 +79,7 @@ namespace Katas.UniMod.Editor
                 throw new Exception($"Could not find a mod assembly builder that supports the current build target: {buildTarget}");
             
             // build the assemblies
-            string assembliesOutputFolder = Path.Combine(outputFolder, UniModSpecification.AssembliesFolder);
+            string assembliesOutputFolder = Path.Combine(outputFolder, UniMod.AssembliesFolder);
             Directory.CreateDirectory(assembliesOutputFolder);
             await assemblyBuilder.BuildAssembliesAsync(assemblyNames, managedPluginPaths, buildMode, buildTarget, assembliesOutputFolder);
         }
@@ -87,7 +87,7 @@ namespace Katas.UniMod.Editor
         private void BuildContent(ModConfig config, string outputFolder)
         {
             if (config.startup)
-                _contentBuilder.AddAsset(config.startup, UniModSpecification.StartupAddress);
+                _contentBuilder.AddAsset(config.startup, UniMod.StartupAddress);
             
             AddressablesPlayerBuildResult result = _contentBuilder.BuildContent(config.modId, outputFolder);
             
@@ -102,7 +102,7 @@ namespace Katas.UniMod.Editor
             
             // currently we are only supporting managed assemblies so an assemblies only mod supports any platform
             if (config.type is ModType.Assemblies)
-                platform = UniModSpecification.AnyPlatform;
+                platform = UniMod.AnyPlatform;
             else
             {
                 // try to get the build target's equivalent runtime platform value
@@ -113,23 +113,27 @@ namespace Katas.UniMod.Editor
             }
             
             // make sure the output path has the proper mod extension
-            outputPath = IOUtils.EnsureFileExtension(outputPath, UniModSpecification.ModFileExtensionNoDot);
-
+            outputPath = IOUtils.EnsureFileExtension(outputPath, UniMod.ModFileExtensionNoDot);
+            
             // create the mod info file
             ModInfo info = new ()
             {
-                AppId = config.appId,
-                AppVersion = config.appVersion,
+                Target = new ModTargetInfo()
+                {
+                    UniModVersion = UniMod.Version,
+                    TargetId = string.IsNullOrEmpty(config.targetId) ? null : config.targetId,
+                    TargetVersion = string.IsNullOrEmpty(config.targetVersion) ? null : config.targetVersion,
+                    Platform = platform,
+                },
                 ModId = config.modId,
                 ModVersion = config.modVersion,
                 Type = config.type,
                 DisplayName = config.displayName,
                 Description = config.description,
-                Platform = platform,
             };
             
             string infoJson = JsonConvert.SerializeObject(info, Formatting.Indented);
-            string infoFilePath = Path.Combine(buildFolder, UniModSpecification.InfoFile);
+            string infoFilePath = Path.Combine(buildFolder, UniMod.InfoFile);
             await File.WriteAllTextAsync(infoFilePath, infoJson);
             
             // overwrite the existing file

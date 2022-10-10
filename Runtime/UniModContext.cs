@@ -24,7 +24,7 @@ namespace Katas.UniMod
         /// </summary>
         public static UniModContext CreateDefaultContext()
         {
-            string installationFolder = UniModSpecification.LocalInstallationFolder;
+            string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
             var context = new UniModContext(installer);
             var localModSource = new LocalModSource(context, installationFolder);

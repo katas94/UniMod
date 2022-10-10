@@ -10,16 +10,11 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace Katas.UniMod
 {
-    /// <summary>
-    /// Some utility methods used by the LocalMod implementation. They are exposed statically in this class so they can be reused by other mod implementations.
-    /// </summary>
-    public static class LocalModUtility
+    public static class UniModUtility
     {
-        private static readonly bool IsDebugBuild = Debug.isDebugBuild;
-        
         public static bool IsPlatformSupported(string platform)
         {
-            if (platform == UniModSpecification.AnyPlatform)
+            if (platform == UniMod.AnyPlatform)
                 return true;
             
             // try to get the RuntimePlatform value from the info
@@ -109,7 +104,7 @@ namespace Katas.UniMod
                 return;
             
             // check if the mod contains a startup script
-            if (!mod.ResourceLocator.Locate(UniModSpecification.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
+            if (!mod.ResourceLocator.Locate(UniMod.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
                 return;
             
             // load and execute the startup script
@@ -173,7 +168,7 @@ namespace Katas.UniMod
                 Assembly = await File.ReadAllBytesAsync(filePath)
             };
 
-            if (!IsDebugBuild)
+            if (!UniMod.IsDebugBuild)
                 return result;
             
             // look for the assembly's pdb file and load it if exists

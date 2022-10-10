@@ -65,40 +65,61 @@ namespace Katas.UniMod
             if (IsLoaded)
                 return;
             
+            // check all dependencies are loaded
+            foreach ((string modId, string version) in Info.Dependencies)
+            {
+                IMod mod = Context.GetMod(modId);
+                
+                if (mod is not { IsLoaded: true })
+                    throw CreateLoadFailedException($"Missing dependency, {modId} is not loaded");
+            }
+            
             // check mod's platform
-            if (!LocalModUtility.IsPlatformSupported(Info.Platform))
-                throw new Exception($"[{Info.ModId}] this mod was built for {Info.Platform} platform");
+            if (!UniModUtility.IsPlatformSupported(Info.Target.Platform))
+                throw CreateLoadFailedException($"This mod was built for {Info.Target.Platform} platform");
             
             // check if the mod was built for this version of the app
-            if (string.IsNullOrEmpty(Info.AppVersion))
+            if (string.IsNullOrEmpty(Info.Target.TargetVersion))
                 Debug.LogWarning($"[{Info.ModId}] could not get the app version that this mod was built for. The mod is not guaranteed to work and the application could crash or be unstable");
-            if (Info.AppVersion != Application.version)
-                Debug.LogWarning($"[{Info.ModId}] this mod was built for app version {Info.AppVersion}, so it is not guaranteed to work and the application could crash or be unstable");
+            if (Info.Target.TargetVersion != Application.version)
+                Debug.LogWarning($"[{Info.ModId}] this mod was built for app version {Info.Target.TargetVersion}, so it is not guaranteed to work and the application could crash or be unstable");
             
             // load assemblies
             if (Info.Type is ModType.ContentAndAssemblies or ModType.Assemblies)
             {
-                string assembliesFolder = Path.Combine(ModFolder, UniModSpecification.AssembliesFolder);
-                await LocalModUtility.LoadAssembliesAsync(assembliesFolder, _loadedAssemblies);
+                string assembliesFolder = Path.Combine(ModFolder, UniMod.AssembliesFolder);
+                await UniModUtility.LoadAssembliesAsync(assembliesFolder, _loadedAssemblies);
             }
             
             // load content
             if (Info.Type is ModType.ContentAndAssemblies or ModType.Content)
             {
                 // load mod content catalog
-                string catalogPath = Path.Combine(ModFolder, UniModSpecification.CatalogFileName);
+                string catalogPath = Path.Combine(ModFolder, UniMod.AddressablesCatalogFileName);
                 if (!File.Exists(catalogPath))
-                    throw new Exception($"Mod's catalogue doesn't exist: {catalogPath}");
+                    throw CreateLoadFailedException($"Couldn't find mod's Addressables catalogue at {catalogPath}");
                 
                 ResourceLocator = await Addressables.LoadContentCatalogAsync(catalogPath, true);
             }
 
             // run startup script and methods
-            await LocalModUtility.RunStartupObjectFromContentAsync(this);
-            await LocalModUtility.RunStartupMethodsFromAssembliesAsync(this);
+            try
+            {
+                await UniModUtility.RunStartupObjectFromContentAsync(this);
+                await UniModUtility.RunStartupMethodsFromAssembliesAsync(this);
+            }
+            catch (Exception exception)
+            {
+                throw CreateLoadFailedException($"Something went wrong while running mod startup.\n{exception}");
+            }
             
             IsLoaded = true;
             Debug.Log($"[UniMod] {Info.ModId} loaded!");
+        }
+
+        private Exception CreateLoadFailedException(string message)
+        {
+            return new Exception($"Failed to load {Info.ModId}: {message}");
         }
     }
 }

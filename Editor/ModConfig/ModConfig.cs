@@ -17,8 +17,8 @@ namespace Katas.UniMod.Editor
         }
         
         [Header("Configuration")]
-        public string appId;
-        public string appVersion;
+        public string targetId;
+        public string targetVersion;
         public string modId;
         public string modVersion;
         public ModType type;

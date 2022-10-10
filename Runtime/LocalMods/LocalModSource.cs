@@ -105,7 +105,7 @@ namespace Katas.UniMod
             await UniTask.SwitchToThreadPool();
             
             // check if the info file exists
-            string infoPath = Path.Combine(modFolder, UniModSpecification.InfoFile);
+            string infoPath = Path.Combine(modFolder, UniMod.InfoFile);
             if (!File.Exists(infoPath))
                 throw new Exception($"Could not find \"{infoPath}\"");
 

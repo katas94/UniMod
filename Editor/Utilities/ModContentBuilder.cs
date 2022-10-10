@@ -65,7 +65,7 @@ namespace Katas.UniMod.Editor
 
             try
             {
-                string loadPath = UniModSpecification.GetAddressablesModLoadPath(modId);
+                string loadPath = UniMod.GetAddressablesLoadPathForMod(modId);
                 return SetupAndBuildAddressables(profileSettings, outputFolder, loadPath, out profileId);
             }
             finally
@@ -91,7 +91,7 @@ namespace Katas.UniMod.Editor
             string buildPath, string loadPath, out string profileId)
         {
             // prepare the settings for the build
-            _settings.OverridePlayerVersion = UniModSpecification.CatalogName;
+            _settings.OverridePlayerVersion = UniMod.AddressablesCatalogName;
             _settings.BuildRemoteCatalog = true;
             _settings.RemoteCatalogBuildPath = _settings.DefaultGroup.GetSchema<BundledAssetGroupSchema>().BuildPath;
             _settings.RemoteCatalogLoadPath = _settings.DefaultGroup.GetSchema<BundledAssetGroupSchema>().LoadPath;
