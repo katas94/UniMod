@@ -2,7 +2,7 @@ using Semver;
 
 namespace Katas.UniMod
 {
-    public class UniModCompatibilityChecker : IModCompatibilityChecker
+    public class ModCompatibilityChecker : IModCompatibilityChecker
     {
         public readonly string TargetId;
         public readonly string TargetVersion;
@@ -22,7 +22,7 @@ namespace Katas.UniMod
         /// </summary>
         public bool TreatNonCompliantVersionsAsCompatible = false;
         
-        public UniModCompatibilityChecker(string targetId, string targetVersion)
+        public ModCompatibilityChecker(string targetId, string targetVersion)
         {
             TargetId = targetId;
             TargetVersion = targetVersion;

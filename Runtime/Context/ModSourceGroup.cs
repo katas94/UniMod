@@ -9,7 +9,7 @@ namespace Katas.UniMod
     /// <summary>
     /// Can group multiple mod sources in one.
     /// </summary>
-    public class ModSourceGroup : IModSource, IModSourceGroup
+    public sealed class ModSourceGroup : IModSource, IModSourceGroup
     {
         public IReadOnlyList<IModSource> Sources { get; }
         

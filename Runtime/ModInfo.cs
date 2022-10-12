@@ -14,16 +14,19 @@ namespace Katas.UniMod
         [JsonRequired]
         public ModTargetInfo Target;
         [JsonRequired]
-        public string ModId;
+        public string Id;
         [JsonRequired]
-        public string ModVersion;
+        public string Version;
         [JsonRequired][JsonConverter(typeof(StringEnumConverter))]
         public ModType Type;
         public string DisplayName;
         public string Description;
         public Dictionary<string, string> Dependencies;
     }
-
+    
+    /// <summary>
+    /// Contains all the necessary information to check the mod's compatibility at runtime.
+    /// </summary>
     public struct ModTargetInfo
     {
         [JsonRequired]

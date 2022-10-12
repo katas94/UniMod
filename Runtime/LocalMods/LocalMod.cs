@@ -31,7 +31,7 @@ namespace Katas.UniMod
             Context = context;
             ModFolder = modFolder;
             Info = info;
-            Incompatibilities = Context.CompatibilityChecker.GetIncompatibilities(Info.Target);
+            Incompatibilities = Context.GetIncompatibilities(Info.Target);
         }
 
         public async UniTask LoadAsync()
@@ -66,25 +66,6 @@ namespace Katas.UniMod
             if (IsLoaded)
                 return;
             
-            // check all dependencies are loaded
-            foreach ((string modId, string version) in Info.Dependencies)
-            {
-                IMod mod = Context.GetMod(modId);
-                
-                if (mod is not { IsLoaded: true })
-                    throw CreateLoadFailedException($"Missing dependency, {modId} is not loaded");
-            }
-            
-            // check mod's platform
-            if (!UniModUtility.IsPlatformCompatible(Info.Target.Platform))
-                throw CreateLoadFailedException($"This mod was built for {Info.Target.Platform} platform");
-            
-            // check if the mod was built for this version of the app
-            if (string.IsNullOrEmpty(Info.Target.TargetVersion))
-                Debug.LogWarning($"[{Info.ModId}] could not get the app version that this mod was built for. The mod is not guaranteed to work and the application could crash or be unstable");
-            if (Info.Target.TargetVersion != Application.version)
-                Debug.LogWarning($"[{Info.ModId}] this mod was built for app version {Info.Target.TargetVersion}, so it is not guaranteed to work and the application could crash or be unstable");
-            
             // load assemblies
             if (Info.Type is ModType.ContentAndAssemblies or ModType.Assemblies)
             {
@@ -115,12 +96,11 @@ namespace Katas.UniMod
             }
             
             IsLoaded = true;
-            Debug.Log($"[UniMod] {Info.ModId} loaded!");
         }
 
         private Exception CreateLoadFailedException(string message)
         {
-            return new Exception($"Failed to load {Info.ModId}: {message}");
+            return new Exception($"Failed to load {Info.Id}: {message}");
         }
     }
 }

@@ -3,10 +3,9 @@ using Cysharp.Threading.Tasks;
 
 namespace Katas.UniMod
 {
-    public interface IModContext : IModSourceGroup, ILocalModInstaller
+    public interface IModContext : IModLoader, ILocalModInstaller, IModSourceGroup, IModCompatibilityChecker
     {
         IReadOnlyList<IMod> Mods { get; }
-        IModCompatibilityChecker CompatibilityChecker { get; }
 
         IMod GetMod(string modId);
         UniTask RefreshAsync();
