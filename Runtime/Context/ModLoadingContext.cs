@@ -92,11 +92,9 @@ namespace Katas.UniMod
         
         private async UniTask<bool> TryLoadModAsync(IModStatus status)
         {
-            // try to load all mod dependencies first
-            if (status.CanBeLoaded)
-                return await WhenAll(status.Dependencies.Select(TryLoadModAsync));
+            if (!status.CanBeLoaded)
+                return false;
             
-            // try to load the mod
             IMod mod = status.Mod;
             if (mod.IsLoaded)
                 return true;
@@ -106,7 +104,21 @@ namespace Katas.UniMod
                 return await operation.Task;
             
             _loadingOperations[mod] = operation = new UniTaskCompletionSource<bool>();
+            
+            // try to load all mod dependencies first
+            if (status.Dependencies.Count > 0)
+            {
+                bool didDependenciesLoad = await WhenAll(status.Dependencies.Select(TryLoadModAsync));
 
+                if (!didDependenciesLoad)
+                {
+                    Debug.LogError($"[ModLoader] Failed to load mod {mod.Info.Id}: at least one dependency failed to load.");
+                    operation.TrySetResult(false);
+                    return false;
+                }
+            }
+            
+            // try to load the mod
             try
             {
                 await mod.LoadAsync(_context);
