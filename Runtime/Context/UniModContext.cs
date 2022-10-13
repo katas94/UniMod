@@ -10,28 +10,30 @@ namespace Katas.UniMod
     /// </summary>
     public sealed class UniModContext : IModContext
     {
+        public string AppId => _targetChecker.AppId;
+        public string AppVersion => _targetChecker.AppVersion;
         public IReadOnlyList<IMod> Mods { get; }
-        public IReadOnlyCollection<IModLoadingInfo> AllLoadingInfo { get; }
+        public IReadOnlyCollection<IModStatus> Statuses { get; }
         public IReadOnlyList<IModSource> Sources { get; }
-        public string InstallationFolder { get; }
+        public string InstallationFolder => _installer.InstallationFolder;
 
+        private readonly ILocalModInstaller _installer;
+        private readonly IModTargetChecker _targetChecker;
+        private readonly ModLoadingContext _loadingContext;
+        private readonly ModSourceGroup _sources;
         private readonly List<IMod> _mods;
         private readonly Dictionary<string, IMod> _modsMap;
-        private readonly ModLoader _loader;
-        private readonly ILocalModInstaller _installer;
-        private readonly ModSourceGroup _sources;
-        private readonly IModCompatibilityChecker _compatibilityChecker;
 
         /// <summary>
         /// Creates a UniMod instance with a default configuration. You will probably want to use this in most cases.
         /// </summary>
-        public static UniModContext CreateDefaultContext(string targetId, string targetVersion)
+        public static UniModContext CreateDefaultContext(string appId, string appVersion)
         {
             string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
             var localModSource = new LocalModSource(installationFolder);
-            var compatibilityChecker = new ModCompatibilityChecker(targetId, targetVersion);
-            var context = new UniModContext(installer, compatibilityChecker, localModSource);
+            var targetChecker = new ModTargetChecker(appId, appVersion);
+            var context = new UniModContext(installer, targetChecker, localModSource);
             
             return context;
         }
@@ -39,34 +41,33 @@ namespace Katas.UniMod
         /// <summary>
         /// Creates a UniMod instance with a default configuration and defining your own compatibility checker. You will probably want to use this in most cases.
         /// </summary>
-        public static UniModContext CreateDefaultContext(IModCompatibilityChecker compatibilityChecker)
+        public static UniModContext CreateDefaultContext(IModTargetChecker targetChecker)
         {
             string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
             var localModSource = new LocalModSource(installationFolder);
-            var context = new UniModContext(installer, compatibilityChecker, localModSource);
+            var context = new UniModContext(installer, targetChecker, localModSource);
             
             return context;
         }
 
-        public UniModContext(ILocalModInstaller installer, IModCompatibilityChecker compatibilityChecker)
-            : this(installer, compatibilityChecker, Array.Empty<IModSource>()) { }
+        public UniModContext(ILocalModInstaller installer, IModTargetChecker targetChecker)
+            : this(installer, targetChecker, Array.Empty<IModSource>()) { }
 
-        public UniModContext(ILocalModInstaller installer, IModCompatibilityChecker compatibilityChecker, params IModSource[] sources)
-            : this(installer, compatibilityChecker, sources as IEnumerable<IModSource>) { }
+        public UniModContext(ILocalModInstaller installer, IModTargetChecker targetChecker, params IModSource[] sources)
+            : this(installer, targetChecker, sources as IEnumerable<IModSource>) { }
         
-        public UniModContext(ILocalModInstaller installer, IModCompatibilityChecker compatibilityChecker, IEnumerable<IModSource> sources)
+        public UniModContext(ILocalModInstaller installer, IModTargetChecker targetChecker, IEnumerable<IModSource> sources)
         {
+            _installer = installer;
+            _targetChecker = targetChecker;
+            _loadingContext = new ModLoadingContext(this, _targetChecker);
+            _sources = new ModSourceGroup(sources);
             _mods = new List<IMod>();
             _modsMap = new Dictionary<string, IMod>();
-            _loader = new ModLoader(this);
-            _installer = installer;
-            _sources = new ModSourceGroup(sources);
-            InstallationFolder = _installer.InstallationFolder;
             
             Mods = _mods.AsReadOnly();
-            AllLoadingInfo = _loader.AllLoadingInfo;
-            _compatibilityChecker = compatibilityChecker;
+            Statuses = _loadingContext.Statuses;
             Sources = _sources.Sources;
         }
         
@@ -98,31 +99,31 @@ namespace Katas.UniMod
                     if (mod is not null)
                         _modsMap[mod.Info.Id] = mod;
                 
-                // set the mods to the loader so it properly updates the loading information (dependency graphs, etc)
-                _loader.SetMods(_mods);
+                // rebuild the mod loading context
+                _loadingContext.RebuildContext(_mods);
             }
         }
 
         #region WRAPPERS
-        // mod loader
-        public IModLoadingInfo GetLoadingInfo(IMod mod)
-            => _loader.GetLoadingInfo(mod);
-        public IModLoadingInfo GetLoadingInfo(string modId)
-            => _loader.GetLoadingInfo(modId);
+        // mod loading context
+        public IModStatus GetStatus(IMod mod)
+            => _loadingContext.GetStatus(mod);
+        public IModStatus GetStatus(string modId)
+            => _loadingContext.GetStatus(modId);
         public UniTask<bool> TryLoadAllModsAsync()
-            => _loader.TryLoadAllModsAsync();
-        public UniTask<bool> TryLoadModsAndDependenciesAsync(params IMod[] mods)
-            => _loader.TryLoadModsAndDependenciesAsync(mods);
-        public UniTask<bool> TryLoadModsAndDependenciesAsync(IEnumerable<IMod> mods)
-            => _loader.TryLoadModsAndDependenciesAsync(mods);
-        public UniTask<bool> TryLoadModsAndDependenciesAsync(params string[] modIds)
-            => _loader.TryLoadModsAndDependenciesAsync(modIds);
-        public UniTask<bool> TryLoadModsAndDependenciesAsync(IEnumerable<string> modIds)
-            => _loader.TryLoadModsAndDependenciesAsync(modIds);
-        public UniTask<bool> TryLoadModAndDependenciesAsync(IMod mod)
-            => _loader.TryLoadModAndDependenciesAsync(mod);
-        public UniTask<bool> TryLoadModAndDependenciesAsync(string modId)
-            => _loader.TryLoadModAndDependenciesAsync(modId);
+            => _loadingContext.TryLoadAllModsAsync();
+        public UniTask<bool> TryLoadModsAsync(params IMod[] mods)
+            => _loadingContext.TryLoadModsAsync(mods);
+        public UniTask<bool> TryLoadModsAsync(IEnumerable<IMod> mods)
+            => _loadingContext.TryLoadModsAsync(mods);
+        public UniTask<bool> TryLoadModsAsync(params string[] modIds)
+            => _loadingContext.TryLoadModsAsync(modIds);
+        public UniTask<bool> TryLoadModsAsync(IEnumerable<string> modIds)
+            => _loadingContext.TryLoadModsAsync(modIds);
+        public UniTask<bool> TryLoadModAsync(IMod mod)
+            => _loadingContext.TryLoadModAsync(mod);
+        public UniTask<bool> TryLoadModAsync(string modId)
+            => _loadingContext.TryLoadModAsync(modId);
 
         // local mod installer
         public UniTask DownloadAndInstallModsAsync(IEnumerable<string> modUrls, CancellationToken cancellationToken = default)
@@ -155,14 +156,6 @@ namespace Katas.UniMod
             => _sources.RemoveSources(sources);
         public void ClearSources()
             => _sources.ClearSources();
-        
-        // compatibility checker
-        public ModIncompatibilities GetIncompatibilities(ModTargetInfo target)
-            => _compatibilityChecker.GetIncompatibilities(target);
-        public bool IsCompatible(ModTargetInfo target, out ModIncompatibilities incompatibilities)
-            => _compatibilityChecker.IsCompatible(target, out incompatibilities);
-        public bool IsCompatible(ModTargetInfo target)
-            => _compatibilityChecker.IsCompatible(target);
         #endregion
 
         private async UniTask RefreshLocalInstallations()

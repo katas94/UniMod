@@ -17,7 +17,6 @@ namespace Katas.UniMod
         public readonly string ModFolder;
 
         public ModInfo Info { get; }
-        public ModIncompatibilities Incompatibilities { get; }
         public bool IsLoaded { get; private set; }
         public IResourceLocator ResourceLocator { get; private set; }
         public IReadOnlyList<Assembly> LoadedAssemblies => _loadedAssemblies;

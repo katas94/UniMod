@@ -121,8 +121,8 @@ namespace Katas.UniMod.Editor
                 Target = new ModTargetInfo()
                 {
                     UniModVersion = UniMod.Version,
-                    TargetId = string.IsNullOrEmpty(config.targetId) ? null : config.targetId,
-                    TargetVersion = string.IsNullOrEmpty(config.targetVersion) ? null : config.targetVersion,
+                    AppId = string.IsNullOrEmpty(config.targetId) ? null : config.targetId,
+                    AppVersion = string.IsNullOrEmpty(config.targetVersion) ? null : config.targetVersion,
                     Platform = platform,
                 },
                 Id = config.modId,

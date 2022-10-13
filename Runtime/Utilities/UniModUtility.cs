@@ -50,22 +50,22 @@ namespace Katas.UniMod
         }
 
         /// <summary>
-        /// Whether the given target semantic version is compatible with the given current one or not.
+        /// Whether or not the given semantic version is supported by the given current one.
         /// </summary>
-        public static bool IsTargetSemanticVersionCompatibleWith(string targetVersion, string currentVersion, bool treatNonCompliantVersionsAsCompatible = false)
+        public static bool IsSemanticVersionSupportedByCurrent(string version, string currentVersion, bool treatNonSemanticVersionsAsCompatible = false)
         {
-            if (!SemVersion.TryParse(targetVersion, SemVersionStyles.Strict, out SemVersion target))
-                return treatNonCompliantVersionsAsCompatible;
+            if (!SemVersion.TryParse(version, SemVersionStyles.Strict, out SemVersion target))
+                return treatNonSemanticVersionsAsCompatible;
             if (!SemVersion.TryParse(currentVersion, SemVersionStyles.Strict, out SemVersion current))
-                return treatNonCompliantVersionsAsCompatible;
+                return treatNonSemanticVersionsAsCompatible;
             
-            return IsTargetSemanticVersionCompatibleWith(target, current);
+            return IsSemanticVersionSupportedByCurrent(target, current);
         }
         
         /// <summary>
-        /// Whether the given target semantic version is compatible with the given current one or not.
+        /// Whether or not the given semantic version is supported by the given current one.
         /// </summary>
-        public static bool IsTargetSemanticVersionCompatibleWith(SemVersion target, SemVersion current)
+        public static bool IsSemanticVersionSupportedByCurrent(SemVersion target, SemVersion current)
         {
             return target.Major == current.Minor && target.Patch <= current.Patch;
         }
