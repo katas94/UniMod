@@ -12,13 +12,15 @@ namespace Katas.UniMod
     public sealed class ModLoader : IModLoader
     {
         public IReadOnlyCollection<IModLoadingInfo> AllLoadingInfo { get; }
-        
+
+        private readonly IModContext _context;
         private readonly Dictionary<string, ModLoadingInfo> _loadingInfo;
         private readonly List<IModLoadingInfo> _allLoadingInfo;
         private readonly Dictionary<IMod, UniTaskCompletionSource<bool>> _loadingOperations;
 
-        public ModLoader()
+        public ModLoader(IModContext context)
         {
+            _context = context;
             _loadingInfo = new Dictionary<string, ModLoadingInfo>();
             _allLoadingInfo = new List<IModLoadingInfo>();
             _loadingOperations = new Dictionary<IMod, UniTaskCompletionSource<bool>>();
@@ -119,7 +121,7 @@ namespace Katas.UniMod
 
             try
             {
-                await mod.LoadAsync();
+                await mod.LoadAsync(_context);
                 operation.TrySetResult(true);
                 return true;
             }

@@ -16,7 +16,6 @@ namespace Katas.UniMod
     {
         public readonly string ModFolder;
 
-        public IModContext Context { get; }
         public ModInfo Info { get; }
         public ModIncompatibilities Incompatibilities { get; }
         public bool IsLoaded { get; private set; }
@@ -26,15 +25,13 @@ namespace Katas.UniMod
         private readonly List<Assembly> _loadedAssemblies = new();
         private UniTaskCompletionSource _loadOperation;
 
-        public LocalMod(IModContext context, string modFolder, ModInfo info)
+        public LocalMod(string modFolder, ModInfo info)
         {
-            Context = context;
             ModFolder = modFolder;
             Info = info;
-            Incompatibilities = Context.GetIncompatibilities(Info.Target);
         }
 
-        public async UniTask LoadAsync()
+        public async UniTask LoadAsync(IModContext context)
         {
             if (_loadOperation != null)
             {
@@ -46,7 +43,7 @@ namespace Katas.UniMod
 
             try
             {
-                await InternalLoadAsync();
+                await InternalLoadAsync(context);
                 _loadOperation.TrySetResult();
             }
             catch (Exception exception)
@@ -61,7 +58,7 @@ namespace Katas.UniMod
             throw new NotImplementedException();
         }
 
-        private async UniTask InternalLoadAsync()
+        private async UniTask InternalLoadAsync(IModContext context)
         {
             if (IsLoaded)
                 return;
@@ -87,8 +84,8 @@ namespace Katas.UniMod
             // run startup script and methods
             try
             {
-                await UniModUtility.RunStartupObjectFromContentAsync(this);
-                await UniModUtility.RunStartupMethodsFromAssembliesAsync(this);
+                await UniModUtility.RunStartupObjectFromContentAsync(ResourceLocator, context);
+                await UniModUtility.RunStartupMethodsFromAssembliesAsync(LoadedAssemblies, context);
             }
             catch (Exception exception)
             {

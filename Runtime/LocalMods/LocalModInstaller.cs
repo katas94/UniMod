@@ -13,7 +13,7 @@ namespace Katas.UniMod
     /// <summary>
     /// Default implementation of a local mod installer.
     /// </summary>
-    public class LocalModInstaller : ILocalModInstaller
+    public sealed class LocalModInstaller : ILocalModInstaller
     {
         public string InstallationFolder { get; }
         

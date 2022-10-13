@@ -25,15 +25,13 @@ namespace Katas.UniMod
     /// </summary>
     public interface IMod
     {
-        IModContext Context { get; }
-        
         ModInfo Info { get; }
         ModIncompatibilities Incompatibilities { get; }
         bool IsLoaded { get; }
         IResourceLocator ResourceLocator { get; }
         IReadOnlyList<Assembly> LoadedAssemblies { get; }
         
-        UniTask LoadAsync();
+        UniTask LoadAsync(IModContext context);
         UniTask<Sprite> LoadThumbnailAsync();
     }
 }

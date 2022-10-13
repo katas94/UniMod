@@ -29,10 +29,9 @@ namespace Katas.UniMod
         {
             string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
+            var localModSource = new LocalModSource(installationFolder);
             var compatibilityChecker = new ModCompatibilityChecker(targetId, targetVersion);
-            var context = new UniModContext(installer, compatibilityChecker);
-            var localModSource = new LocalModSource(context, installationFolder);
-            context.AddSource(localModSource);
+            var context = new UniModContext(installer, compatibilityChecker, localModSource);
             
             return context;
         }
@@ -44,9 +43,8 @@ namespace Katas.UniMod
         {
             string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
-            var context = new UniModContext(installer, compatibilityChecker);
-            var localModSource = new LocalModSource(context, installationFolder);
-            context.AddSource(localModSource);
+            var localModSource = new LocalModSource(installationFolder);
+            var context = new UniModContext(installer, compatibilityChecker, localModSource);
             
             return context;
         }
@@ -61,7 +59,7 @@ namespace Katas.UniMod
         {
             _mods = new List<IMod>();
             _modsMap = new Dictionary<string, IMod>();
-            _loader = new ModLoader();
+            _loader = new ModLoader(this);
             _installer = installer;
             _sources = new ModSourceGroup(sources);
             InstallationFolder = _installer.InstallationFolder;
