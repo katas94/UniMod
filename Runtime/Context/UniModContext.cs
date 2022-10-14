@@ -10,62 +10,54 @@ namespace Katas.UniMod
     /// </summary>
     public sealed class UniModContext : IModContext
     {
-        public string AppId => _targetChecker.AppId;
-        public string AppVersion => _targetChecker.AppVersion;
+        public IModdableApp Application { get; }
         public IReadOnlyList<IMod> Mods { get; }
         public IReadOnlyCollection<IModStatus> Statuses { get; }
         public IReadOnlyList<IModSource> Sources { get; }
         public string InstallationFolder => _installer.InstallationFolder;
 
         private readonly ILocalModInstaller _installer;
-        private readonly IModTargetChecker _targetChecker;
         private readonly ModLoadingContext _loadingContext;
         private readonly ModSourceGroup _sources;
         private readonly List<IMod> _mods;
         private readonly Dictionary<string, IMod> _modsMap;
 
         /// <summary>
-        /// Creates a UniMod instance with a default configuration. You will probably want to use this in most cases.
+        /// Creates a default UniMod context for the specified application parameters.
         /// </summary>
         public static UniModContext CreateDefaultContext(string appId, string appVersion)
         {
-            string installationFolder = UniMod.LocalInstallationFolder;
-            var installer = new LocalModInstaller(installationFolder);
-            var localModSource = new LocalModSource(installationFolder);
-            var targetChecker = new ModTargetChecker(appId, appVersion);
-            var context = new UniModContext(installer, targetChecker, localModSource);
-            
-            return context;
+            return CreateDefaultContext(new ModdableApp(appId, appVersion));
         }
         
         /// <summary>
-        /// Creates a UniMod instance with a default configuration and defining your own compatibility checker. You will probably want to use this in most cases.
+        /// Creates a default UniMod context for the specified application.
         /// </summary>
-        public static UniModContext CreateDefaultContext(IModTargetChecker targetChecker)
+        public static UniModContext CreateDefaultContext(IModdableApp application)
         {
             string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
             var localModSource = new LocalModSource(installationFolder);
-            var context = new UniModContext(installer, targetChecker, localModSource);
+            var context = new UniModContext(application, installer, localModSource);
             
             return context;
         }
 
-        public UniModContext(ILocalModInstaller installer, IModTargetChecker targetChecker)
-            : this(installer, targetChecker, Array.Empty<IModSource>()) { }
+        public UniModContext(IModdableApp application, ILocalModInstaller installer)
+            : this(application, installer, Array.Empty<IModSource>()) { }
 
-        public UniModContext(ILocalModInstaller installer, IModTargetChecker targetChecker, params IModSource[] sources)
-            : this(installer, targetChecker, sources as IEnumerable<IModSource>) { }
+        public UniModContext(IModdableApp application, ILocalModInstaller installer, params IModSource[] sources)
+            : this(application, installer, sources as IEnumerable<IModSource>) { }
         
-        public UniModContext(ILocalModInstaller installer, IModTargetChecker targetChecker, IEnumerable<IModSource> sources)
+        public UniModContext(IModdableApp application, ILocalModInstaller installer, IEnumerable<IModSource> sources)
         {
             _installer = installer;
-            _targetChecker = targetChecker;
-            _loadingContext = new ModLoadingContext(this, _targetChecker);
+            _loadingContext = new ModLoadingContext(this);
             _sources = new ModSourceGroup(sources);
             _mods = new List<IMod>();
             _modsMap = new Dictionary<string, IMod>();
             
+            Application = application;
             Mods = _mods.AsReadOnly();
             Statuses = _loadingContext.Statuses;
             Sources = _sources.Sources;

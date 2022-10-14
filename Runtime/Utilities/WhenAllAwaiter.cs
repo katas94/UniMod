@@ -4,6 +4,9 @@ using Cysharp.Threading.Tasks;
 
 namespace Katas.UniMod
 {
+    /// <summary>
+    /// Utility class to await multiple task with proper exception throwing.
+    /// </summary>
     internal sealed class WhenAllAwaiter
     {
         public bool IsAwaiting { get; private set; }

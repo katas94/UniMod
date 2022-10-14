@@ -41,15 +41,15 @@ namespace Katas.UniMod
                         results.Add(cause);
         }
 
-        private void Resolve(IDictionary<string, ModStatus> statuses, IModTargetChecker targetChecker)
+        private void Resolve(IDictionary<string, ModStatus> statuses, IModdableApp application)
         {
             if (_resolved)
                 return;
             
             _resolved = true;
             
-            // check for any issues with the mod's target
-            Issues = targetChecker.CheckForIssues(Mod.Info.Target);
+            // get any possible app support issues with the mod
+            Issues = application.GetModIssues(Mod.Info);
             
             if (Mod.Info.Dependencies is null)
                 return;
@@ -66,7 +66,7 @@ namespace Katas.UniMod
                 }
 
                 _dependencies.Add(dependency);
-                dependency.Resolve(statuses, targetChecker);
+                dependency.Resolve(statuses, application);
                 
                 // check version support
                 if (!UniModUtility.IsSemanticVersionSupportedByCurrent(version, dependency.Mod.Info.Version))
@@ -119,13 +119,13 @@ namespace Katas.UniMod
             causes.Add(status);
         }
         
-        public static void ResolveStatuses(IEnumerable<IMod> mods, IModTargetChecker targetChecker, ICollection<ModStatus> statuses)
+        public static void ResolveStatuses(IEnumerable<IMod> mods, IModdableApp application, ICollection<ModStatus> statuses)
         {
             if (mods is null || statuses is null)
                 return;
             
             var dictionary = DictionaryPool<string, ModStatus>.Pick();
-            ResolveStatuses(mods, targetChecker, dictionary);
+            ResolveStatuses(mods, application, dictionary);
             
             foreach (ModStatus status in dictionary.Values)
                 statuses.Add(status);
@@ -133,12 +133,12 @@ namespace Katas.UniMod
             DictionaryPool<string, ModStatus>.Release(dictionary);
         }
         
-        public static void ResolveStatuses(IEnumerable<IMod> mods, IModTargetChecker targetChecker, IDictionary<string, ModStatus> statuses)
+        public static void ResolveStatuses(IEnumerable<IMod> mods, IModdableApp application, IDictionary<string, ModStatus> statuses)
         {
             foreach (IMod mod in mods)
                 statuses[mod.Info.Id] = new ModStatus(mod);
             foreach (ModStatus status in statuses.Values)
-                status.Resolve(statuses, targetChecker);
+                status.Resolve(statuses, application);
         }
     }
 }

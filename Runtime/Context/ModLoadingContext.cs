@@ -14,15 +14,13 @@ namespace Katas.UniMod
         public IReadOnlyCollection<IModStatus> Statuses { get; }
 
         private readonly IModContext _context;
-        private readonly IModTargetChecker _targetChecker;
         private readonly Dictionary<string, ModStatus> _statuses;
         private readonly List<IModStatus> _statusesList;
         private readonly Dictionary<IMod, UniTaskCompletionSource<bool>> _loadingOperations;
 
-        public ModLoadingContext(IModContext context, IModTargetChecker targetChecker)
+        public ModLoadingContext(IModContext context)
         {
             _context = context;
-            _targetChecker = targetChecker;
             _statuses = new Dictionary<string, ModStatus>();
             _statusesList = new List<IModStatus>();
             _loadingOperations = new Dictionary<IMod, UniTaskCompletionSource<bool>>();
@@ -33,7 +31,7 @@ namespace Katas.UniMod
         {
             _statuses.Clear();
             _statusesList.Clear();
-            ModStatus.ResolveStatuses(mods, _targetChecker, _statuses);
+            ModStatus.ResolveStatuses(mods, _context.Application, _statuses);
             _statusesList.AddRange(_statuses.Values);
         }
 

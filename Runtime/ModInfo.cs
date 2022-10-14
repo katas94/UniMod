@@ -30,10 +30,12 @@ namespace Katas.UniMod
     public struct ModTargetInfo
     {
         [JsonRequired]
+        public string UnityVersion;
+        [JsonRequired]
         public string UniModVersion;
+        public string Platform;
         public string AppId;
         public string AppVersion;
-        public string Platform;
     }
 
     public enum ModType
