@@ -49,7 +49,7 @@ namespace Katas.UniMod
             _resolved = true;
             
             // get any possible app support issues with the mod
-            Issues = application.GetModIssues(Mod.Info);
+            Issues = application.GetModIssues(Mod);
             
             if (Mod.Info.Dependencies is null)
                 return;

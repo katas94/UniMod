@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
 namespace Katas.UniMod
@@ -15,8 +14,6 @@ namespace Katas.UniMod
         public string Id;
         [JsonRequired]
         public string Version;
-        [JsonRequired][JsonConverter(typeof(StringEnumConverter))]
-        public ModType Type;
         public string DisplayName;
         public string Description;
         public Dictionary<string, string> Dependencies;
@@ -36,12 +33,5 @@ namespace Katas.UniMod
         public string Platform;
         public string AppId;
         public string AppVersion;
-    }
-
-    public enum ModType
-    {
-        ContentAndAssemblies = 0,
-        Content = 1,
-        Assemblies = 2
     }
 }

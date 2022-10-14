@@ -5,7 +5,7 @@ namespace Katas.UniMod
         string Id { get; }
         string Version { get; }
         
-        ModIssues GetModIssues(ModInfo info);
-        bool IsModSupported(ModInfo info, out ModIssues issues);
+        ModIssues GetModIssues(IMod mod);
+        bool IsModSupported(IMod mod, out ModIssues issues);
     }
 }

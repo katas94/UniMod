@@ -15,6 +15,8 @@ namespace Katas.UniMod
     {
         ModInfo Info { get; }
         bool IsLoaded { get; }
+        bool ContainsAssets { get; }
+        bool ContainsAssemblies { get; }
         IResourceLocator ResourceLocator { get; }
         IReadOnlyList<Assembly> LoadedAssemblies { get; }
         

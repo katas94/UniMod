@@ -18,9 +18,13 @@ namespace Katas.UniMod
 
         public ModInfo Info { get; }
         public bool IsLoaded { get; private set; }
+        public bool ContainsAssets { get; }
+        public bool ContainsAssemblies { get; }
         public IResourceLocator ResourceLocator { get; private set; }
         public IReadOnlyList<Assembly> LoadedAssemblies => _loadedAssemblies;
         
+        private readonly string _assembliesFolder;
+        private readonly string _catalogPath;
         private readonly List<Assembly> _loadedAssemblies = new();
         private UniTaskCompletionSource _loadOperation;
 
@@ -28,6 +32,11 @@ namespace Katas.UniMod
         {
             ModFolder = modFolder;
             Info = info;
+            
+            _assembliesFolder = Path.Combine(ModFolder, UniMod.AssembliesFolder);
+            _catalogPath = Path.Combine(ModFolder, UniMod.AddressablesCatalogFileName);
+            ContainsAssets = File.Exists(_catalogPath);
+            ContainsAssemblies = Directory.Exists(_assembliesFolder);
         }
 
         public async UniTask LoadAsync(IModContext context)
@@ -62,34 +71,15 @@ namespace Katas.UniMod
             if (IsLoaded)
                 return;
             
-            // load assemblies
-            if (Info.Type is ModType.ContentAndAssemblies or ModType.Assemblies)
-            {
-                string assembliesFolder = Path.Combine(ModFolder, UniMod.AssembliesFolder);
-                await UniModUtility.LoadAssembliesAsync(assembliesFolder, _loadedAssemblies);
-            }
+            if (ContainsAssemblies)
+                await UniModUtility.LoadAssembliesAsync(_assembliesFolder, _loadedAssemblies);
             
-            // load content
-            if (Info.Type is ModType.ContentAndAssemblies or ModType.Content)
-            {
-                // load mod content catalog
-                string catalogPath = Path.Combine(ModFolder, UniMod.AddressablesCatalogFileName);
-                if (!File.Exists(catalogPath))
-                    throw CreateLoadFailedException($"Couldn't find mod's Addressables catalogue at {catalogPath}");
-                
-                ResourceLocator = await Addressables.LoadContentCatalogAsync(catalogPath, true);
-            }
+            if (ContainsAssets)
+                ResourceLocator = await Addressables.LoadContentCatalogAsync(_catalogPath, true);
 
             // run startup script and methods
-            try
-            {
-                await UniModUtility.RunStartupObjectFromContentAsync(ResourceLocator, context);
-                await UniModUtility.RunStartupMethodsFromAssembliesAsync(LoadedAssemblies, context);
-            }
-            catch (Exception exception)
-            {
-                throw CreateLoadFailedException($"Something went wrong while running mod startup.\n{exception}");
-            }
+            await UniModUtility.RunStartupObjectFromContentAsync(ResourceLocator, context);
+            await UniModUtility.RunStartupMethodsFromAssembliesAsync(LoadedAssemblies, context);
             
             IsLoaded = true;
         }

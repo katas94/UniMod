@@ -22,7 +22,7 @@ namespace Katas.UniMod
             Version = appVersion;
         }
         
-        public virtual ModIssues GetModIssues(ModInfo info)
+        public virtual ModIssues GetModIssues(IMod mod)
         {
             var issues = ModIssues.None;
             
@@ -30,13 +30,13 @@ namespace Katas.UniMod
             bool isAppVersionSupported;
 
             // if the mod was created for this app, then check if the version is supported
-            if (info.Target.AppId == Id)
+            if (mod.Info.Target.AppId == Id)
             {
                 isAppSupported = true;
-                isAppVersionSupported = !IsAppVersionSupported(info.Target.AppVersion);
+                isAppVersionSupported = !IsAppVersionSupported(mod.Info.Target.AppVersion);
             }
             // if the mod is standalone (does not target a specific app), then set it supported depending on the config
-            else if (string.IsNullOrEmpty(info.Target.AppId))
+            else if (string.IsNullOrEmpty(mod.Info.Target.AppId))
             {
                 isAppSupported = SupportStandaloneMods;
                 isAppVersionSupported = true; // skip app version checking
@@ -49,25 +49,25 @@ namespace Katas.UniMod
             }
             
             // register the issues
-            if (Application.unityVersion != info.Target.UnityVersion)
+            if (Application.unityVersion != mod.Info.Target.UnityVersion)
                 issues |= ModIssues.UnsupportedUnityVersion;
-            if (!UniModUtility.IsSemanticVersionSupportedByCurrent(info.Target.UniModVersion, UniMod.Version))
+            if (!UniModUtility.IsSemanticVersionSupportedByCurrent(mod.Info.Target.UniModVersion, UniMod.Version))
                 issues |= ModIssues.UnsupportedUniModVersion;
-            if (!UniModUtility.IsPlatformCompatible(info.Target.Platform))
+            if (!UniModUtility.IsPlatformCompatible(mod.Info.Target.Platform))
                 issues |= ModIssues.UnsupportedPlatform;
             if (!isAppSupported)
                 issues |= ModIssues.UnsupportedApp;
             if (!isAppVersionSupported)
                 issues |= ModIssues.UnsupportedAppVersion;
-            if (!SupportModsContainingAssemblies && info.Type is ModType.ContentAndAssemblies or ModType.Assemblies)
+            if (!SupportModsContainingAssemblies && mod.ContainsAssemblies)
                 issues |= ModIssues.UnsupportedContent;
             
             return issues;
         }
         
-        public virtual bool IsModSupported(ModInfo info, out ModIssues issues)
+        public virtual bool IsModSupported(IMod mod, out ModIssues issues)
         {
-            issues = GetModIssues(info);
+            issues = GetModIssues(mod);
             return issues == ModIssues.None;
         }
         

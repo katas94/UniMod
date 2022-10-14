@@ -14,7 +14,7 @@ namespace Katas.UniMod.Editor
     /// that will not show up on Addressables after the build is finished. It will also setup all the necessary settings for
     /// the build and will restore the previous settings after the build.
     /// </summary>
-    public sealed class ModContentBuilder
+    public sealed class ModAssetsBuilder
     {
         private const string ModProfileName = "__unimod_profile";
         
@@ -41,11 +41,11 @@ namespace Katas.UniMod.Editor
         }
 
         /// <summary>
-        /// Builds the mod content for the given mod ID into the given output folder. All assets added until this point
+        /// Builds the mod assets for the given mod ID into the given output folder. All assets added until this point
         /// will be built and cleared after, which means that you can reuse this instance to add new assets and perform
         /// another content build.
         /// </summary>
-        public AddressablesPlayerBuildResult BuildContent(string modId, string outputFolder)
+        public AddressablesPlayerBuildResult Build(string modId, string outputFolder)
         {
             if (string.IsNullOrEmpty(modId))
                 throw new Exception("The given mod ID is null or empty");
