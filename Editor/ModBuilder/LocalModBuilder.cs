@@ -123,6 +123,11 @@ namespace Katas.UniMod.Editor
             // create the mod info file
             ModInfo info = new ()
             {
+                Id = config.modId,
+                Version = config.modVersion,
+                DisplayName = config.displayName,
+                Description = config.description,
+                Dependencies = CreateDependenciesFromEntries(config.dependencies),
                 Target = new ModTargetInfo()
                 {
                     UnityVersion = Application.unityVersion,
@@ -131,10 +136,6 @@ namespace Katas.UniMod.Editor
                     AppId = string.IsNullOrEmpty(config.appId) ? null : config.appId,
                     AppVersion = string.IsNullOrEmpty(config.appVersion) ? null : config.appVersion,
                 },
-                Id = config.modId,
-                Version = config.modVersion,
-                DisplayName = config.displayName,
-                Description = config.description,
             };
             
             string infoJson = JsonConvert.SerializeObject(info, Formatting.Indented);
@@ -179,6 +180,17 @@ namespace Katas.UniMod.Editor
                 default:
                     return false;
             }
+        }
+
+        private static Dictionary<string, string> CreateDependenciesFromEntries(IEnumerable<ModConfig.ModEntry> entries)
+        {
+            var dependencies = new Dictionary<string, string>();
+            
+            foreach (ModConfig.ModEntry entry in entries)
+                if (!string.IsNullOrEmpty(entry.id) && !string.IsNullOrEmpty(entry.version))
+                    dependencies[entry.id] = entry.version;
+            
+            return dependencies.Count == 0 ? null : dependencies;
         }
     }
 }
