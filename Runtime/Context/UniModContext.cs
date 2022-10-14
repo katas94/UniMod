@@ -70,7 +70,7 @@ namespace Katas.UniMod
 
         public async UniTask RefreshAsync()
         {
-            await RefreshLocalInstallations(); // installs and deletes any mod files added in the installation folder
+            await RefreshLocalInstallations(); // installs any mod files added in the installation folder (and deletes the file if succeeded)
             await FetchFromAllSources();
             
             // get all mods from the sources after the fetch and reconstruct the map
@@ -87,9 +87,16 @@ namespace Katas.UniMod
             }
             finally
             {
-                foreach (IMod mod in _mods)
-                    if (mod is not null)
+                // map the mods that loaded successfully
+                for (int i = 0; i < _mods.Count; ++i)
+                {
+                    IMod mod = _mods[i];
+                    
+                    if (mod is null)
+                        _mods.RemoveAt(i--);
+                    else
                         _modsMap[mod.Info.Id] = mod;
+                }
                 
                 // rebuild the mod loading context
                 _loadingContext.RebuildContext(_mods);
