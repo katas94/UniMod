@@ -90,7 +90,8 @@ namespace Katas.UniMod
         
         private async UniTask<bool> TryLoadModAsync(IModStatus status)
         {
-            if (!status.CanBeLoaded)
+            // don't load the mod if it has any issues
+            if (status.Issues != ModIssues.None)
                 return false;
             
             IMod mod = status.Mod;

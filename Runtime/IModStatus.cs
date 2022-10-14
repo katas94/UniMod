@@ -13,11 +13,6 @@ namespace Katas.UniMod
         IMod Mod { get; }
         
         /// <summary>
-        /// True if there are no loading issues for the mod.
-        /// </summary>
-        bool CanBeLoaded => Issues == ModIssues.None;
-        
-        /// <summary>
         /// Issues that can cause the mod to not load properly.
         /// </summary>
         ModIssues Issues { get; }
