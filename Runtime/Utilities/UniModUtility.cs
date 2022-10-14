@@ -131,15 +131,15 @@ namespace Katas.UniMod
         }
 
         /// <summary>
-        /// Given a resource locator it will try to load the ModStartup object and invoke it with the given context.
+        /// Given a mod instance it will try to load the ModStartup object from its ResourceLocator and invoke it with the given context.
         /// </summary>
-        public static async UniTask RunStartupObjectFromContentAsync(IResourceLocator resourceLocator, IModContext context)
+        public static async UniTask RunStartupObjectFromContentAsync(IModContext context, IMod mod)
         {
-            if (resourceLocator is null)
+            if (mod.ResourceLocator is null)
                 return;
             
             // check if the mod contains a startup script
-            if (!resourceLocator.Locate(UniMod.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
+            if (!mod.ResourceLocator.Locate(UniMod.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
                 return;
             
             // load and execute the startup script
@@ -149,7 +149,7 @@ namespace Katas.UniMod
             
             var startup = await Addressables.LoadAssetAsync<ModStartup>(location);
             if (startup)
-                await startup.StartAsync(context);
+                await startup.StartAsync(context, mod);
         }
         
         /// <summary>

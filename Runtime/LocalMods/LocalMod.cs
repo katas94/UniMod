@@ -78,7 +78,7 @@ namespace Katas.UniMod
                 ResourceLocator = await Addressables.LoadContentCatalogAsync(_catalogPath, true);
 
             // run startup script and methods
-            await UniModUtility.RunStartupObjectFromContentAsync(ResourceLocator, context);
+            await UniModUtility.RunStartupObjectFromContentAsync(context, this);
             await UniModUtility.RunStartupMethodsFromAssembliesAsync(LoadedAssemblies, context);
             
             IsLoaded = true;
