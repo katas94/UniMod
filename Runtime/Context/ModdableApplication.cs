@@ -13,8 +13,8 @@ namespace Katas.UniMod
         public string Version { get; }
         
         public bool SupportStandaloneMods = true;
-        public bool SupportModsCreatedForOtherApps = false;
         public bool SupportModsContainingAssemblies = true;
+        public bool SupportModsCreatedForOtherApps = false;
         
         public ModdableApplication(string appId, string appVersion)
         {
