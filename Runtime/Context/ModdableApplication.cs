@@ -3,11 +3,11 @@ using UnityEngine;
 namespace Katas.UniMod
 {
     /// <summary>
-    /// Default moddable app implementation which can be extended for overriding the app versioning rules. It also provides some
+    /// Default moddable application implementation which can be extended for overriding the app versioning rules. It also provides some
     /// extra configuration parameters like the ability to enable disable support for standalone mods or mods created for other apps and
     /// the ability to disable support for mods containing assemblies.
     /// </summary>
-    public class ModdableApp : IModdableApp
+    public class ModdableApplication : IModdableApplication
     {
         public string Id { get; }
         public string Version { get; }
@@ -16,7 +16,7 @@ namespace Katas.UniMod
         public bool SupportModsCreatedForOtherApps = false;
         public bool SupportModsContainingAssemblies = true;
         
-        public ModdableApp(string appId, string appVersion)
+        public ModdableApplication(string appId, string appVersion)
         {
             Id = appId;
             Version = appVersion;

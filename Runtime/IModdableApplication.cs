@@ -1,6 +1,6 @@
 namespace Katas.UniMod
 {
-    public interface IModdableApp
+    public interface IModdableApplication
     {
         string Id { get; }
         string Version { get; }

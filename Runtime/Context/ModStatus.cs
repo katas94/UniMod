@@ -41,7 +41,7 @@ namespace Katas.UniMod
                         results.Add(cause);
         }
 
-        private void Resolve(IDictionary<string, ModStatus> statuses, IModdableApp application)
+        private void Resolve(IDictionary<string, ModStatus> statuses, IModdableApplication application)
         {
             if (_resolved)
                 return;
@@ -119,7 +119,7 @@ namespace Katas.UniMod
             causes.Add(status);
         }
         
-        public static void ResolveStatuses(IEnumerable<IMod> mods, IModdableApp application, ICollection<ModStatus> statuses)
+        public static void ResolveStatuses(IEnumerable<IMod> mods, IModdableApplication application, ICollection<ModStatus> statuses)
         {
             if (mods is null || statuses is null)
                 return;
@@ -133,7 +133,7 @@ namespace Katas.UniMod
             DictionaryPool<string, ModStatus>.Release(dictionary);
         }
         
-        public static void ResolveStatuses(IEnumerable<IMod> mods, IModdableApp application, IDictionary<string, ModStatus> statuses)
+        public static void ResolveStatuses(IEnumerable<IMod> mods, IModdableApplication application, IDictionary<string, ModStatus> statuses)
         {
             foreach (IMod mod in mods)
                 statuses[mod.Info.Id] = new ModStatus(mod);

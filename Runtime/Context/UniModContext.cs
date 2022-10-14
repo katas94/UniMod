@@ -10,7 +10,7 @@ namespace Katas.UniMod
     /// </summary>
     public sealed class UniModContext : IModContext
     {
-        public IModdableApp Application { get; }
+        public IModdableApplication Application { get; }
         public IReadOnlyList<IMod> Mods { get; }
         public IReadOnlyCollection<IModStatus> Statuses { get; }
         public IReadOnlyList<IModSource> Sources { get; }
@@ -27,13 +27,13 @@ namespace Katas.UniMod
         /// </summary>
         public static UniModContext CreateDefaultContext(string appId, string appVersion)
         {
-            return CreateDefaultContext(new ModdableApp(appId, appVersion));
+            return CreateDefaultContext(new ModdableApplication(appId, appVersion));
         }
         
         /// <summary>
         /// Creates a default UniMod context for the specified application.
         /// </summary>
-        public static UniModContext CreateDefaultContext(IModdableApp application)
+        public static UniModContext CreateDefaultContext(IModdableApplication application)
         {
             string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
@@ -43,13 +43,13 @@ namespace Katas.UniMod
             return context;
         }
 
-        public UniModContext(IModdableApp application, ILocalModInstaller installer)
+        public UniModContext(IModdableApplication application, ILocalModInstaller installer)
             : this(application, installer, Array.Empty<IModSource>()) { }
 
-        public UniModContext(IModdableApp application, ILocalModInstaller installer, params IModSource[] sources)
+        public UniModContext(IModdableApplication application, ILocalModInstaller installer, params IModSource[] sources)
             : this(application, installer, sources as IEnumerable<IModSource>) { }
         
-        public UniModContext(IModdableApp application, ILocalModInstaller installer, IEnumerable<IModSource> sources)
+        public UniModContext(IModdableApplication application, ILocalModInstaller installer, IEnumerable<IModSource> sources)
         {
             _installer = installer;
             _loadingContext = new ModLoadingContext(this);

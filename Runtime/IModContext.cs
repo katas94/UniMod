@@ -5,7 +5,7 @@ namespace Katas.UniMod
 {
     public interface IModContext : IModLoadingContext, ILocalModInstaller, IModSourceGroup
     {
-        IModdableApp Application { get; }
+        IModdableApplication Application { get; }
         IReadOnlyList<IMod> Mods { get; }
 
         IMod GetMod(string modId);
