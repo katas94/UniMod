@@ -153,31 +153,31 @@ namespace Katas.UniMod
             return UniTask.CompletedTask;
         }
 
-        public UniTask<IMod> GetModAsync(string modId)
+        public UniTask<IModLoader> GetLoaderAsync(string id)
         {
             foreach (ModSourceEntry entry in _entries)
-                if (entry.Ids.Contains(modId))
-                    return entry.Source.GetModAsync(modId);
+                if (entry.Ids.Contains(id))
+                    return entry.Source.GetLoaderAsync(id);
             
-            throw new Exception($"Couldn't find mod ID {modId}");
+            throw new Exception($"Couldn't find loader for ID {id}");
         }
 
-        public async UniTask GetModsAsync(IEnumerable<string> modIds, ICollection<IMod> results)
+        public async UniTask GetLoadersAsync(IEnumerable<string> ids, ICollection<IModLoader> results)
         {
-            (IMod[] mods, Exception exception) = await UniTaskUtility.WhenAllNoThrow(modIds.Select(GetModAsync));
+            (IModLoader[] loaders, Exception exception) = await UniTaskUtility.WhenAllNoThrow(ids.Select(GetLoaderAsync));
             
-            foreach (IMod mod in mods)
-                if (mod is not null)
-                    results.Add(mod);
+            foreach (IModLoader loader in loaders)
+                if (loader is not null)
+                    results.Add(loader);
             
             if (exception is not null)
                 throw exception;
         }
 
-        public UniTask GetAllModsAsync(ICollection<IMod> results)
+        public UniTask GetAllLoadersAsync(ICollection<IModLoader> results)
         {
             return UniTaskUtility.WhenAll(_entries.Select(
-                instance => instance.Source.GetModsAsync(instance.Ids, results)
+                instance => instance.Source.GetLoadersAsync(instance.Ids, results)
             ));
         }
 

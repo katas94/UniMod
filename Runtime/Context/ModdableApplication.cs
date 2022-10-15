@@ -30,13 +30,13 @@ namespace Katas.UniMod
             bool isAppVersionSupported;
 
             // if the mod was created for this app, then check if the version is supported
-            if (mod.Info.Target.AppId == Id)
+            if (mod.Target.AppId == Id)
             {
                 isAppSupported = true;
-                isAppVersionSupported = !IsAppVersionSupported(mod.Info.Target.AppVersion);
+                isAppVersionSupported = !IsAppVersionSupported(mod.Target.AppVersion);
             }
             // if the mod is standalone (does not target a specific app), then set it supported depending on the config
-            else if (string.IsNullOrEmpty(mod.Info.Target.AppId))
+            else if (string.IsNullOrEmpty(mod.Target.AppId))
             {
                 isAppSupported = SupportStandaloneMods;
                 isAppVersionSupported = true; // skip app version checking
@@ -49,11 +49,11 @@ namespace Katas.UniMod
             }
             
             // register the issues
-            if (Application.unityVersion != mod.Info.Target.UnityVersion)
+            if (Application.unityVersion != mod.Target.UnityVersion)
                 issues |= ModIssues.UnsupportedUnityVersion;
-            if (!UniModUtility.IsSemanticVersionSupportedByCurrent(mod.Info.Target.UniModVersion, UniMod.Version))
+            if (!UniModUtility.IsSemanticVersionSupportedByCurrent(mod.Target.UniModVersion, UniMod.Version))
                 issues |= ModIssues.UnsupportedUniModVersion;
-            if (!UniModUtility.IsPlatformCompatible(mod.Info.Target.Platform))
+            if (!UniModUtility.IsPlatformCompatible(mod.Target.Platform))
                 issues |= ModIssues.UnsupportedPlatform;
             if (!isAppSupported)
                 issues |= ModIssues.UnsupportedApp;

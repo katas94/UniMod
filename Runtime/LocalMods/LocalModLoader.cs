@@ -10,9 +10,9 @@ using UnityEngine.AddressableAssets.ResourceLocators;
 namespace Katas.UniMod
 {
     /// <summary>
-    /// Mod implementation for mods installed locally.
+    /// Mod loader implementation for mods installed locally.
     /// </summary>
-    public sealed class LocalMod : IMod
+    public sealed class LocalModLoader : IModLoader
     {
         public readonly string ModFolder;
 
@@ -28,7 +28,7 @@ namespace Katas.UniMod
         private readonly List<Assembly> _loadedAssemblies = new();
         private UniTaskCompletionSource _loadOperation;
 
-        public LocalMod(string modFolder, ModInfo info)
+        public LocalModLoader(string modFolder, ModInfo info)
         {
             ModFolder = modFolder;
             Info = info;
@@ -37,9 +37,10 @@ namespace Katas.UniMod
             _catalogPath = Path.Combine(ModFolder, UniMod.AddressablesCatalogFileName);
             ContainsAssets = File.Exists(_catalogPath);
             ContainsAssemblies = Directory.Exists(_assembliesFolder);
+            ResourceLocator = EmptyResourceLocator.Instance;
         }
 
-        public async UniTask LoadAsync(IModContext context)
+        public async UniTask LoadAsync(IModContext context, IMod mod)
         {
             if (_loadOperation != null)
             {
@@ -51,7 +52,7 @@ namespace Katas.UniMod
 
             try
             {
-                await InternalLoadAsync(context);
+                await InternalLoadAsync(context, mod);
                 _loadOperation.TrySetResult();
             }
             catch (Exception exception)
@@ -61,12 +62,12 @@ namespace Katas.UniMod
             }
         }
 
-        public UniTask<Sprite> LoadThumbnailAsync()
+        public UniTask<Texture2D> LoadThumbnailAsync()
         {
             throw new NotImplementedException();
         }
 
-        private async UniTask InternalLoadAsync(IModContext context)
+        private async UniTask InternalLoadAsync(IModContext context, IMod mod)
         {
             if (IsLoaded)
                 return;
@@ -78,15 +79,10 @@ namespace Katas.UniMod
                 ResourceLocator = await Addressables.LoadContentCatalogAsync(_catalogPath, true);
 
             // run startup script and methods
-            await UniModUtility.RunStartupObjectFromContentAsync(context, this);
-            await UniModUtility.RunStartupMethodsFromAssembliesAsync(LoadedAssemblies, context);
+            await UniModUtility.RunModStartupFromAssetsAsync(context, mod);
+            await UniModUtility.RunStartupMethodsFromAssembliesAsync(LoadedAssemblies, context, mod);
             
             IsLoaded = true;
-        }
-
-        private Exception CreateLoadFailedException(string message)
-        {
-            return new Exception($"Failed to load {Info.Id}: {message}");
         }
     }
 }

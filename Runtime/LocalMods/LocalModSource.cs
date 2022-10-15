@@ -14,13 +14,13 @@ namespace Katas.UniMod
         public readonly string InstallationFolder;
         
         private readonly HashSet<string> _modIds;
-        private readonly Dictionary<string, LocalMod> _mods;
+        private readonly Dictionary<string, LocalModLoader> _loaders;
 
         public LocalModSource(string installationFolder)
         {
             InstallationFolder = installationFolder;
             _modIds = new HashSet<string>();
-            _mods = new Dictionary<string, LocalMod>();
+            _loaders = new Dictionary<string, LocalModLoader>();
         }
         
         public UniTask FetchAsync()
@@ -49,25 +49,25 @@ namespace Katas.UniMod
             return UniTask.CompletedTask;
         }
 
-        public async UniTask<IMod> GetModAsync(string modId)
+        public async UniTask<IModLoader> GetLoaderAsync(string id)
         {
-            if (string.IsNullOrEmpty(modId))
+            if (string.IsNullOrEmpty(id))
                 throw new Exception("Null or empty mod ID");
-            if (!_modIds.Contains(modId))
-                throw new Exception($"Couldn't find mod ID {modId}");
+            if (!_modIds.Contains(id))
+                throw new Exception($"Couldn't find mod ID {id}");
             
-            if (_mods.TryGetValue(modId, out LocalMod mod))
+            if (_loaders.TryGetValue(id, out LocalModLoader mod))
                 return mod;
 
             try
             {
-                mod = await CreateLocalModAsync(modId);
-                _mods[modId] = mod;
+                mod = await CreateLocalModAsync(id);
+                _loaders[id] = mod;
                 return mod;
             }
             catch (Exception exception)
             {
-                throw new Exception($"Failed to get mod with ID: {modId}", exception);
+                throw new Exception($"Failed to get mod with ID: {id}", exception);
             }
             finally
             {
@@ -75,11 +75,11 @@ namespace Katas.UniMod
             }
         }
 
-        public async UniTask GetModsAsync(IEnumerable<string> modIds, ICollection<IMod> results)
+        public async UniTask GetLoadersAsync(IEnumerable<string> ids, ICollection<IModLoader> results)
         {
-            (IMod[] mods, Exception exception) = await UniTaskUtility.WhenAllNoThrow(modIds.Select(GetModAsync));
+            (IModLoader[] mods, Exception exception) = await UniTaskUtility.WhenAllNoThrow(ids.Select(GetLoaderAsync));
             
-            foreach (IMod mod in mods)
+            foreach (IModLoader mod in mods)
                 if (mod is not null)
                     results.Add(mod);
             
@@ -87,14 +87,14 @@ namespace Katas.UniMod
                 throw exception;
         }
 
-        public UniTask GetAllModsAsync(ICollection<IMod> results)
+        public UniTask GetAllLoadersAsync(ICollection<IModLoader> results)
         {
-            return GetModsAsync(_modIds, results);
+            return GetLoadersAsync(_modIds, results);
         }
         
         // Tries to create and return a LocalMod instance from the mod on the installation folder matching the given ID.
         // This method runs, returns and throws on a background thread.
-        private async UniTask<LocalMod> CreateLocalModAsync(string modId)
+        private async UniTask<LocalModLoader> CreateLocalModAsync(string modId)
         {
             string modFolder = Path.Combine(InstallationFolder, modId);
             if (!Directory.Exists(modFolder))
@@ -114,7 +114,7 @@ namespace Katas.UniMod
                 var info = JsonConvert.DeserializeObject<ModInfo>(json);
                 
                 // instantiate and register the mod instance
-                return new LocalMod(modFolder, info);
+                return new LocalModLoader(modFolder, info);
             }
             catch (Exception exception)
             {

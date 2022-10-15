@@ -1,14 +1,12 @@
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
 namespace Katas.UniMod
 {
-    public interface IModContext : IModLoadingContext, ILocalModInstaller, IModSourceGroup
+    public interface IModContext : IModClosure, ILocalModInstaller, IModSourceGroup
     {
-        IModdableApplication Application { get; }
-        IReadOnlyList<IMod> Mods { get; }
+        string ApplicationId { get; }
+        string ApplicationVersion { get; }
 
-        IMod GetMod(string modId);
         UniTask RefreshAsync();
     }
 }

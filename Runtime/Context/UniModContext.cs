@@ -10,17 +10,17 @@ namespace Katas.UniMod
     /// </summary>
     public sealed class UniModContext : IModContext
     {
-        public IModdableApplication Application { get; }
-        public IReadOnlyList<IMod> Mods { get; }
-        public IReadOnlyCollection<IModStatus> Statuses { get; }
-        public IReadOnlyList<IModSource> Sources { get; }
+        public string ApplicationId => _application.Id;
+        public string ApplicationVersion => _application.Version;
+        public IReadOnlyCollection<IMod> Mods => _closure.Mods;
+        public IReadOnlyList<IModSource> Sources => _sources.Sources;
         public string InstallationFolder => _installer.InstallationFolder;
 
+        private readonly IModdableApplication _application;
         private readonly ILocalModInstaller _installer;
-        private readonly ModLoadingContext _loadingContext;
+        private readonly ModClosure _closure;
         private readonly ModSourceGroup _sources;
-        private readonly List<IMod> _mods;
-        private readonly Dictionary<string, IMod> _modsMap;
+        private readonly List<IModLoader> _loaders;
 
         /// <summary>
         /// Creates a default UniMod context for the specified application parameters.
@@ -51,21 +51,11 @@ namespace Katas.UniMod
         
         public UniModContext(IModdableApplication application, ILocalModInstaller installer, IEnumerable<IModSource> sources)
         {
+            _application = application;
             _installer = installer;
-            _loadingContext = new ModLoadingContext(this);
+            _closure = new ModClosure(this, _application);
             _sources = new ModSourceGroup(sources);
-            _mods = new List<IMod>();
-            _modsMap = new Dictionary<string, IMod>();
-            
-            Application = application;
-            Mods = _mods.AsReadOnly();
-            Statuses = _loadingContext.Statuses;
-            Sources = _sources.Sources;
-        }
-        
-        public IMod GetMod(string modId)
-        {
-            return _modsMap.TryGetValue(modId, out IMod mod) ? mod : null;
+            _loaders = new List<IModLoader>();
         }
 
         public async UniTask RefreshAsync()
@@ -73,56 +63,35 @@ namespace Katas.UniMod
             await RefreshLocalInstallations(); // installs any mod files added in the installation folder (and deletes the file if succeeded)
             await FetchFromAllSources();
             
-            // get all mods from the sources after the fetch and reconstruct the map
-            _mods.Clear();
-            _modsMap.Clear();
-
+            // get all loaders from the sources
             try
             {
-                await _sources.GetAllModsAsync(_mods);
+                _loaders.Clear();
+                await _sources.GetAllLoadersAsync(_loaders);
             }
             catch (Exception exception)
             {
-                throw new Exception("[UniModContext] there were some errors while trying to get mods from the sources", exception);
+                throw new Exception("[UniModContext] there were some errors while trying to get the mod loaders from the sources", exception);
             }
             finally
             {
-                // map the mods that loaded successfully
-                for (int i = 0; i < _mods.Count; ++i)
-                {
-                    IMod mod = _mods[i];
-                    
-                    if (mod is null)
-                        _mods.RemoveAt(i--);
-                    else
-                        _modsMap[mod.Info.Id] = mod;
-                }
-                
-                // rebuild the mod loading context
-                _loadingContext.RebuildContext(_mods);
+                // rebuild mod closure with the loaders that were instantiated successfully
+                _closure.RebuildClosure(_loaders);
             }
         }
 
         #region WRAPPERS
         // mod loading context
-        public IModStatus GetStatus(IMod mod)
-            => _loadingContext.GetStatus(mod);
-        public IModStatus GetStatus(string modId)
-            => _loadingContext.GetStatus(modId);
+        public IMod GetMod(string id)
+            => _closure.GetMod(id);
         public UniTask<bool> TryLoadAllModsAsync()
-            => _loadingContext.TryLoadAllModsAsync();
-        public UniTask<bool> TryLoadModsAsync(params IMod[] mods)
-            => _loadingContext.TryLoadModsAsync(mods);
-        public UniTask<bool> TryLoadModsAsync(IEnumerable<IMod> mods)
-            => _loadingContext.TryLoadModsAsync(mods);
-        public UniTask<bool> TryLoadModsAsync(params string[] modIds)
-            => _loadingContext.TryLoadModsAsync(modIds);
-        public UniTask<bool> TryLoadModsAsync(IEnumerable<string> modIds)
-            => _loadingContext.TryLoadModsAsync(modIds);
-        public UniTask<bool> TryLoadModAsync(IMod mod)
-            => _loadingContext.TryLoadModAsync(mod);
-        public UniTask<bool> TryLoadModAsync(string modId)
-            => _loadingContext.TryLoadModAsync(modId);
+            => _closure.TryLoadAllModsAsync();
+        public UniTask<bool> TryLoadModsAsync(params string[] ids)
+            => _closure.TryLoadModsAsync(ids);
+        public UniTask<bool> TryLoadModsAsync(IEnumerable<string> ids)
+            => _closure.TryLoadModsAsync(ids);
+        public UniTask<bool> TryLoadModAsync(string id)
+            => _closure.TryLoadModAsync(id);
 
         // local mod installer
         public UniTask DownloadAndInstallModsAsync(IEnumerable<string> modUrls, CancellationToken cancellationToken = default)

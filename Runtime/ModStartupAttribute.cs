@@ -12,8 +12,8 @@ namespace Katas.UniMod
     /// <code>
     /// static void Method();
     /// static UniTask MethodAsync();
-    /// static void Method(IModContext context);
-    /// static UniTask MethodAsync(IModContext context);
+    /// static void Method(IModContext context, IMod mod);
+    /// static UniTask MethodAsync(IModContext context, IMod mod);
     /// </code>
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]

@@ -3,13 +3,16 @@ using Cysharp.Threading.Tasks;
 
 namespace Katas.UniMod
 {
+    /// <summary>
+    /// A mod source can fetch and provide mod loaders.
+    /// </summary>
     public interface IModSource
     {
         UniTask FetchAsync();
         
         UniTask GetAllIdsAsync(ICollection<string> results);
-        UniTask<IMod> GetModAsync(string modId);
-        UniTask GetModsAsync(IEnumerable<string> modIds, ICollection<IMod> results);
-        UniTask GetAllModsAsync(ICollection<IMod> results);
+        UniTask<IModLoader> GetLoaderAsync(string id);
+        UniTask GetLoadersAsync(IEnumerable<string> ids, ICollection<IModLoader> results);
+        UniTask GetAllLoadersAsync(ICollection<IModLoader> results);
     }
 }
