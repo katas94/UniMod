@@ -127,7 +127,7 @@ namespace Katas.UniMod.Editor
                 Version = config.modVersion,
                 DisplayName = config.displayName,
                 Description = config.description,
-                Dependencies = CreateDependenciesFromEntries(config.dependencies),
+                Dependencies = CreateDependenciesForModInfo(config.dependencies),
                 Target = new ModTargetInfo()
                 {
                     UnityVersion = Application.unityVersion,
@@ -182,11 +182,11 @@ namespace Katas.UniMod.Editor
             }
         }
 
-        private static Dictionary<string, string> CreateDependenciesFromEntries(IEnumerable<ModConfig.ModEntry> entries)
+        private static Dictionary<string, string> CreateDependenciesForModInfo(IEnumerable<ModReference> references)
         {
             var dependencies = new Dictionary<string, string>();
             
-            foreach (ModConfig.ModEntry entry in entries)
+            foreach (ModReference entry in references)
                 if (!string.IsNullOrEmpty(entry.id) && !string.IsNullOrEmpty(entry.version))
                     dependencies[entry.id] = entry.version;
             

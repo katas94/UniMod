@@ -9,21 +9,16 @@ namespace Katas.UniMod.Editor
     [CreateAssetMenu(fileName = "ModConfig", menuName = "UniMod/Mod Config")]
     public sealed class ModConfig : ScriptableObject
     {
-        [Serializable]
-        public struct ModEntry
-        {
-            public string id;
-            public string version;
-        }
+        public EmbeddedModConfig linkedEmbeddedConfig;
         
-        [Header("Configuration")]
+        [Header("Configuration")][Space(5)]
         public string modId;
         public string modVersion;
         public string displayName;
         public string description;
         public bool buildAssets;
         public ModStartup startup;
-        public List<ModEntry> dependencies;
+        public List<ModReference> dependencies;
         
         [Header("Target Application")][Space(5)]
         public string appId;
@@ -47,6 +42,8 @@ namespace Katas.UniMod.Editor
             
             if (assemblyDefinitions.Changed || managedPlugins.Changed)
                 IncludesModified?.Invoke();
+            
+            UpdateLinkedEmbeddedConfig();
         }
 
         private static bool IsManagedPlugin(DefaultAsset asset)
@@ -60,5 +57,23 @@ namespace Katas.UniMod.Editor
             return !importer.isNativePlugin;
         }
 #endregion
+
+        private void UpdateLinkedEmbeddedConfig()
+        {
+            if (!linkedEmbeddedConfig)
+                return;
+            
+            linkedEmbeddedConfig.modId = modId;
+            linkedEmbeddedConfig.modVersion = modVersion;
+            linkedEmbeddedConfig.displayName = displayName;
+            linkedEmbeddedConfig.description = description;
+            linkedEmbeddedConfig.containsAssets = buildAssets;
+            linkedEmbeddedConfig.startup = startup;
+            linkedEmbeddedConfig.dependencies = dependencies;
+            linkedEmbeddedConfig.appId = appId;
+            linkedEmbeddedConfig.appVersion = appVersion;
+            
+            EditorUtility.SetDirty(linkedEmbeddedConfig);
+        }
     }
 }

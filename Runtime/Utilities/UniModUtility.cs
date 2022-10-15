@@ -7,7 +7,6 @@ using Cysharp.Threading.Tasks;
 using Semver;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace Katas.UniMod
