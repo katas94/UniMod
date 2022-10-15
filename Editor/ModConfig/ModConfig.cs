@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
@@ -72,8 +73,54 @@ namespace Katas.UniMod.Editor
             linkedEmbeddedConfig.dependencies = dependencies;
             linkedEmbeddedConfig.appId = appId;
             linkedEmbeddedConfig.appVersion = appVersion;
+            UpdateEmbeddedModAssemblies(linkedEmbeddedConfig.assemblies);
             
             EditorUtility.SetDirty(linkedEmbeddedConfig);
+        }
+
+        private void UpdateEmbeddedModAssemblies(List<EmbeddedModAssemblies> assemblies)
+        {
+            assemblies.Clear();
+            var buildTargets = Enum.GetValues(typeof(BuildTarget)) as IEnumerable<BuildTarget>;
+            if (buildTargets is null)
+                return;
+            
+            var namesSet = HashSetPool<string>.Pick();
+
+            foreach (BuildTarget buildTarget in buildTargets)
+            {
+                if (!UniModEditorUtility.TryGetRuntimePlatformFromBuildTarget(buildTarget, out RuntimePlatform platform))
+                    continue;
+                
+                // resolve all included assembly names for the given build target
+                var names = new List<string>();
+                
+                // get managed plugin paths and transform them into the managed assembly name
+                ManagedPluginIncludesUtility.ResolveIncludedSupportedManagedPluginPaths(managedPlugins, buildTarget, names);
+                for (int i = 0; i < names.Count; ++i)
+                    names[i] = AssemblyName.GetAssemblyName(names[i]).Name;
+                
+                // get the user defined assembly names
+                AssemblyDefinitionIncludesUtility.ResolveIncludedSupportedAssemblyNames(assemblyDefinitions, buildTarget, names);
+                
+                if (names.Count == 0)
+                    continue;
+                
+                // remove duplicates
+                namesSet.Clear();
+                namesSet.UnionWith(names);
+                names.Clear();
+                names.AddRange(namesSet);
+                
+                // add a new embedded mod assemblies instance with the results
+                assemblies.Add(new EmbeddedModAssemblies()
+                {
+                    platform = platform,
+                    names = names
+                });
+            }
+            
+            HashSetPool<string>.Release(namesSet);
         }
     }
 }

@@ -54,20 +54,20 @@ namespace Katas.UniMod
             if (string.IsNullOrEmpty(id))
                 throw new Exception("Null or empty mod ID");
             if (!_modIds.Contains(id))
-                throw new Exception($"Couldn't find mod ID {id}");
+                throw new Exception($"Couldn't find loader for ID {id}");
             
-            if (_loaders.TryGetValue(id, out LocalModLoader mod))
-                return mod;
+            if (_loaders.TryGetValue(id, out LocalModLoader loader))
+                return loader;
 
             try
             {
-                mod = await CreateLocalModAsync(id);
-                _loaders[id] = mod;
-                return mod;
+                loader = await CreateLocalModAsync(id);
+                _loaders[id] = loader;
+                return loader;
             }
             catch (Exception exception)
             {
-                throw new Exception($"Failed to get mod with ID: {id}", exception);
+                throw new Exception($"Failed to get loader with ID: {id}", exception);
             }
             finally
             {
@@ -77,11 +77,11 @@ namespace Katas.UniMod
 
         public async UniTask GetLoadersAsync(IEnumerable<string> ids, ICollection<IModLoader> results)
         {
-            (IModLoader[] mods, Exception exception) = await UniTaskUtility.WhenAllNoThrow(ids.Select(GetLoaderAsync));
+            (IModLoader[] loaders, Exception exception) = await UniTaskUtility.WhenAllNoThrow(ids.Select(GetLoaderAsync));
             
-            foreach (IModLoader mod in mods)
-                if (mod is not null)
-                    results.Add(mod);
+            foreach (IModLoader loader in loaders)
+                if (loader is not null)
+                    results.Add(loader);
             
             if (exception is not null)
                 throw exception;

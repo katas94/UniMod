@@ -21,23 +21,26 @@ namespace Katas.UniMod
         public bool ContainsAssets { get; }
         public bool ContainsAssemblies { get; }
         public IResourceLocator ResourceLocator { get; private set; }
-        public IReadOnlyList<Assembly> LoadedAssemblies => _loadedAssemblies;
+        public IReadOnlyList<Assembly> LoadedAssemblies { get; }
         
         private readonly string _assembliesFolder;
         private readonly string _catalogPath;
-        private readonly List<Assembly> _loadedAssemblies = new();
+        private readonly List<Assembly> _loadedAssemblies;
+        
         private UniTaskCompletionSource _loadOperation;
 
         public LocalModLoader(string modFolder, ModInfo info)
         {
             ModFolder = modFolder;
-            Info = info;
+            _assembliesFolder = Path.Combine(modFolder, UniMod.AssembliesFolder);
+            _catalogPath = Path.Combine(modFolder, UniMod.AddressablesCatalogFileName);
+            _loadedAssemblies = new List<Assembly>();
             
-            _assembliesFolder = Path.Combine(ModFolder, UniMod.AssembliesFolder);
-            _catalogPath = Path.Combine(ModFolder, UniMod.AddressablesCatalogFileName);
+            Info = info;
             ContainsAssets = File.Exists(_catalogPath);
             ContainsAssemblies = Directory.Exists(_assembliesFolder);
             ResourceLocator = EmptyResourceLocator.Instance;
+            LoadedAssemblies = _loadedAssemblies.AsReadOnly();
         }
 
         public async UniTask LoadAsync(IModContext context, IMod mod)

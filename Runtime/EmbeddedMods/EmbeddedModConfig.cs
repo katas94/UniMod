@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Katas.UniMod
 {
     [CreateAssetMenu(fileName = "EmbeddedModConfig", menuName = "UniMod/Embedded Mod Config")]
-    public class EmbeddedModConfig : ScriptableObject
+    public sealed class EmbeddedModConfig : ScriptableObject
     {
         public string modId;
         public string modVersion;
@@ -15,5 +15,6 @@ namespace Katas.UniMod
         public List<ModReference> dependencies;
         public string appId;
         public string appVersion;
+        public List<EmbeddedModAssemblies> assemblies = new();
     }
 }

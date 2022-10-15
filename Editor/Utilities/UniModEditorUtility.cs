@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
@@ -117,6 +118,31 @@ namespace Katas.UniMod.Editor
                 return $"{guid}-{key}";
             
             return null;
+        }
+        
+        public static ModTargetInfo CreateModTargetInfo(ModConfig config, BuildTarget buildTarget)
+        {
+            return new ModTargetInfo()
+            {
+                UnityVersion = Application.unityVersion,
+                UniModVersion = UniMod.Version,
+                Platform = GetModTargetPlatform(config, buildTarget),
+                AppId = string.IsNullOrEmpty(config.appId) ? null : config.appId,
+                AppVersion = string.IsNullOrEmpty(config.appVersion) ? null : config.appVersion,
+            };
+        }
+
+        public static string GetModTargetPlatform(ModConfig config, BuildTarget buildTarget)
+        {
+            // currently we are only supporting managed assemblies so a mod that only contains assemblies will support all platforms
+            if (!config.buildAssets)
+                return UniMod.AnyPlatform;
+            
+            // try to get the build target's equivalent runtime platform value
+            if (!TryGetRuntimePlatformFromBuildTarget(buildTarget, out RuntimePlatform runtimePlatform))
+                throw new Exception($"Couldn't get the equivalent runtime platform value for the current active build target: {buildTarget}");
+            
+            return runtimePlatform.ToString();
         }
     }
 }

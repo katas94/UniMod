@@ -55,6 +55,11 @@ namespace Katas.UniMod
             
             // create a default mod context with the moddable application
             _context = UniModContext.CreateDefaultContext(application);
+            
+            // check if we have an embedded mod source component
+            var embeddedModSource = GetComponent<EmbeddedModSource>();
+            if (embeddedModSource)
+                _context.AddSource(embeddedModSource);
         }
 
         private async UniTaskVoid StartAsync()

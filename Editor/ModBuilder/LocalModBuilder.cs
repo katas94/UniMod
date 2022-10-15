@@ -102,45 +102,24 @@ namespace Katas.UniMod.Editor
 
         private async UniTask CreateModFileFromBuildAsync(ModConfig config, string buildFolder, BuildTarget buildTarget, string outputPath)
         {
-            // get the mod's supported platform
-            string platform;
-            
-            // currently we are only supporting managed assemblies so a mod that only contains assemblies will support all platforms
-            if (!config.buildAssets)
-                platform = UniMod.AnyPlatform;
-            else
-            {
-                // try to get the build target's equivalent runtime platform value
-                if (!UniModEditorUtility.TryGetRuntimePlatformFromBuildTarget(buildTarget, out RuntimePlatform runtimePlatform))
-                    throw new Exception($"Couldn't get the equivalent runtime platform value for the current active build target: {buildTarget}");
-                
-                platform = runtimePlatform.ToString();
-            }
-            
-            // make sure the output path has the proper mod extension
-            outputPath = IOUtils.EnsureFileExtension(outputPath, UniMod.ModFileExtensionNoDot);
-            
-            // create the mod info file
+            // create the mod info struct
             ModInfo info = new ()
             {
                 Id = config.modId,
                 Version = config.modVersion,
                 DisplayName = config.displayName,
                 Description = config.description,
-                Dependencies = CreateDependenciesForModInfo(config.dependencies),
-                Target = new ModTargetInfo()
-                {
-                    UnityVersion = Application.unityVersion,
-                    UniModVersion = UniMod.Version,
-                    Platform = platform,
-                    AppId = string.IsNullOrEmpty(config.appId) ? null : config.appId,
-                    AppVersion = string.IsNullOrEmpty(config.appVersion) ? null : config.appVersion,
-                },
+                Dependencies = UniModUtility.CreateDictionaryFromModReferences(config.dependencies),
+                Target = UniModEditorUtility.CreateModTargetInfo(config, buildTarget)
             };
             
+            // write the info file
             string infoJson = JsonConvert.SerializeObject(info, Formatting.Indented);
             string infoFilePath = Path.Combine(buildFolder, UniMod.InfoFile);
             await File.WriteAllTextAsync(infoFilePath, infoJson);
+            
+            // make sure the output path has the proper mod extension
+            outputPath = IOUtils.EnsureFileExtension(outputPath, UniMod.ModFileExtensionNoDot);
             
             // overwrite the existing file
             if (File.Exists(outputPath))
@@ -180,17 +159,6 @@ namespace Katas.UniMod.Editor
                 default:
                     return false;
             }
-        }
-
-        private static Dictionary<string, string> CreateDependenciesForModInfo(IEnumerable<ModReference> references)
-        {
-            var dependencies = new Dictionary<string, string>();
-            
-            foreach (ModReference entry in references)
-                if (!string.IsNullOrEmpty(entry.id) && !string.IsNullOrEmpty(entry.version))
-                    dependencies[entry.id] = entry.version;
-            
-            return dependencies.Count == 0 ? null : dependencies;
         }
     }
 }

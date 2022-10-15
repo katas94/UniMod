@@ -27,6 +27,9 @@ namespace Katas.UniMod
                 return false;
             
 #if UNITY_EDITOR
+            if (runtimePlatform == Application.platform)
+                return true;
+            
             // special case for unity editor (mod builds are never set to any of the Editor platforms)
             return Application.platform switch
             {
@@ -193,6 +196,37 @@ namespace Katas.UniMod
                 return task;
             
             return UniTask.CompletedTask;
+        }
+        
+        public static ModInfo CreateModInfoFromEmbeddedConfig(EmbeddedModConfig config)
+        {
+            return new ModInfo()
+            {
+                Id = config.modId,
+                Version = config.modVersion,
+                DisplayName = config.displayName,
+                Description = config.description,
+                Dependencies = CreateDictionaryFromModReferences(config.dependencies),
+                Target = new ModTargetInfo()
+                {
+                    UnityVersion = Application.unityVersion,
+                    UniModVersion = UniMod.Version,
+                    Platform = Application.platform.ToString(),
+                    AppId = config.appId,
+                    AppVersion = config.appVersion
+                },
+            };
+        }
+        
+        public static Dictionary<string, string> CreateDictionaryFromModReferences(IEnumerable<ModReference> references)
+        {
+            var dependencies = new Dictionary<string, string>();
+            
+            foreach (ModReference entry in references)
+                if (!string.IsNullOrEmpty(entry.id) && !string.IsNullOrEmpty(entry.version))
+                    dependencies[entry.id] = entry.version;
+            
+            return dependencies.Count == 0 ? null : dependencies;
         }
         
         private static async UniTask<RawAssembly> LoadRawAssemblyOnSameThreadAsync(string filePath)
