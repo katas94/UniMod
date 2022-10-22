@@ -97,7 +97,7 @@ namespace Katas.UniMod
                     var results = new List<Assembly>(configAssemblies.names.Count);
                     
                     // get all the domain loaded assemblies and register them by name
-                    var assembliesByName = DictionaryPool<string, Assembly>.Pick();
+                    using var _ = DictionaryPool<string, Assembly>.Get(out var assembliesByName);
                     foreach (Assembly assembly in DomainAssemblies.Assemblies)
                         assembliesByName[assembly.GetName().Name] = assembly;
                     

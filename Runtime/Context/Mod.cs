@@ -169,13 +169,14 @@ namespace Katas.UniMod
         
         public void GetDependenciesRelatedToIssues(ModIssues issues, ICollection<IMod> results)
         {
-            var modResults = ListPool<Mod>.Pick();
+            if (results is null)
+                return;
+            
+            using var _ = ListPool<Mod>.Get(out var modResults);
             GetDependenciesRelatedToIssues(issues, modResults);
             
             foreach(Mod mod in modResults)
                 results.Add(mod);
-            
-            ListPool<Mod>.Release(modResults);
         }
 #endregion
     }

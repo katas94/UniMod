@@ -12,16 +12,8 @@ namespace Katas.UniMod
         /// </summary>
         public static async UniTask WhenAll(IEnumerable<UniTask> tasks)
         {
-            WhenAllAwaiter awaiter = GlobalPool<WhenAllAwaiter>.Pick();
-
-            try
-            {
-                await awaiter.WaitAndThrowAll(tasks);
-            }
-            finally
-            {
-                GlobalPool<WhenAllAwaiter>.Release(awaiter);
-            }
+            using var _ = StaticPool<WhenAllAwaiter>.Get(out var awaiter);
+            await awaiter.WaitAndThrowAll(tasks);
         }
 
         /// <summary>
@@ -32,16 +24,8 @@ namespace Katas.UniMod
         /// <typeparam name="T">UniTask return type</typeparam>
         public static async UniTask<T[]> WhenAll<T>(IEnumerable<UniTask<T>> tasks)
         {
-            WhenAllAwaiter<T> awaiter = GlobalPool<WhenAllAwaiter<T>>.Pick();
-
-            try
-            {
-                return await awaiter.WhenAll(tasks);
-            }
-            finally
-            {
-                GlobalPool<WhenAllAwaiter<T>>.Release(awaiter);
-            }
+            using var _ = StaticPool<WhenAllAwaiter<T>>.Get(out var awaiter);
+            return await awaiter.WhenAll(tasks);
         }
 
         /// <summary>
@@ -52,16 +36,8 @@ namespace Katas.UniMod
         /// <returns>The results of the tasks and any thrown exceptions</returns>
         public static async UniTask<(T[] result, Exception exception)> WhenAllNoThrow<T>(IEnumerable<UniTask<T>> tasks)
         {
-            WhenAllAwaiter<T> awaiter = GlobalPool<WhenAllAwaiter<T>>.Pick();
-
-            try
-            {
-                return await awaiter.WhenAllWithResult(tasks);
-            }
-            finally
-            {
-                GlobalPool<WhenAllAwaiter<T>>.Release(awaiter);
-            }
+            using var _ = StaticPool<WhenAllAwaiter<T>>.Get(out var awaiter);
+            return await awaiter.WhenAllWithResult(tasks);
         }
     }
 }

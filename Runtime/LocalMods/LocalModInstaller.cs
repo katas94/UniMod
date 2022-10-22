@@ -27,21 +27,15 @@ namespace Katas.UniMod
 
         public async UniTask DownloadAndInstallModsAsync(IEnumerable<string> modUrls, CancellationToken cancellationToken = default)
         {
+            using var _ = ListPool<UniTask>.Get(out var tasks);
+            
             // prepare all the install tasks for concurrent execution
-            List<UniTask> tasks = ListPool<UniTask>.Pick();
             IEnumerator<string> enumerator = modUrls.GetEnumerator();
             while(enumerator.MoveNext())
                 tasks.Add(DownloadAndInstallModAsync(enumerator.Current, cancellationToken));
             enumerator.Dispose();
 
-            try
-            {
-                await UniTaskUtility.WhenAll(tasks);
-            }
-            finally
-            {
-                ListPool<UniTask>.Release(tasks);
-            }
+            await UniTaskUtility.WhenAll(tasks);
         }
 
         public async UniTask DownloadAndInstallModAsync(string modUrl, CancellationToken cancellationToken = default, IProgress<float> progress = null)
@@ -78,21 +72,15 @@ namespace Katas.UniMod
 
         public async UniTask InstallModsAsync(IEnumerable<string> modFilePaths, bool deleteModFilesAfter = false)
         {
+            using var _ = ListPool<UniTask>.Get(out var tasks);
+
             // prepare all the install tasks for concurrent execution
-            List<UniTask> tasks = ListPool<UniTask>.Pick();
             IEnumerator<string> enumerator = modFilePaths.GetEnumerator();
             while(enumerator.MoveNext())
                 tasks.Add(InstallModAsync(enumerator.Current, deleteModFilesAfter));
             enumerator.Dispose();
 
-            try
-            {
-                await UniTaskUtility.WhenAll(tasks);
-            }
-            finally
-            {
-                ListPool<UniTask>.Release(tasks);
-            }
+            await UniTaskUtility.WhenAll(tasks);
         }
 
         public async UniTask InstallModAsync(string modFilePath, bool deleteModFileAfter = false)

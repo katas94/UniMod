@@ -85,7 +85,7 @@ namespace Katas.UniMod.Editor
             if (buildTargets is null)
                 return;
             
-            var namesSet = HashSetPool<string>.Pick();
+            using var _ = HashSetPool<string>.Get(out var namesSet);
 
             foreach (BuildTarget buildTarget in buildTargets)
             {
@@ -119,8 +119,6 @@ namespace Katas.UniMod.Editor
                     names = names
                 });
             }
-            
-            HashSetPool<string>.Release(namesSet);
         }
     }
 }

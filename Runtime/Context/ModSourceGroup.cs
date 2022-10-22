@@ -119,7 +119,7 @@ namespace Katas.UniMod
         public async UniTask FetchAsync()
         {
             CancellationToken cancellationToken = _fetchController.Invoke();
-            HashSet<string> allIds = HashSetPool<string>.Pick();
+            var allIds = HashSetPool<string>.Get();
 
             try
             {
