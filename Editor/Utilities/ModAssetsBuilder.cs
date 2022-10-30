@@ -32,7 +32,7 @@ namespace Katas.UniMod.Editor
             if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out string guid, out long _))
                 throw new Exception($"Could not get the asset GUID from the AssetDatabase: {asset}");
             
-            Initialize();
+            _settings ??= AddressableAssetSettingsDefaultObject.GetSettings(true);
             AddressableAssetEntry entry = _settings.CreateOrMoveEntry(guid, _settings.DefaultGroup, true, false);
             if (address is not null)
                 entry.address = address;
@@ -52,7 +52,7 @@ namespace Katas.UniMod.Editor
             if (string.IsNullOrEmpty(outputFolder))
                 throw new Exception("The given output folder is null or empty");
             
-            Initialize();
+            _settings ??= AddressableAssetSettingsDefaultObject.GetSettings(true);
             AddressableAssetProfileSettings profileSettings = _settings.profileSettings;
             string profileId = null;
             
@@ -107,18 +107,6 @@ namespace Katas.UniMod.Editor
 
             AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
             return result;
-        }
-        
-        private void Initialize()
-        {
-            if (_settings is not null)
-                return;
-            
-            // check if Addressables is initialized within the project and initialize them if not
-            if (!AddressableAssetSettingsDefaultObject.SettingsExists)
-                AddressableAssetSettingsDefaultObject.Settings = AddressableAssetSettings.Create(AddressableAssetSettingsDefaultObject.kDefaultConfigFolder, AddressableAssetSettingsDefaultObject.kDefaultConfigAssetName, true, true);
-
-            _settings = AddressableAssetSettingsDefaultObject.Settings;
         }
     }
 }
