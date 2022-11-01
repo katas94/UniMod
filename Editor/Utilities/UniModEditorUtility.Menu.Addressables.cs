@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -43,6 +44,43 @@ namespace Katas.UniMod.Editor
             }
             
             CreateAddressablesModGroupTemplate(settings);
+        }
+        
+        [MenuItem(AddressablesMenu + "/Fix Group Labels")]
+        public static void FixAddressablesGroupLabels()
+        {
+            AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
+            
+            if (settings)
+                FixAddressablesGroupLabels(settings);
+        }
+        
+        /// <summary>
+        /// Automatically adds to the settings any labels in its groups that are not already added.
+        /// </summary>
+        public static void FixAddressablesGroupLabels(AddressableAssetSettings settings)
+        {
+            if (!settings)
+                return;
+            
+            // gather all labels from all entries on all groups
+            HashSet<string> labels = new HashSet<string>();
+            foreach (var group in settings.groups)
+            {
+                if (!group)
+                    continue;
+
+                foreach (var entry in group.entries)
+                {
+                    if (entry is null)
+                        continue;
+                    
+                    labels.UnionWith(entry.labels);
+                }
+            }
+            
+            foreach (string label in labels)
+                settings.AddLabel(label);
         }
         
         /// <summary>

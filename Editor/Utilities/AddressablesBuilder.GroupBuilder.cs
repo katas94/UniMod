@@ -70,14 +70,23 @@ namespace Katas.UniMod.Editor
                 _bundledSchema = _group.GetSchema<BundledAssetGroupSchema>() ?? throw new Exception($"The group must have a {nameof(BundledAssetGroupSchema)}");
                 SetupBundledSchema();
                 
-                // save all the original entries and move them to the new group
+                ////////// process entries
                 _originalEntries = _originalGroup.entries.ToArray();
+                
+                // since we have created a clean settings object we also need to make sure that all entry labels are added to it
+                var labels = new HashSet<string>();
+                foreach (AddressableAssetEntry entry in _originalEntries)
+                    labels.UnionWith(entry.labels);
+                foreach (string label in labels)
+                    _settings.AddLabel(label, false);
+                
+                // temporarily move all entries to the group copy and save their readonly state for later restore
                 _originalEntriesReadOnly = new bool[_originalEntries.Length];
-
                 for (int i = 0; i < _originalEntries.Length; ++i)
                 {
-                    _originalEntriesReadOnly[i] = _originalEntries[i].ReadOnly;
-                    _settings.MoveEntry(_originalEntries[i], _group, true, false);
+                    AddressableAssetEntry entry = _originalEntries[i];
+                    _originalEntriesReadOnly[i] = entry.ReadOnly;
+                    _settings.MoveEntry(entry, _group, true, false);
                 }
                 
                 _isDisposed = false;
@@ -98,7 +107,7 @@ namespace Katas.UniMod.Editor
                     entry.address = address;
                 if (labels is not null)
                     foreach(string label in labels)
-                        entry.SetLabel(label, true, false, false);
+                        entry.SetLabel(label, true, true, false);
             }
             
             public void SetPathIds(string buildPathId, string loadPathId)
