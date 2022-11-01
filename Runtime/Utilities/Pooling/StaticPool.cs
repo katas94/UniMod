@@ -6,20 +6,19 @@ namespace Katas.UniMod
     /// <summary>
     /// Offers static access to thread-local pools for objects that have parameterless constructors.
     /// </summary>
-    internal class StaticPool<T>
+    internal static class StaticPool<T>
         where T : class, new()
     {
+        [ThreadStatic] private static Pool<T> _instance;
+        
         public static Pool<T> Instance => _instance ??= CreatePool();
-        
-        public static Pool<T> CreatePool()
-            => new(CreateNew);
-        
-        [ThreadStatic]
-        protected static Pool<T> _instance;
-        
+
         public static int TotalCount => Instance.TotalCount;
         public static int PooledCount => Instance.PooledCount;
         public static int ActiveCount => Instance.ActiveCount;
+        
+        public static Pool<T> CreatePool()
+            => new(CreateNew);
         
         public static T Get()
             => Instance.Get();
@@ -42,7 +41,7 @@ namespace Katas.UniMod
         public static void Clear()
             => Instance.Clear();
         
-        protected static T CreateNew()
+        private static T CreateNew()
             => new();
     }
 }
