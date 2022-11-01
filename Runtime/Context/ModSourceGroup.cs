@@ -131,11 +131,16 @@ namespace Katas.UniMod
                     cancellationToken.ThrowIfCancellationRequested();
                     await entry.Source.GetAllIdsAsync(entry.Ids);
                     cancellationToken.ThrowIfCancellationRequested();
-                    
+                }));
+                
+                cancellationToken.ThrowIfCancellationRequested();
+
+                foreach (ModSourceEntry entry in _entries)
+                {
                     // make it so there are no duplicate ids between sources (first sources will have priority)
                     entry.Ids.ExceptWith(allIds);
                     allIds.UnionWith(entry.Ids);
-                }));
+                }
             }
             finally
             {
@@ -177,7 +182,7 @@ namespace Katas.UniMod
         public UniTask GetAllLoadersAsync(ICollection<IModLoader> results)
         {
             return UniTaskUtility.WhenAll(_entries.Select(
-                instance => instance.Source.GetLoadersAsync(instance.Ids, results)
+                entry => entry.Source.GetLoadersAsync(entry.Ids, results)
             ));
         }
 
