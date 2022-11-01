@@ -18,6 +18,7 @@ namespace Katas.UniMod
         string Version { get; }
         string DisplayName { get; }
         string Description { get; }
+        string Source { get; }
         bool ContainsAssets { get; }
         bool ContainsAssemblies { get; }
         ModTargetInfo Target { get; }

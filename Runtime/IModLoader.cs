@@ -12,6 +12,7 @@ namespace Katas.UniMod
     public interface IModLoader
     {
         ModInfo Info { get; }
+        string Source { get; }
         bool ContainsAssets { get; }
         bool ContainsAssemblies { get; }
         bool IsLoaded { get; }

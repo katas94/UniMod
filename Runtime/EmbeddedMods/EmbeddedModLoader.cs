@@ -12,6 +12,7 @@ namespace Katas.UniMod
         public readonly EmbeddedModConfig Config;
         
         public ModInfo Info { get; }
+        public string Source { get; }
         public bool ContainsAssets { get; }
         public bool ContainsAssemblies { get; }
         public bool IsLoaded { get; private set; }
@@ -22,12 +23,13 @@ namespace Katas.UniMod
         
         private UniTaskCompletionSource _loadOperation;
 
-        public EmbeddedModLoader(EmbeddedModConfig config)
+        public EmbeddedModLoader(EmbeddedModConfig config, string source = EmbeddedModSource.SourceLabel)
         {
             Config = config;
             _startup = config.startup;
             
             Info = UniModUtility.CreateModInfoFromEmbeddedConfig(config);
+            Source = source;
             // ContainsAssets = config.containsAssets;
             ResourceLocator = new EmptyResourceLocator();
             LoadedAssemblies = GetLoadedAssemblies(config).AsReadOnly();

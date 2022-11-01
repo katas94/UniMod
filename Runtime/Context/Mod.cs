@@ -19,6 +19,7 @@ namespace Katas.UniMod
         public string Version => Loader.Info.Version;
         public string DisplayName => Loader.Info.DisplayName;
         public string Description => Loader.Info.Description;
+        public string Source => Loader.Source;
         public bool ContainsAssets => Loader.ContainsAssets;
         public bool ContainsAssemblies => Loader.ContainsAssemblies;
         public ModTargetInfo Target => Loader.Info.Target;

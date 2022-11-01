@@ -17,6 +17,7 @@ namespace Katas.UniMod
         public readonly string ModFolder;
 
         public ModInfo Info { get; }
+        public string Source { get; }
         public bool IsLoaded { get; private set; }
         public bool ContainsAssets { get; }
         public bool ContainsAssemblies { get; }
@@ -29,7 +30,7 @@ namespace Katas.UniMod
         
         private UniTaskCompletionSource _loadOperation;
 
-        public LocalModLoader(string modFolder, ModInfo info)
+        public LocalModLoader(string modFolder, ModInfo info, string source = LocalModSource.SourceLabel)
         {
             ModFolder = modFolder;
             _assembliesFolder = Path.Combine(modFolder, UniMod.AssembliesFolder);
@@ -37,6 +38,7 @@ namespace Katas.UniMod
             _loadedAssemblies = new List<Assembly>();
             
             Info = info;
+            Source = source;
             ContainsAssets = File.Exists(_catalogPath);
             ContainsAssemblies = Directory.Exists(_assembliesFolder);
             ResourceLocator = EmptyResourceLocator.Instance;

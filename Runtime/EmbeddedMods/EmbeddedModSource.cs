@@ -7,6 +7,8 @@ namespace Katas.UniMod
 {
     public sealed class EmbeddedModSource : MonoBehaviour, IModSource
     {
+        public const string SourceLabel = "Embedded";
+
         [SerializeField] private List<EmbeddedModConfig> configs;
         
         private readonly Dictionary<string, EmbeddedModLoader> _loaders = new();
@@ -40,7 +42,7 @@ namespace Katas.UniMod
                 throw new Exception($"Couldn't find loader for ID {id}");
             
             if (!_loaders.TryGetValue(id, out EmbeddedModLoader loader))
-                _loaders[id] = loader = new EmbeddedModLoader(config);
+                _loaders[id] = loader = new EmbeddedModLoader(config, SourceLabel);
             
             return UniTask.FromResult<IModLoader>(loader);
         }

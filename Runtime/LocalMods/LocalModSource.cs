@@ -11,6 +11,8 @@ namespace Katas.UniMod
     /// </summary>
     public sealed class LocalModSource : IModSource
     {
+        public const string SourceLabel = "Local";
+        
         public readonly string InstallationFolder;
         
         private readonly HashSet<string> _modIds;
@@ -114,7 +116,7 @@ namespace Katas.UniMod
                 var info = JsonConvert.DeserializeObject<ModInfo>(json);
                 
                 // instantiate and register the mod instance
-                return new LocalModLoader(modFolder, info);
+                return new LocalModLoader(modFolder, info, SourceLabel);
             }
             catch (Exception exception)
             {
