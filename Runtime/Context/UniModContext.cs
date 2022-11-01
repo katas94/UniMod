@@ -103,8 +103,32 @@ namespace Katas.UniMod
             _refreshingOperation = null;
             operation.TrySetResult();
         }
+        
+        private async UniTask RefreshLocalInstallations()
+        {
+            try
+            {
+                await _installer.InstallModsAsync(InstallationFolder, true);
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("[UniModContext] there were some errors while trying to refresh the local installation folder", exception);
+            }
+        }
+        
+        private async UniTask FetchFromAllSources()
+        {
+            try
+            {
+                await _sources.FetchAsync();
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("[UniModContext] there were some errors while trying to fetch from mod sources", exception);
+            }
+        }
 
-        #region WRAPPERS
+#region WRAPPERS
         // mod loading context
         public IMod GetMod(string id)
             => _closure.GetMod(id);
@@ -148,30 +172,6 @@ namespace Katas.UniMod
             => _sources.RemoveSources(sources);
         public void ClearSources()
             => _sources.ClearSources();
-        #endregion
-
-        private async UniTask RefreshLocalInstallations()
-        {
-            try
-            {
-                await _installer.InstallModsAsync(InstallationFolder, true);
-            }
-            catch (Exception exception)
-            {
-                throw new Exception("[UniModContext] there were some errors while trying to refresh the local installation folder", exception);
-            }
-        }
-        
-        private async UniTask FetchFromAllSources()
-        {
-            try
-            {
-                await _sources.FetchAsync();
-            }
-            catch (Exception exception)
-            {
-                throw new Exception("[UniModContext] there were some errors while trying to fetch from mod sources", exception);
-            }
-        }
+#endregion
     }
 }
