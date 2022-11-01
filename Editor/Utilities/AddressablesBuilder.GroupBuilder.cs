@@ -23,6 +23,8 @@ namespace Katas.UniMod.Editor
         /// </summary>
         private sealed class GroupBuilder : IGroupBuilder
         {
+            public BundledAssetGroupSchema BundledSchema => _bundledSchema;
+            
             private readonly AddressableAssetSettings _settings;
             private readonly AddressableAssetGroup _group;
             private readonly AddressableAssetGroup _originalGroup;
@@ -43,7 +45,6 @@ namespace Katas.UniMod.Editor
                 _settings = settings;
                 _group = settings.CreateGroup(groupName, false, true, false, schemas);
                 _bundledSchema = _group.GetSchema<BundledAssetGroupSchema>() ?? throw new Exception($"The group must have a {nameof(BundledAssetGroupSchema)}");
-                SetupBundledSchema();
                 
                 _isDisposed = false;
             }
@@ -57,8 +58,7 @@ namespace Katas.UniMod.Editor
                 _settings = settings;
                 _group = settings.CreateGroup(groupName, false, true, false, schemasToCopy, types);
                 _bundledSchema = _group.GetSchema<BundledAssetGroupSchema>() ?? throw new Exception($"The group must have a {nameof(BundledAssetGroupSchema)}");
-                SetupBundledSchema();
-                
+
                 _isDisposed = false;
             }
 
@@ -68,7 +68,6 @@ namespace Katas.UniMod.Editor
                 _group = settings.CreateGroup(group.Name, false, true, false, group.Schemas);
                 _originalGroup = group;
                 _bundledSchema = _group.GetSchema<BundledAssetGroupSchema>() ?? throw new Exception($"The group must have a {nameof(BundledAssetGroupSchema)}");
-                SetupBundledSchema();
                 
                 ////////// process entries
                 _originalEntries = _originalGroup.entries.ToArray();
@@ -110,13 +109,6 @@ namespace Katas.UniMod.Editor
                         entry.SetLabel(label, true, true, false);
             }
             
-            public void SetPathIds(string buildPathId, string loadPathId)
-            {
-                ThrowIfDisposed();
-                _bundledSchema.BuildPath.SetVariableById(_settings, buildPathId);
-                _bundledSchema.LoadPath.SetVariableById(_settings, loadPathId);
-            }
-
             public void Dispose()
             {
                 if (_isDisposed || !_originalGroup || _originalEntries is null)
@@ -127,12 +119,6 @@ namespace Katas.UniMod.Editor
                     _settings.MoveEntry(_originalEntries[i], _originalGroup, _originalEntriesReadOnly[i], false);
                 
                 _isDisposed = true;
-            }
-
-            private void SetupBundledSchema()
-            {
-                _bundledSchema.IncludeInBuild = true;
-                _bundledSchema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.NoHash;
             }
 
             private void ThrowIfDisposed()

@@ -208,9 +208,9 @@ namespace Katas.UniMod.Editor
             _settings.RemoteCatalogBuildPath.SetVariableById(_settings, catalogBuildPathId);
             _settings.RemoteCatalogLoadPath.SetVariableById(_settings, catalogLoadPathId);
 
-            // setup build/load paths for the groups
+            // setup the bundled schema for all groups
             foreach (GroupBuilder groupBuilder in _groupBuilders)
-                groupBuilder.SetPathIds(bundlesBuildPathId, bundlesLoadPathId);
+                SetupBundledSchema(groupBuilder.BundledSchema, bundlesBuildPathId, bundlesLoadPathId);
 
             AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
             
@@ -227,7 +227,16 @@ namespace Katas.UniMod.Editor
             
             return result;
         }
-
+        
+        private void SetupBundledSchema(BundledAssetGroupSchema schema, string buildPathId, string loadPathId)
+        {
+            schema.IncludeInBuild = true;
+            schema.IncludeGUIDInCatalog = true; // make sure this is true, otherwise embedded mods will not work as expected
+            schema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.NoHash;
+            schema.BuildPath.SetVariableById(_settings, buildPathId);
+            schema.LoadPath.SetVariableById(_settings, loadPathId);
+        }
+        
         private void ThrowIfDisposed()
         {
             if (_isDisposed)
