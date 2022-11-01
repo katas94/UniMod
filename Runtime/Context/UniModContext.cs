@@ -21,6 +21,8 @@ namespace Katas.UniMod
         private readonly ModClosure _closure;
         private readonly ModSourceGroup _sources;
         private readonly List<IModLoader> _loaders;
+        
+        private UniTaskCompletionSource _refreshingOperation;
 
         /// <summary>
         /// Creates a default UniMod context for the specified application parameters.
@@ -60,24 +62,46 @@ namespace Katas.UniMod
 
         public async UniTask RefreshAsync()
         {
-            await RefreshLocalInstallations(); // installs any mod files added in the installation folder (and deletes the file if succeeded)
-            await FetchFromAllSources();
+            if (_refreshingOperation is not null)
+            {
+                await _refreshingOperation.Task;
+                return;
+            }
             
-            // get all loaders from the sources
+            UniTaskCompletionSource operation = _refreshingOperation = new UniTaskCompletionSource();
+
             try
             {
-                _loaders.Clear();
-                await _sources.GetAllLoadersAsync(_loaders);
+                await RefreshLocalInstallations(); // installs any mod files added in the installation folder (and deletes the file if succeeded)
+                await FetchFromAllSources();
+
+                // get all loaders from the sources
+                try
+                {
+                    _loaders.Clear();
+                    await _sources.GetAllLoadersAsync(_loaders);
+                }
+                catch (Exception exception)
+                {
+                    throw new Exception(
+                        "[UniModContext] there were some errors while trying to get the mod loaders from the sources",
+                        exception);
+                }
+                finally
+                {
+                    // rebuild mod closure with the loaders that were instantiated successfully
+                    _closure.RebuildClosure(_loaders);
+                }
             }
             catch (Exception exception)
             {
-                throw new Exception("[UniModContext] there were some errors while trying to get the mod loaders from the sources", exception);
+                _refreshingOperation = null;
+                operation.TrySetException(exception);
+                throw;
             }
-            finally
-            {
-                // rebuild mod closure with the loaders that were instantiated successfully
-                _closure.RebuildClosure(_loaders);
-            }
+            
+            _refreshingOperation = null;
+            operation.TrySetResult();
         }
 
         #region WRAPPERS
