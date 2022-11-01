@@ -9,6 +9,8 @@ namespace Katas.UniMod
 {
     public sealed class EmbeddedModLoader : IModLoader
     {
+        private static readonly IReadOnlyList<Assembly> EmptyAssemblies = new List<Assembly>(0).AsReadOnly();
+        
         public readonly EmbeddedModConfig Config;
         
         public ModInfo Info { get; }
@@ -16,10 +18,11 @@ namespace Katas.UniMod
         public bool ContainsAssets { get; }
         public bool ContainsAssemblies { get; }
         public bool IsLoaded { get; private set; }
-        public IResourceLocator ResourceLocator { get; }
-        public IReadOnlyList<Assembly> LoadedAssemblies { get; }
-        
+        public IResourceLocator ResourceLocator { get; private set; }
+        public IReadOnlyList<Assembly> LoadedAssemblies { get; private set; }
+
         private readonly ModStartup _startup;
+        private readonly IReadOnlyList<Assembly> _loadedAssemblies;
         
         private UniTaskCompletionSource _loadOperation;
 
@@ -27,13 +30,15 @@ namespace Katas.UniMod
         {
             Config = config;
             _startup = config.startup;
+            _loadedAssemblies = GetLoadedAssemblies(config).AsReadOnly();
             
             Info = UniModUtility.CreateModInfoFromEmbeddedConfig(config);
             Source = source;
-            // ContainsAssets = config.containsAssets;
-            ResourceLocator = new EmptyResourceLocator();
-            LoadedAssemblies = GetLoadedAssemblies(config).AsReadOnly();
-            ContainsAssemblies = LoadedAssemblies.Count > 0;
+            ContainsAssets = config.ContainsAssets;
+            ContainsAssemblies = _loadedAssemblies.Count > 0;
+            // to simulate how local mods are loaded, lets not assign these properties yet even though the assets/assemblies are already loaded
+            ResourceLocator = EmptyLocator.Instance;
+            LoadedAssemblies = EmptyAssemblies;
         }
         
         public async UniTask LoadAsync(IModContext context, IMod mod)
@@ -67,6 +72,12 @@ namespace Katas.UniMod
         {
             if (IsLoaded)
                 return;
+            
+            // to simulate how local mods are loaded, we will assign now the properties to the already loaded assets/assemblies
+            if (ContainsAssets)
+                ResourceLocator = await EmbeddedModAssetsLocator.CreateAsync(Config.modId, Config.assets);
+            if (ContainsAssemblies)
+                LoadedAssemblies = _loadedAssemblies;
             
             // run startup script and methods
             if (_startup)

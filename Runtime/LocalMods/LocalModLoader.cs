@@ -41,7 +41,7 @@ namespace Katas.UniMod
             Source = source;
             ContainsAssets = File.Exists(_catalogPath);
             ContainsAssemblies = Directory.Exists(_assembliesFolder);
-            ResourceLocator = EmptyResourceLocator.Instance;
+            ResourceLocator = EmptyLocator.Instance;
             LoadedAssemblies = _loadedAssemblies.AsReadOnly();
         }
 

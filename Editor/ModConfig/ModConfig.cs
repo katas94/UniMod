@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor;
@@ -32,60 +33,60 @@ namespace Katas.UniMod.Editor
 
         [Header("Build")][Space(5)]
         public ModBuilder builder;
+
+        public bool ContainsAssets
+        {
+            get
+            {
+                if (startup)
+                    return true;
+                if (addressableGroups is null || addressableGroups.Count == 0)
+                    return false;
+                
+                // it could be the case that the added groups are empty so they won't generate any asset bundles
+                return GatherAllAssetEntries().Count > 0;
+            }
+        }
         
-        public bool ContainsAssets => startup || (addressableGroups is not null && addressableGroups.Count > 0);
-        
-#region VALIDATION
         public event Action IncludesModified;
         
-        private void OnValidate()
+        public void SyncEmbeddedConfig(EmbeddedModConfig embeddedConfig)
         {
-            assemblyDefinitions.Validate();
-            managedPlugins.Validate(IsManagedPlugin);
-            
-            if (assemblyDefinitions.Changed || managedPlugins.Changed)
-                IncludesModified?.Invoke();
-            
-            UpdateLinkedEmbeddedConfig();
-        }
-
-        private static bool IsManagedPlugin(DefaultAsset asset)
-        {
-            string path = AssetDatabase.GetAssetPath(asset);
-            var importer = AssetImporter.GetAtPath(path) as PluginImporter;
-            
-            if (!importer)
-                return false;
-            
-            return !importer.isNativePlugin;
-        }
-#endregion
-
-        private void UpdateLinkedEmbeddedConfig()
-        {
-            if (!linkedEmbeddedConfig)
+            if (!embeddedConfig)
                 return;
             
-            linkedEmbeddedConfig.modId = modId;
-            linkedEmbeddedConfig.modVersion = modVersion;
-            linkedEmbeddedConfig.displayName = displayName;
-            linkedEmbeddedConfig.description = description;
-            linkedEmbeddedConfig.startup = startup;
-            linkedEmbeddedConfig.dependencies = dependencies;
-            linkedEmbeddedConfig.appId = appId;
-            linkedEmbeddedConfig.appVersion = appVersion;
-            UpdateEmbeddedModAssemblies(linkedEmbeddedConfig.assemblies);
+            embeddedConfig.modId = modId;
+            embeddedConfig.modVersion = modVersion;
+            embeddedConfig.displayName = displayName;
+            embeddedConfig.description = description;
+            embeddedConfig.startup = startup;
+            embeddedConfig.dependencies = dependencies;
+            embeddedConfig.appId = appId;
+            embeddedConfig.appVersion = appVersion;
+            SyncEmbeddedModAssets(embeddedConfig.assets);
+            SyncEmbeddedModAssemblies(embeddedConfig.assemblies);
             
-            EditorUtility.SetDirty(linkedEmbeddedConfig);
+            EditorUtility.SetDirty(embeddedConfig);
         }
 
-        private void UpdateEmbeddedModAssemblies(List<EmbeddedModAssemblies> assemblies)
+        public void SyncEmbeddedModAssets(List<EmbeddedModAsset> assets)
+        {
+            // add all assets from the included addressable groups
+            List<AddressableAssetEntry> entries = GatherAllAssetEntries();
+            assets.Clear();
+            assets.AddRange(entries.Select(
+                entry => new EmbeddedModAsset()
+                {
+                    guid = entry.guid,
+                    labels = new List<string>(entry.labels)
+                })
+            );
+        }
+
+        public void SyncEmbeddedModAssemblies(List<EmbeddedModAssemblies> assemblies)
         {
             assemblies.Clear();
-            var buildTargets = Enum.GetValues(typeof(BuildTarget)) as IEnumerable<BuildTarget>;
-            if (buildTargets is null)
-                return;
-            
+            var buildTargets = (BuildTarget[])Enum.GetValues(typeof(BuildTarget));
             using var _ = HashSetPool<string>.Get(out var namesSet);
 
             foreach (BuildTarget buildTarget in buildTargets)
@@ -121,5 +122,39 @@ namespace Katas.UniMod.Editor
                 });
             }
         }
+
+        private List<AddressableAssetEntry> GatherAllAssetEntries()
+        {
+            var entries = new List<AddressableAssetEntry>();
+            
+            foreach (AddressableAssetGroup group in addressableGroups)
+                group.GatherAllAssets(entries, true, true, true);
+            
+            return entries;
+        }
+        
+#region VALIDATION
+        private void OnValidate()
+        {
+            assemblyDefinitions.Validate();
+            managedPlugins.Validate(IsManagedPlugin);
+            
+            if (assemblyDefinitions.Changed || managedPlugins.Changed)
+                IncludesModified?.Invoke();
+            
+            SyncEmbeddedConfig(linkedEmbeddedConfig);
+        }
+
+        private static bool IsManagedPlugin(DefaultAsset asset)
+        {
+            string path = AssetDatabase.GetAssetPath(asset);
+            var importer = AssetImporter.GetAtPath(path) as PluginImporter;
+            
+            if (!importer)
+                return false;
+            
+            return !importer.isNativePlugin;
+        }
+#endregion
     }
 }

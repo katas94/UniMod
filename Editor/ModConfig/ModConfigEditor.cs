@@ -20,10 +20,10 @@ namespace Katas.UniMod.Editor
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-
+            
             if (target is not ModConfig config)
                 return;
-            
+
             // this prevents inspector lagging if there is a lot of included assemblies (since it would fetch them on each inspector frame update)
             config.IncludesModified -= UpdateIncludesMessage;
             config.IncludesModified += UpdateIncludesMessage;
@@ -33,6 +33,15 @@ namespace Katas.UniMod.Editor
                 UpdateIncludesMessage();
             
             GUILayout.Space(8);
+            if (config.linkedEmbeddedConfig && GUILayout.Button("Refresh Linked Embedded Config"))
+                config.SyncEmbeddedConfig(config.linkedEmbeddedConfig);
+            
+            // if there is no builder, don't display the build buttons
+            if (!config.builder)
+                return;
+            
+            if (config.linkedEmbeddedConfig)
+                GUILayout.Space(16);
             if (GUILayout.Button("Build"))
                 config.BuildWithGuiAsync(defaultToCachedParameters: false).Forget();
             EditorGUILayout.HelpBox(_includesMessage, MessageType.Info, true);

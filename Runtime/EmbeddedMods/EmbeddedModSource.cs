@@ -27,9 +27,8 @@ namespace Katas.UniMod
 
         public UniTask GetAllIdsAsync(ICollection<string> results)
         {
-            foreach (EmbeddedModConfig config in configs)
-                if (config)
-                    results.Add(config.modId);
+            foreach (string id in _configsById.Keys)
+                results.Add(id);
             
             return UniTask.CompletedTask;
         }

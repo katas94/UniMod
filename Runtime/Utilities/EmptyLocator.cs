@@ -5,9 +5,9 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace Katas.UniMod
 {
-    internal sealed class EmptyResourceLocator : IResourceLocator
+    internal sealed class EmptyLocator : IResourceLocator
     {
-        public static readonly EmptyResourceLocator Instance = new EmptyResourceLocator();
+        public static readonly EmptyLocator Instance = new();
         
         public bool Locate(object key, Type type, out IList<IResourceLocation> locations)
         {
