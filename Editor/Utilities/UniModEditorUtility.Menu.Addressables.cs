@@ -39,7 +39,7 @@ namespace Katas.UniMod.Editor
 
             if (!settings)
             {
-                Debug.LogError("Cannot create the mod group template because Addressables have not been initialized in the project!");
+                Debug.LogError("Cannot create the mod assets group template because Addressables have not been initialized in the project!");
                 return;
             }
             
@@ -64,27 +64,36 @@ namespace Katas.UniMod.Editor
                 return;
             
             // gather all labels from all entries on all groups
-            HashSet<string> labels = new HashSet<string>();
-            foreach (var group in settings.groups)
+            var labels = new HashSet<string>();
+            
+            void GatherEntryLabels(AddressableAssetEntry entry)
+            {
+                if (entry is null)
+                    return;
+                
+                if (entry.labels is not null)
+                    labels.UnionWith(entry.labels);
+                if (entry.SubAssets is not null)
+                    foreach (AddressableAssetEntry subEntry in entry.SubAssets)
+                        GatherEntryLabels(subEntry);
+            }
+            
+            foreach (AddressableAssetGroup group in settings.groups)
             {
                 if (!group)
                     continue;
 
-                foreach (var entry in group.entries)
-                {
-                    if (entry is null)
-                        continue;
-                    
-                    labels.UnionWith(entry.labels);
-                }
+                foreach (AddressableAssetEntry entry in group.entries)
+                    GatherEntryLabels(entry);
             }
             
+            // add gathered labels to the settings
             foreach (string label in labels)
                 settings.AddLabel(label);
         }
-        
+
         /// <summary>
-        /// Creates an Addressables group template which is the recommended way to create addressable groups for mods.
+        /// Creates an Addressables group template that should be used when creating asset groups for mods.
         /// </summary>
         public static void CreateAddressablesModGroupTemplate(AddressableAssetSettings settings)
         {
@@ -100,7 +109,7 @@ namespace Katas.UniMod.Editor
             
             // create and save template object
             AddressableAssetGroupTemplate template = ScriptableObject.CreateInstance<AddressableAssetGroupTemplate>();
-            template.Description = "UniMod assets group template recommended for your mod assets. It is designed so you can share the group objects in custom Unity packages.";
+            template.Description = "UniMod group template for your mod asset groups. It is designed so you can share the group objects in custom Unity packages.";
             AssetDatabase.CreateAsset(template, assetPath);
             
             // add schemas
@@ -120,6 +129,7 @@ namespace Katas.UniMod.Editor
 
             try
             {
+                bundledSchema.IncludeGUIDInCatalog = true; // ensure this is true for Embedded mods compatibility
                 // set custom build and load paths so the group can be shared across projects without depending on the Addressable settings profiles
                 IdField.SetValue(bundledSchema.BuildPath, "[UnityEngine.AddressableAssets.Addressables.BuildPath]/[UnityEditor.EditorUserBuildSettings.activeBuildTarget]");
                 IdField.SetValue(bundledSchema.LoadPath, "{UnityEngine.AddressableAssets.Addressables.RuntimePath}/[UnityEditor.EditorUserBuildSettings.activeBuildTarget]");
