@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.AddressableAssets.Settings;
 using UnityEditorInternal;
 
 namespace Katas.UniMod.Editor
@@ -11,13 +12,12 @@ namespace Katas.UniMod.Editor
     public sealed class ModConfig : ScriptableObject
     {
         public EmbeddedModConfig linkedEmbeddedConfig;
-        
+
         [Header("Configuration")][Space(5)]
         public string modId;
         public string modVersion;
         public string displayName;
         public string description;
-        public bool buildAssets;
         public ModStartup startup;
         public List<ModReference> dependencies;
         
@@ -25,13 +25,15 @@ namespace Katas.UniMod.Editor
         public string appId;
         public string appVersion;
         
-        [Header("Includes")][Space(5)]
+        [Header("Content")][Space(5)]
+        public List<AddressableAssetGroup> addressableGroups;
         public AssetIncludes<AssemblyDefinitionAsset> assemblyDefinitions;
         public AssetIncludes<DefaultAsset> managedPlugins;
 
         [Header("Build")][Space(5)]
         public ModBuilder builder;
         
+        public bool ContainsAssets => startup || (addressableGroups is not null && addressableGroups.Count > 0);
         
 #region VALIDATION
         public event Action IncludesModified;
@@ -68,7 +70,6 @@ namespace Katas.UniMod.Editor
             linkedEmbeddedConfig.modVersion = modVersion;
             linkedEmbeddedConfig.displayName = displayName;
             linkedEmbeddedConfig.description = description;
-            linkedEmbeddedConfig.containsAssets = buildAssets;
             linkedEmbeddedConfig.startup = startup;
             linkedEmbeddedConfig.dependencies = dependencies;
             linkedEmbeddedConfig.appId = appId;

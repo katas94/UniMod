@@ -25,11 +25,11 @@ namespace Katas.UniMod.Editor
     [CreateAssetMenu(fileName = "LocalModBuilder", menuName = "UniMod/Local Mod Builder")]
     public sealed class LocalModBuilder : ModBuilder
     {
+        private const string StartupGroupName = "ModStartup";
+        
         public CompressionLevel compressionLevel = CompressionLevel.Optimal;
         public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.PlatformSpecific;
         public List<CustomModAssemblyBuilder> customAssemblyBuilders;
-        
-        private readonly ModAssetsBuilder _assetsBuilder = new();
         
         /// <summary>
         /// Builds the mod with the specified parameters.
@@ -55,8 +55,8 @@ namespace Katas.UniMod.Editor
                 BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
                 await BuildAssembliesAsync(config, buildMode, buildTarget, tmpBuildFolder);
                 
-                // build assets if enabled (this will run an Addressables build)
-                if (config.buildAssets)
+                // build assets if there are any included (this will run an Addressables build)
+                if (config.ContainsAssets)
                     BuildAssets(config, tmpBuildFolder);
                 
                 // create the output mod archive file with all the built contents on it
@@ -91,13 +91,34 @@ namespace Katas.UniMod.Editor
         
         private void BuildAssets(ModConfig config, string outputFolder)
         {
-            if (config.startup)
-                _assetsBuilder.AddAsset(config.startup, UniMod.StartupAddress);
-            
-            AddressablesPlayerBuildResult result = _assetsBuilder.Build(config.modId, outputFolder);
-            
-            if (!string.IsNullOrEmpty(result.Error))
-                throw new Exception($"Failed to build mod assets.\nError: {result.Error}");
+            AddressablesBuilder addressablesBuilder = null;
+
+            try
+            {
+                addressablesBuilder = new AddressablesBuilder();
+                
+                // add the startup script for the assets build if any
+                if (config.startup)
+                {
+                    AddressablesBuilder.IGroupBuilder groupBuilder = addressablesBuilder.CreateGroup(StartupGroupName);
+                    groupBuilder.CreateEntry(config.startup, UniMod.StartupAddress);
+                }
+                
+                // add all the config addressable groups to the build
+                addressablesBuilder.AddGroups(config.addressableGroups);
+                
+                // get the load path and perform the build
+                string buildPath = Path.Combine(outputFolder, UniMod.AssetsFolder);
+                string loadPath = UniMod.GetAddressablesLoadPathForMod(config.modId);
+                AddressablesPlayerBuildResult result = addressablesBuilder.Build(buildPath, loadPath);
+                
+                if (!string.IsNullOrEmpty(result.Error))
+                    throw new Exception($"Failed to build mod assets.\nError: {result.Error}");
+            }
+            finally
+            {
+                addressablesBuilder?.Dispose();
+            }
         }
 
         private async UniTask CreateModFileFromBuildAsync(ModConfig config, string buildFolder, BuildTarget buildTarget, string outputPath)

@@ -11,9 +11,9 @@ namespace Katas.UniMod
         public const string InfoFile = "info.json";
         public const string ModFileExtensionNoDot = "umod";
         public const string ModFileExtension = "." + ModFileExtensionNoDot;
-        public const string AddressablesCatalogName = "mod_content";
-        public const string AddressablesCatalogFileName = "catalog_" + AddressablesCatalogName + ".json";
+        public const string AddressablesCatalogFileName = "catalog.json";
         public const string StartupAddress = "__mod_startup";
+        public const string AssetsFolder = "Assets";
         public const string AssembliesFolder = "Assemblies";
         public const string AnyPlatform = null;
         
@@ -25,7 +25,7 @@ namespace Katas.UniMod
 
         public static string GetAddressablesLoadPathForMod(string modId)
         {
-            return AddressablesLoadPath + modId;
+            return Path.Combine(AddressablesLoadPath, modId, AssetsFolder);
         }
     }
 }

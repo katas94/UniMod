@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
@@ -12,7 +12,7 @@ namespace Katas.UniMod.Editor
     /// <summary>
     /// Some mixed utility methods for the UniMod editor classes.
     /// </summary>
-    public static class UniModEditorUtility
+    public static partial class UniModEditorUtility
     {
         /// <summary>
         /// Tries to copy the given managed assembly path into the given output folder. If specified, it will also
@@ -135,7 +135,7 @@ namespace Katas.UniMod.Editor
         public static string GetModTargetPlatform(ModConfig config, BuildTarget buildTarget)
         {
             // currently we are only supporting managed assemblies so a mod that only contains assemblies will support all platforms
-            if (!config.buildAssets)
+            if (!config.ContainsAssets)
                 return UniMod.AnyPlatform;
             
             // try to get the build target's equivalent runtime platform value

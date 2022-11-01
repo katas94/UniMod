@@ -28,7 +28,7 @@ namespace Katas.UniMod
             _startup = config.startup;
             
             Info = UniModUtility.CreateModInfoFromEmbeddedConfig(config);
-            ContainsAssets = config.containsAssets;
+            // ContainsAssets = config.containsAssets;
             ResourceLocator = new EmptyResourceLocator();
             LoadedAssemblies = GetLoadedAssemblies(config).AsReadOnly();
             ContainsAssemblies = LoadedAssemblies.Count > 0;

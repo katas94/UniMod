@@ -11,7 +11,6 @@ namespace Katas.UniMod
         public string modVersion;
         public string displayName;
         public string description;
-        public bool containsAssets;
         public ModStartup startup;
         public List<ModReference> dependencies;
         
