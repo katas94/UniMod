@@ -13,7 +13,7 @@ namespace Katas.UniMod.Editor
 {
     public static partial class UniModEditorUtility
     {
-        private const string AddressablesMenu = "UniMod/Addressables Utility";
+        private const string AddressablesMenu = "UniMod/Addressables";
         
         [MenuItem(AddressablesMenu + "/Reload Groups Editor")]
         public static void ReloadAddressablesGroupsEditor()
@@ -46,19 +46,19 @@ namespace Katas.UniMod.Editor
             CreateAddressablesModGroupTemplate(settings);
         }
         
-        [MenuItem(AddressablesMenu + "/Fix Group Labels")]
-        public static void FixAddressablesGroupLabels()
+        [MenuItem(AddressablesMenu + "/Fix Labels")]
+        public static void FixAddressablesLabels()
         {
             AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
             
             if (settings)
-                FixAddressablesGroupLabels(settings);
+                FixAddressablesLabels(settings);
         }
         
         /// <summary>
         /// Automatically adds to the settings any labels in its groups that are not already added.
         /// </summary>
-        public static void FixAddressablesGroupLabels(AddressableAssetSettings settings)
+        public static void FixAddressablesLabels(AddressableAssetSettings settings)
         {
             if (!settings)
                 return;
