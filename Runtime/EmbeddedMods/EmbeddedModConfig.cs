@@ -11,6 +11,7 @@ namespace Katas.UniMod
         public string modVersion;
         public string displayName;
         public string description;
+        public Texture2D thumbnail;
         public ModStartup startup;
         public List<ModReference> dependencies = new();
         

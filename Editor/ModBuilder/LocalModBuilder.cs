@@ -51,21 +51,63 @@ namespace Katas.UniMod.Editor
             
             try
             {
-                // get current active build target and build the assemblies (if there are not included assemblies then nothing will be built)
+                // export the mod thumbnail if any
+                await ExportThumbnailAsync(config, tmpBuildFolder);
+                
+                // build the mod assemblies if there are any
                 BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
                 await BuildAssembliesAsync(config, buildMode, buildTarget, tmpBuildFolder);
                 
                 // build assets if there are any included (this will run an Addressables build)
-                if (config.ContainsAssets)
-                    BuildAssets(config, tmpBuildFolder);
+                BuildAssets(config, tmpBuildFolder);
                 
-                // create the output mod archive file with all the built contents on it
+                // create the output mod archive file from the build
                 await CreateModFileFromBuildAsync(config, tmpBuildFolder, buildTarget, outputPath);
             }
             finally
             {
                 // cleanup
                 IOUtils.DeleteDirectory(tmpFolder);
+            }
+        }
+        
+        private async UniTask ExportThumbnailAsync(ModConfig config, string outputFolder)
+        {
+            if (!config.thumbnail)
+                return;
+
+            TextureImporter importer = null;
+
+            try
+            {
+                // if the thumbnail texture is non-readable we will try to make it readable temporarily for the export
+                if (!config.thumbnail.isReadable)
+                {
+                    string assetPath = AssetDatabase.GetAssetPath(config.thumbnail);
+                    importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                    if (importer is null)
+                        throw new Exception("The thumbnail texture is non-readable");
+
+                    importer.isReadable = true;
+                    importer.SaveAndReimport();
+                }
+
+                string path = Path.Combine(outputFolder, UniModRuntime.ThumbnailFile);
+                byte[] bytes = config.thumbnail.EncodeToPNG();
+                await File.WriteAllBytesAsync(path, bytes);
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("Failed to export the mod thumbnail", exception);
+            }
+            finally
+            {
+                if (importer is not null)
+                {
+                    // set the texture back to non-readable if it was before
+                    importer.isReadable = false;
+                    importer.SaveAndReimport();
+                }
             }
         }
 
@@ -91,6 +133,9 @@ namespace Katas.UniMod.Editor
         
         private void BuildAssets(ModConfig config, string outputFolder)
         {
+            if (!config.ContainsAssets)
+                return;
+            
             AddressablesBuilder addressablesBuilder = null;
 
             try

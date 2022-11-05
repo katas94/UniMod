@@ -133,6 +133,23 @@ namespace Katas.UniMod
         }
 
         /// <summary>
+        /// Creates a Sprite instance from the given texture.
+        /// </summary>
+        public static Sprite CreateSpriteFromTexture(Texture2D texture)
+        {
+            return Sprite.Create(
+                texture,
+                new Rect(0, 0, texture.width, texture.height),
+                new Vector2(0.5F, 0.5F),
+                Mathf.Max(texture.width, texture.height),
+                0,
+                SpriteMeshType.FullRect,
+                Vector4.zero,
+                false
+            );
+        }
+
+        /// <summary>
         /// Given a mod instance it will try to load and run the ModStartup script from its ResourceLocator.
         /// </summary>
         public static async UniTask RunModStartupScriptAsync(IMod mod)

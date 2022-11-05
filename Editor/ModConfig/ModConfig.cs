@@ -19,6 +19,7 @@ namespace Katas.UniMod.Editor
         public string modVersion;
         public string displayName;
         public string description;
+        public Texture2D thumbnail;
         public ModStartup startup;
         public List<ModReference> dependencies;
         
@@ -59,6 +60,7 @@ namespace Katas.UniMod.Editor
             embeddedConfig.modVersion = modVersion;
             embeddedConfig.displayName = displayName;
             embeddedConfig.description = description;
+            embeddedConfig.thumbnail = thumbnail;
             embeddedConfig.startup = startup;
             embeddedConfig.dependencies = dependencies;
             embeddedConfig.appId = appId;
@@ -128,7 +130,8 @@ namespace Katas.UniMod.Editor
             var entries = new List<AddressableAssetEntry>();
             
             foreach (AddressableAssetGroup group in addressableGroups)
-                group.GatherAllAssets(entries, true, true, true);
+                if (group)
+                    group.GatherAllAssets(entries, true, true, true);
             
             return entries;
         }

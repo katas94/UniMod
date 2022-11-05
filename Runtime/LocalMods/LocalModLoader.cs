@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
+using UnityEngine.Networking;
 
 namespace Katas.UniMod
 {
@@ -27,8 +28,9 @@ namespace Katas.UniMod
         private readonly string _assembliesFolder;
         private readonly string _catalogPath;
         private readonly List<Assembly> _loadedAssemblies;
-        
+
         private UniTaskCompletionSource _loadOperation;
+        private UniTaskCompletionSource<Sprite> _thumbnailOperation;
 
         public LocalModLoader(string modFolder, ModInfo info, string source = LocalModSource.SourceLabel)
         {
@@ -67,9 +69,24 @@ namespace Katas.UniMod
             }
         }
 
-        public UniTask<Texture2D> LoadThumbnailAsync()
+        public async UniTask<Sprite> GetThumbnailAsync()
         {
-            throw new NotImplementedException();
+            if (_thumbnailOperation is not null)
+                return await _thumbnailOperation.Task;
+            
+            _thumbnailOperation = new UniTaskCompletionSource<Sprite>();
+
+            try
+            {
+                Sprite thumbnail = await LoadThumbnailAsync();
+                _thumbnailOperation.TrySetResult(thumbnail);
+                return thumbnail;
+            }
+            catch (Exception exception)
+            {
+                _thumbnailOperation.TrySetException(exception);
+                throw;
+            }
         }
 
         private async UniTask InternalLoadAsync(IMod mod)
@@ -88,6 +105,24 @@ namespace Katas.UniMod
             await UniModUtility.RunStartupMethodsAsync(LoadedAssemblies, mod);
             
             IsLoaded = true;
+        }
+
+        private async UniTask<Sprite> LoadThumbnailAsync()
+        {
+            string path = Path.Combine(ModFolder, UniModRuntime.ThumbnailFile);
+            if (!File.Exists(path))
+                return null;
+            
+            using UnityWebRequest request = UnityWebRequestTexture.GetTexture(path);
+            await request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success)
+                throw new Exception($"Failed to load the mod thumbnail from: {path}.\nResult: {request.result}\nError: {request.error}");
+
+            Texture2D texture = DownloadHandlerTexture.GetContent(request);
+            texture.filterMode = FilterMode.Bilinear;
+            
+            return UniModUtility.CreateSpriteFromTexture(texture);
         }
     }
 }

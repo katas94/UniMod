@@ -20,6 +20,6 @@ namespace Katas.UniMod
         IReadOnlyList<Assembly> LoadedAssemblies { get; }
 
         UniTask LoadAsync(IMod mod);
-        UniTask<Texture2D> LoadThumbnailAsync();
+        UniTask<Sprite> GetThumbnailAsync();
     }
 }

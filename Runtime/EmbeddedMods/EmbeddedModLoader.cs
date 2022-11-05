@@ -25,6 +25,7 @@ namespace Katas.UniMod
         private readonly IReadOnlyList<Assembly> _loadedAssemblies;
         
         private UniTaskCompletionSource _loadOperation;
+        private Sprite _thumbnail;
 
         public EmbeddedModLoader(EmbeddedModConfig config, string source = EmbeddedModSource.SourceLabel)
         {
@@ -63,9 +64,13 @@ namespace Katas.UniMod
             }
         }
 
-        public UniTask<Texture2D> LoadThumbnailAsync()
+        public UniTask<Sprite> GetThumbnailAsync()
         {
-            throw new System.NotImplementedException();
+            if (!Config.thumbnail)
+                return UniTask.FromResult<Sprite>(null);
+            
+            _thumbnail ??= UniModUtility.CreateSpriteFromTexture(Config.thumbnail);
+            return UniTask.FromResult(_thumbnail);
         }
         
         private async UniTask InternalLoadAsync(IMod mod)

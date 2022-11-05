@@ -27,6 +27,7 @@ namespace Katas.UniMod
         public const string InfoFile = "info.json";
         public const string ModFileExtensionNoDot = "umod";
         public const string ModFileExtension = "." + ModFileExtensionNoDot;
+        public const string ThumbnailFile = "thumbnail.png";
         public const string AddressablesCatalogFileName = "catalog.json";
         public const string StartupAddress = "__mod_startup";
         public const string AssetsFolder = "Assets";

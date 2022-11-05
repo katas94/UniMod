@@ -70,9 +70,9 @@ namespace Katas.UniMod
             return Loader.LoadAsync(this);
         }
 
-        public UniTask<Texture2D> LoadThumbnailAsync()
+        public UniTask<Sprite> GetThumbnailAsync()
         {
-            return Loader.LoadThumbnailAsync();
+            return Loader.GetThumbnailAsync();
         }
 
         public void GetDependenciesRelatedToIssues(ModIssues issues, ICollection<Mod> results)

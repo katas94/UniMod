@@ -61,9 +61,9 @@ namespace Katas.UniMod
         UniTask LoadAsync();
         
         /// <summary>
-        /// Loads the mod's thumbnail as a texture object. Each call returns a new texture object so the caller is responsible of destroying it.
+        /// Gets the mod's thumbnail asynchronously.
         /// </summary>
-        UniTask<Texture2D> LoadThumbnailAsync();
+        UniTask<Sprite> GetThumbnailAsync();
         
         /// <summary>
         /// Populates the results collection with the dependencies causing the specified issues. Issues can include multiple flags.
