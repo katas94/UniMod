@@ -8,6 +8,10 @@ namespace Katas.UniMod
     /// </summary>
     public interface IModSource
     {
+        /// <summary>
+        /// Fetches all available mod loaders from the source. Once fetching has occured, the available mods should stay the same
+        /// until fetching is performed again.
+        /// </summary>
         UniTask FetchAsync();
         
         UniTask GetAllIdsAsync(ICollection<string> results);

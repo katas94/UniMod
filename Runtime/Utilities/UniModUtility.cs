@@ -135,7 +135,7 @@ namespace Katas.UniMod
         /// <summary>
         /// Given a mod instance it will try to load the ModStartup object from its ResourceLocator and invoke it with the given context.
         /// </summary>
-        public static async UniTask RunModStartupFromAssetsAsync(IModContext context, IMod mod)
+        public static async UniTask RunModStartupFromAssetsAsync(IUniModContext context, IMod mod)
         {
             if (mod.ResourceLocator is null)
                 return;
@@ -158,7 +158,7 @@ namespace Katas.UniMod
         /// Invokes all the methods with the ModStartupAttribute from the given assemblies. ModStartup methods returning a UniTask
         /// object will be executed concurrently.
         /// </summary>
-        public static UniTask RunStartupMethodsFromAssembliesAsync(IEnumerable<Assembly> assemblies, IModContext context, IMod mod)
+        public static UniTask RunStartupMethodsFromAssembliesAsync(IEnumerable<Assembly> assemblies, IUniModContext context, IMod mod)
         {
             if (assemblies is null)
                 return UniTask.CompletedTask;
@@ -176,7 +176,7 @@ namespace Katas.UniMod
         /// If the provided method info instance is from a ModStartup method (has the ModStartupAttribute), it will invoke it with the correct parameters.
         /// The method can either return void or a UniTask object and it can receive no arguments or receive a IModContext and a IMod instances as arguments.
         /// </summary>
-        public static UniTask InvokeModStartupMethodAsync(MethodInfo methodInfo, IModContext context, IMod mod)
+        public static UniTask InvokeModStartupMethodAsync(MethodInfo methodInfo, IUniModContext context, IMod mod)
         {
             if (methodInfo is null || !methodInfo.IsStatic || methodInfo.GetCustomAttributes(typeof(ModStartupAttribute), false).Length == 0)
                 return UniTask.CompletedTask;
@@ -187,7 +187,7 @@ namespace Katas.UniMod
             object result = parameters.Length switch
             {
                 0 => methodInfo.Invoke(null, null),
-                2 when parameters[0].ParameterType == typeof(IModContext) && parameters[1].ParameterType == typeof(IMod)
+                2 when parameters[0].ParameterType == typeof(IUniModContext) && parameters[1].ParameterType == typeof(IMod)
                     => methodInfo.Invoke(null, new object[] { context, mod }),
                 _ => null
             };
@@ -212,8 +212,8 @@ namespace Katas.UniMod
                     UnityVersion = Application.unityVersion,
                     UniModVersion = UniMod.Version,
                     Platform = Application.platform.ToString(),
-                    AppId = config.appId,
-                    AppVersion = config.appVersion
+                    HostId = config.appId,
+                    HostVersion = config.appVersion
                 },
             };
         }

@@ -126,8 +126,8 @@ namespace Katas.UniMod.Editor
                 UnityVersion = Application.unityVersion,
                 UniModVersion = UniMod.Version,
                 Platform = GetModTargetPlatform(config, buildTarget),
-                AppId = string.IsNullOrEmpty(config.appId) ? null : config.appId,
-                AppVersion = string.IsNullOrEmpty(config.appVersion) ? null : config.appVersion,
+                HostId = string.IsNullOrEmpty(config.appId) ? null : config.appId,
+                HostVersion = string.IsNullOrEmpty(config.appVersion) ? null : config.appVersion,
             };
         }
 

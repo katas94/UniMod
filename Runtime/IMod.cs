@@ -7,10 +7,10 @@ using UnityEngine.AddressableAssets.ResourceLocators;
 namespace Katas.UniMod
 {
     /// <summary>
-    /// Represents a mod that is loaded or can be loaded. It contains all the mod information including its dependencies and any
-    /// issues that can prevent the mod from loading. Loading a IMod instance directly will try to force load the mod by skipping
-    /// any checks for issues or missing/unsupported dependencies, so it is recommended to load the mods from a mod closure or context
-    /// instead.
+    /// Represents a mod. It contains all the mod information including its dependencies and any issues that
+    /// can prevent the mod from loading. Loading a mod instance directly will try to force load the mod by
+    /// skipping any checks for issues or missing/unsupported dependencies, so it is recommended to load mods
+    /// from the context instead.
     /// </summary>
     public interface IMod
     {
@@ -55,19 +55,19 @@ namespace Katas.UniMod
         
         /// <summary>
         /// Loads the mod. This method will not perform any checks regarding issues or missing dependencies, so you should call it only if
-        /// you want to try a forced load. To properly load a mod with automatic dependency loading and issues check use a mod context or
+        /// you want to try a forced load. To properly load a mod with automatic dependency loading and issues check use the mod context or
         /// a mod closure implementation.
         /// </summary>
-        UniTask LoadAsync(IModContext context);
+        UniTask LoadAsync(IUniModContext context);
         
         /// <summary>
-        /// Loads the mod's thumbnail as a texture object. Each call should return a new texture object so you should destroy it when no longer using it.
+        /// Loads the mod's thumbnail as a texture object. Each call returns a new texture object so the caller is responsible of destroying it.
         /// </summary>
         UniTask<Texture2D> LoadThumbnailAsync();
         
         /// <summary>
         /// Populates the results collection with the dependencies causing the specified issues. Issues can include multiple flags.
-        /// Not all issues are related with dependencies, like the ones regarding application support, those will never produce results.
+        /// Not all issues are related with dependencies, like the ones regarding host support, those will never produce results.
         /// </summary>
         void GetDependenciesRelatedToIssues(ModIssues issues, ICollection<IMod> results);
     }

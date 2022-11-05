@@ -45,7 +45,7 @@ namespace Katas.UniMod
             LoadedAssemblies = _loadedAssemblies.AsReadOnly();
         }
 
-        public async UniTask LoadAsync(IModContext context, IMod mod)
+        public async UniTask LoadAsync(IUniModContext context, IMod mod)
         {
             if (_loadOperation != null)
             {
@@ -72,7 +72,7 @@ namespace Katas.UniMod
             throw new NotImplementedException();
         }
 
-        private async UniTask InternalLoadAsync(IModContext context, IMod mod)
+        private async UniTask InternalLoadAsync(IUniModContext context, IMod mod)
         {
             if (IsLoaded)
                 return;

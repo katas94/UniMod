@@ -6,17 +6,11 @@ using Cysharp.Threading.Tasks;
 namespace Katas.UniMod
 {
     /// <summary>
-    /// Default UniMod mod context implementation.
+    /// Default UniMod context implementation that can be instantiated with any implementation of a mod host and local mod installer.
     /// </summary>
-    public sealed class UniModContext : IModContext
+    public sealed class UniModContext : IUniModContext
     {
-        public string ApplicationId => _application.Id;
-        public string ApplicationVersion => _application.Version;
-        public IReadOnlyCollection<IMod> Mods => _closure.Mods;
-        public IReadOnlyList<IModSource> Sources => _sources.Sources;
-        public string InstallationFolder => _installer.InstallationFolder;
-
-        private readonly IModdableApplication _application;
+        private readonly IModHost _host;
         private readonly ILocalModInstaller _installer;
         private readonly ModClosure _closure;
         private readonly ModSourceGroup _sources;
@@ -25,43 +19,48 @@ namespace Katas.UniMod
         private UniTaskCompletionSource _refreshingOperation;
 
         /// <summary>
-        /// Creates a default UniMod context for the specified application parameters.
+        /// Creates a default UniMod context with the specified host ID and version.
         /// </summary>
-        public static UniModContext CreateDefaultContext(string appId, string appVersion)
+        public static UniModContext CreateDefaultContext(string hostId, string hostVersion)
         {
-            return CreateDefaultContext(new ModdableApplication(appId, appVersion));
+            return CreateDefaultContext(new ModHost(hostId, hostVersion));
         }
         
         /// <summary>
-        /// Creates a default UniMod context for the specified application.
+        /// Creates a default UniMod context with the specified host.
         /// </summary>
-        public static UniModContext CreateDefaultContext(IModdableApplication application)
+        public static UniModContext CreateDefaultContext(IModHost host)
         {
             string installationFolder = UniMod.LocalInstallationFolder;
             var installer = new LocalModInstaller(installationFolder);
             var localModSource = new LocalModSource(installationFolder);
-            var context = new UniModContext(application, installer, localModSource);
+            var context = new UniModContext(host, installer, localModSource);
             
             return context;
         }
 
-        public UniModContext(IModdableApplication application, ILocalModInstaller installer)
-            : this(application, installer, Array.Empty<IModSource>()) { }
+        public UniModContext(IModHost host, ILocalModInstaller installer)
+            : this(host, installer, Array.Empty<IModSource>()) { }
 
-        public UniModContext(IModdableApplication application, ILocalModInstaller installer, params IModSource[] sources)
-            : this(application, installer, sources as IEnumerable<IModSource>) { }
+        public UniModContext(IModHost host, ILocalModInstaller installer, params IModSource[] sources)
+            : this(host, installer, sources as IEnumerable<IModSource>) { }
         
-        public UniModContext(IModdableApplication application, ILocalModInstaller installer, IEnumerable<IModSource> sources)
+        public UniModContext(IModHost host, ILocalModInstaller installer, IEnumerable<IModSource> sources)
         {
-            _application = application;
+            _host = host;
             _installer = installer;
-            _closure = new ModClosure(this, _application);
+            
+            // we use this specific implementation of mod closure because it allows us to rebuild the closure when refreshing the context
+            _closure = new ModClosure(this, _host);
+            // we use this specific implementation of mod source because it allows us to group multiple sources and treat them as one
             _sources = new ModSourceGroup(sources);
+            
             _loaders = new List<IModLoader>();
         }
 
         public async UniTask RefreshAsync()
         {
+            // ensure that multiple close calls to refresh results in one refresh
             if (_refreshingOperation is not null)
             {
                 await _refreshingOperation.Task;
@@ -83,9 +82,7 @@ namespace Katas.UniMod
                 }
                 catch (Exception exception)
                 {
-                    throw new Exception(
-                        "[UniModContext] there were some errors while trying to get the mod loaders from the sources",
-                        exception);
+                    throw new Exception("[UniModContext] something went wrong while trying to get the mod loaders from the sources", exception);
                 }
                 finally
                 {
@@ -112,7 +109,7 @@ namespace Katas.UniMod
             }
             catch (Exception exception)
             {
-                throw new Exception("[UniModContext] there were some errors while trying to refresh the local installation folder", exception);
+                throw new Exception("[UniModContext] something went wrong while trying to refresh the local installation folder", exception);
             }
         }
         
@@ -124,12 +121,24 @@ namespace Katas.UniMod
             }
             catch (Exception exception)
             {
-                throw new Exception("[UniModContext] there were some errors while trying to fetch from mod sources", exception);
+                throw new Exception("[UniModContext] something went wrong while trying to fetch from mod sources", exception);
             }
         }
 
 #region WRAPPERS
-        // mod loading context
+        // mod host
+        public string Id
+            => _host.Id;
+        public string Version
+            => _host.Version;
+        public ModIssues GetModIssues(IMod mod)
+            => _host.GetModIssues(mod);
+        public bool IsModSupported(IMod mod, out ModIssues issues)
+            => _host.IsModSupported(mod, out issues);
+        
+        // mod closure
+        public IReadOnlyCollection<IMod> Mods
+            => _closure.Mods;
         public IMod GetMod(string id)
             => _closure.GetMod(id);
         public UniTask<bool> TryLoadAllModsAsync()
@@ -142,6 +151,8 @@ namespace Katas.UniMod
             => _closure.TryLoadModAsync(id);
 
         // local mod installer
+        public string InstallationFolder
+            => _installer.InstallationFolder;
         public UniTask DownloadAndInstallModsAsync(IEnumerable<string> modUrls, CancellationToken cancellationToken = default)
             => _installer.DownloadAndInstallModsAsync(modUrls, cancellationToken);
         public UniTask DownloadAndInstallModAsync(string modUrl, CancellationToken cancellationToken = default, IProgress<float> progress = null)
@@ -156,6 +167,8 @@ namespace Katas.UniMod
             => _installer.InstallModAsync(modBuffer);
         
         // mod source group
+        public IReadOnlyList<IModSource> Sources
+            => _sources.Sources;
         public bool AddSource(IModSource source)
             => _sources.AddSource(source);
         public bool AddSource(IModSource source, int insertAtIndex)

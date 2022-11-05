@@ -5,6 +5,8 @@ using UnityEngine;
 
 namespace Katas.UniMod
 {
+    [AddComponentMenu("UniMod/Embedded Mod Source")]
+    [DisallowMultipleComponent]
     public sealed class EmbeddedModSource : MonoBehaviour, IModSource
     {
         public const string SourceLabel = "Embedded";

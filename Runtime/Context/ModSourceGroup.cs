@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 namespace Katas.UniMod
 {
     /// <summary>
-    /// Can group multiple mod sources in one.
+    /// Mod source group implementation that also implements a mod source so it can be handled as a single mod source.
     /// </summary>
     public sealed class ModSourceGroup : IModSource, IModSourceGroup
     {

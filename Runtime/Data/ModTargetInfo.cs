@@ -14,7 +14,7 @@ namespace Katas.UniMod
         [JsonRequired]
         public string UniModVersion;
         public string Platform;
-        public string AppId;
-        public string AppVersion;
+        public string HostId;
+        public string HostVersion;
     }
 }

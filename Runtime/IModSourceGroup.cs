@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 namespace Katas.UniMod
 {
+    /// <summary>
+    /// Handles a group of mod sources.
+    /// </summary>
     public interface IModSourceGroup
     {
         IReadOnlyList<IModSource> Sources { get; }

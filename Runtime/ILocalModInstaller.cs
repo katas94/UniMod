@@ -5,6 +5,9 @@ using Cysharp.Threading.Tasks;
 
 namespace Katas.UniMod
 {
+    /// <summary>
+    /// Provides different methods to install mods locally.
+    /// </summary>
     public interface ILocalModInstaller
     {
         /// <summary>

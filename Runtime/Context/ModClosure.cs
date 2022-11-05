@@ -7,23 +7,23 @@ using UnityEngine;
 namespace Katas.UniMod
 {
     /// <summary>
-    /// Default implementation of a mod closure. It uses the default Mod implementation and provides a public method to rebuild the closure.
+    /// Default implementation of a mod closure that can be rebuilt at any time with a collection of mod loaders.
     /// </summary>
     public sealed class ModClosure : IModClosure
     {
         public IReadOnlyCollection<IMod> Mods { get; }
 
-        private readonly IModContext _context;
-        private readonly IModdableApplication _application;
+        private readonly IUniModContext _context;
+        private readonly IModHost _host;
         private readonly List<Mod> _mods;
         private readonly Dictionary<IModLoader, UniTaskCompletionSource<bool>> _loadingOperations;
         
         private Dictionary<string, Mod> _modsById;
 
-        public ModClosure(IModContext context, IModdableApplication application)
+        public ModClosure(IUniModContext context, IModHost host)
         {
             _context = context;
-            _application = application;
+            _host = host;
             _mods = new List<Mod>();
             _loadingOperations = new Dictionary<IModLoader, UniTaskCompletionSource<bool>>();
             Mods = _mods.AsReadOnly();
@@ -31,7 +31,7 @@ namespace Katas.UniMod
         
         public void RebuildClosure(IEnumerable<IModLoader> loaders)
         {
-            _modsById = Mod.ResolveClosure(loaders, _application);
+            _modsById = Mod.ResolveClosure(loaders, _host);
             _mods.Clear();
             
             if (_modsById is not null)

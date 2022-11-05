@@ -11,13 +11,13 @@ namespace Katas.UniMod
         None                           = 0,
         Unknown                        = 1 << 0, // can be used by custom implementations that may have other issues
         
-        // issues regarding application support
+        // issues regarding host support
         UnsupportedUnityVersion        = 1 << 1, // mod was built with a different Unity version
         UnsupportedUniModVersion       = 1 << 2, // mod was built with an unsupported UniMod version
         UnsupportedPlatform            = 1 << 3, // mod was built for a different platform
-        UnsupportedApp                 = 1 << 4, // mod was built for an unsupported app
-        UnsupportedAppVersion          = 1 << 5, // mod was built for an unsupported app version
-        UnsupportedContent             = 1 << 6, // mod has content that it is either unsupported or explicitly disabled by the app (i.e.: scripting assemblies)
+        UnsupportedHost                 = 1 << 4, // mod was built for an unsupported host
+        UnsupportedHostVersion          = 1 << 5, // mod was built for an unsupported host version
+        UnsupportedContent             = 1 << 6, // mod has content that it is either unsupported or explicitly disabled by the host (i.e.: scripting assemblies)
         
         // issues regarding mod's dependencies
         CyclicDependencies             = 1 << 7, // there is at least one cyclic route in the mod's dependency graph

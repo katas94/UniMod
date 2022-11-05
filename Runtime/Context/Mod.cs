@@ -38,7 +38,7 @@ namespace Katas.UniMod
         
         private bool _resolved;
         
-        public static Dictionary<string, Mod> ResolveClosure(IEnumerable<IModLoader> loaders, IModdableApplication application)
+        public static Dictionary<string, Mod> ResolveClosure(IEnumerable<IModLoader> loaders, IModHost host)
         {
             var mods = new Dictionary<string, Mod>();
             
@@ -49,7 +49,7 @@ namespace Katas.UniMod
             
             // resolve all created mod instances
             foreach (Mod mod in mods.Values)
-                mod.Resolve(mods, application);
+                mod.Resolve(mods, host);
             
             return mods;
         }
@@ -65,7 +65,7 @@ namespace Katas.UniMod
             Dependencies = _dependencies.AsReadOnly();
         }
 
-        public UniTask LoadAsync(IModContext context)
+        public UniTask LoadAsync(IUniModContext context)
         {
             return Loader.LoadAsync(context, this);
         }
@@ -87,15 +87,15 @@ namespace Katas.UniMod
                         results.Add(mod);
         }
 
-        private void Resolve(IReadOnlyDictionary<string, Mod> mods, IModdableApplication application)
+        private void Resolve(IReadOnlyDictionary<string, Mod> mods, IModHost host)
         {
             if (_resolved)
                 return;
             
             _resolved = true;
             
-            // get any possible app support issues with the mod
-            Issues = application.GetModIssues(this);
+            // get any possible host support issues with the mod
+            Issues = host.GetModIssues(this);
             
             if (Loader.Info.Dependencies is null)
                 return;
@@ -112,7 +112,7 @@ namespace Katas.UniMod
                 }
 
                 _dependencies.Add(dependency);
-                dependency.Resolve(mods, application);
+                dependency.Resolve(mods, host);
                 
                 // check version support
                 if (!UniModUtility.IsSemanticVersionSupportedByCurrent(version, dependency.Version))
