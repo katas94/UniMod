@@ -8,6 +8,6 @@ namespace Katas.UniMod
     /// </summary>
     public abstract class ModStartup : ScriptableObject
     {
-        public abstract UniTask StartAsync (IUniModContext context, IMod mod);
+        public abstract UniTask StartAsync (IMod mod);
     }
 }

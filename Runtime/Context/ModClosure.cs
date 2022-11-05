@@ -13,16 +13,14 @@ namespace Katas.UniMod
     {
         public IReadOnlyCollection<IMod> Mods { get; }
 
-        private readonly IUniModContext _context;
         private readonly IModHost _host;
         private readonly List<Mod> _mods;
         private readonly Dictionary<IModLoader, UniTaskCompletionSource<bool>> _loadingOperations;
         
         private Dictionary<string, Mod> _modsById;
 
-        public ModClosure(IUniModContext context, IModHost host)
+        public ModClosure(IModHost host)
         {
-            _context = context;
             _host = host;
             _mods = new List<Mod>();
             _loadingOperations = new Dictionary<IModLoader, UniTaskCompletionSource<bool>>();
@@ -102,7 +100,7 @@ namespace Katas.UniMod
             // try to load the mod
             try
             {
-                await mod.LoadAsync(_context);
+                await mod.LoadAsync();
                 operation.TrySetResult(true);
                 return true;
             }

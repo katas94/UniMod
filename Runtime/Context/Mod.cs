@@ -65,9 +65,9 @@ namespace Katas.UniMod
             Dependencies = _dependencies.AsReadOnly();
         }
 
-        public UniTask LoadAsync(IUniModContext context)
+        public UniTask LoadAsync()
         {
-            return Loader.LoadAsync(context, this);
+            return Loader.LoadAsync(this);
         }
 
         public UniTask<Texture2D> LoadThumbnailAsync()

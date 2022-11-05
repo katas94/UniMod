@@ -58,7 +58,7 @@ namespace Katas.UniMod
         /// you want to try a forced load. To properly load a mod with automatic dependency loading and issues check use the mod context or
         /// a mod closure implementation.
         /// </summary>
-        UniTask LoadAsync(IUniModContext context);
+        UniTask LoadAsync();
         
         /// <summary>
         /// Loads the mod's thumbnail as a texture object. Each call returns a new texture object so the caller is responsible of destroying it.

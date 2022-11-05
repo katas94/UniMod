@@ -18,27 +18,6 @@ namespace Katas.UniMod
         
         private UniTaskCompletionSource _refreshingOperation;
 
-        /// <summary>
-        /// Creates a default UniMod context with the specified host ID and version.
-        /// </summary>
-        public static UniModContext CreateDefaultContext(string hostId, string hostVersion)
-        {
-            return CreateDefaultContext(new ModHost(hostId, hostVersion));
-        }
-        
-        /// <summary>
-        /// Creates a default UniMod context with the specified host.
-        /// </summary>
-        public static UniModContext CreateDefaultContext(IModHost host)
-        {
-            string installationFolder = UniMod.LocalInstallationFolder;
-            var installer = new LocalModInstaller(installationFolder);
-            var localModSource = new LocalModSource(installationFolder);
-            var context = new UniModContext(host, installer, localModSource);
-            
-            return context;
-        }
-
         public UniModContext(IModHost host, ILocalModInstaller installer)
             : this(host, installer, Array.Empty<IModSource>()) { }
 
@@ -51,7 +30,7 @@ namespace Katas.UniMod
             _installer = installer;
             
             // we use this specific implementation of mod closure because it allows us to rebuild the closure when refreshing the context
-            _closure = new ModClosure(this, _host);
+            _closure = new ModClosure(_host);
             // we use this specific implementation of mod source because it allows us to group multiple sources and treat them as one
             _sources = new ModSourceGroup(sources);
             

@@ -133,9 +133,9 @@ namespace Katas.UniMod
         }
 
         /// <summary>
-        /// Given a mod instance it will try to load the ModStartup object from its ResourceLocator and invoke it with the given context.
+        /// Given a mod instance it will try to load and run the ModStartup script from its ResourceLocator.
         /// </summary>
-        public static async UniTask RunModStartupFromAssetsAsync(IUniModContext context, IMod mod)
+        public static async UniTask RunModStartupScriptAsync(IMod mod)
         {
             if (mod.ResourceLocator is null)
                 return;
@@ -151,14 +151,14 @@ namespace Katas.UniMod
             
             var startup = await Addressables.LoadAssetAsync<ModStartup>(location);
             if (startup)
-                await startup.StartAsync(context, mod);
+                await startup.StartAsync(mod);
         }
         
         /// <summary>
         /// Invokes all the methods with the ModStartupAttribute from the given assemblies. ModStartup methods returning a UniTask
         /// object will be executed concurrently.
         /// </summary>
-        public static UniTask RunStartupMethodsFromAssembliesAsync(IEnumerable<Assembly> assemblies, IUniModContext context, IMod mod)
+        public static UniTask RunStartupMethodsAsync(IEnumerable<Assembly> assemblies, IMod mod)
         {
             if (assemblies is null)
                 return UniTask.CompletedTask;
@@ -167,29 +167,31 @@ namespace Katas.UniMod
             IEnumerable<UniTask> tasks = assemblies
                 .SelectMany(assembly => assembly.GetTypes())
                 .SelectMany(type => type.GetMethods())
-                .Select(methodInfo => InvokeModStartupMethodAsync(methodInfo, context, mod));
+                .Select(methodInfo => InvokeModStartupMethodAsync(methodInfo, mod));
             
             return UniTaskUtility.WhenAll(tasks);
         }
 
         /// <summary>
         /// If the provided method info instance is from a ModStartup method (has the ModStartupAttribute), it will invoke it with the correct parameters.
-        /// The method can either return void or a UniTask object and it can receive no arguments or receive a IModContext and a IMod instances as arguments.
+        /// The method can either return void or a UniTask object and it can receive no arguments or receive an IMod instance.
         /// </summary>
-        public static UniTask InvokeModStartupMethodAsync(MethodInfo methodInfo, IUniModContext context, IMod mod)
+        public static UniTask InvokeModStartupMethodAsync(MethodInfo methodInfo, IMod mod)
         {
             if (methodInfo is null || !methodInfo.IsStatic || methodInfo.GetCustomAttributes(typeof(ModStartupAttribute), false).Length == 0)
                 return UniTask.CompletedTask;
 
             ParameterInfo[] parameters = methodInfo.GetParameters();
             
-            // accept methods with no parameters or methods with (IModContext, IMod) parameters
+            // accept methods with no parameters or methods with an IMod parameter
             object result = parameters.Length switch
             {
-                0 => methodInfo.Invoke(null, null),
-                2 when parameters[0].ParameterType == typeof(IUniModContext) && parameters[1].ParameterType == typeof(IMod)
-                    => methodInfo.Invoke(null, new object[] { context, mod }),
-                _ => null
+                0
+                    => methodInfo.Invoke(null, null),
+                1 when parameters[0].ParameterType == typeof(IMod)
+                    => methodInfo.Invoke(null, new object[] { mod }),
+                _
+                    => null
             };
 
             if (result is UniTask task)

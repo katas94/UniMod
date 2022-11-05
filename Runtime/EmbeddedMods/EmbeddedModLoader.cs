@@ -41,7 +41,7 @@ namespace Katas.UniMod
             LoadedAssemblies = EmptyAssemblies;
         }
         
-        public async UniTask LoadAsync(IUniModContext context, IMod mod)
+        public async UniTask LoadAsync(IMod mod)
         {
             if (_loadOperation != null)
             {
@@ -53,7 +53,7 @@ namespace Katas.UniMod
 
             try
             {
-                await InternalLoadAsync(context, mod);
+                await InternalLoadAsync(mod);
                 _loadOperation.TrySetResult();
             }
             catch (Exception exception)
@@ -68,7 +68,7 @@ namespace Katas.UniMod
             throw new System.NotImplementedException();
         }
         
-        private async UniTask InternalLoadAsync(IUniModContext context, IMod mod)
+        private async UniTask InternalLoadAsync(IMod mod)
         {
             if (IsLoaded)
                 return;
@@ -81,9 +81,9 @@ namespace Katas.UniMod
             
             // run startup script and methods
             if (_startup)
-                await _startup.StartAsync(context, mod);
+                await _startup.StartAsync(mod);
             
-            await UniModUtility.RunStartupMethodsFromAssembliesAsync(LoadedAssemblies, context, mod);
+            await UniModUtility.RunStartupMethodsAsync(LoadedAssemblies, mod);
             
             IsLoaded = true;
         }

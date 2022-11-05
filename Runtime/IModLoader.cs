@@ -19,7 +19,7 @@ namespace Katas.UniMod
         IResourceLocator ResourceLocator { get; }
         IReadOnlyList<Assembly> LoadedAssemblies { get; }
 
-        UniTask LoadAsync(IUniModContext context, IMod mod);
+        UniTask LoadAsync(IMod mod);
         UniTask<Texture2D> LoadThumbnailAsync();
     }
 }
