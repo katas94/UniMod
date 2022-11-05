@@ -33,8 +33,8 @@ namespace Katas.UniMod
         public LocalModLoader(string modFolder, ModInfo info, string source = LocalModSource.SourceLabel)
         {
             ModFolder = modFolder;
-            _assembliesFolder = Path.Combine(modFolder, UniMod.AssembliesFolder);
-            _catalogPath = Path.Combine(modFolder, UniMod.AssetsFolder, UniMod.AddressablesCatalogFileName);
+            _assembliesFolder = Path.Combine(modFolder, UniModRuntime.AssembliesFolder);
+            _catalogPath = Path.Combine(modFolder, UniModRuntime.AssetsFolder, UniModRuntime.AddressablesCatalogFileName);
             _loadedAssemblies = new List<Assembly>();
             
             Info = info;

@@ -51,7 +51,7 @@ namespace Katas.UniMod
             // register the issues
             if (Application.unityVersion != mod.Target.UnityVersion)
                 issues |= ModIssues.UnsupportedUnityVersion;
-            if (!UniModUtility.IsSemanticVersionSupportedByCurrent(mod.Target.UniModVersion, UniMod.Version))
+            if (!UniModUtility.IsSemanticVersionSupportedByCurrent(mod.Target.UniModVersion, UniModRuntime.Version))
                 issues |= ModIssues.UnsupportedUniModVersion;
             if (!UniModUtility.IsPlatformCompatible(mod.Target.Platform))
                 issues |= ModIssues.UnsupportedPlatform;

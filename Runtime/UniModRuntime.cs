@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Katas.UniMod
 {
-    public static class UniMod
+    public static class UniModRuntime
     {
         public static IUniModContext Context
         {

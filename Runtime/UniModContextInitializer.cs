@@ -36,7 +36,7 @@ namespace Katas.UniMod
 
         private void InitializeContext()
         {
-            if (UniMod.IsContextInitialized)
+            if (UniModRuntime.IsContextInitialized)
             {
                 Debug.LogWarning("[UniMod] tried to initialize a UniMod context but it has already been initialized");
                 return;
@@ -49,20 +49,20 @@ namespace Katas.UniMod
             host.SupportModsCreatedForOtherHosts = supportModsCreatedForOtherHosts;
             
             // initialize the UniMod context
-            UniMod.InitializeContext(host);
+            UniModRuntime.InitializeContext(host);
             
             // check if we have an embedded mod source component so we can add it to the context
             var embeddedModSource = GetComponent<EmbeddedModSource>();
             if (embeddedModSource)
-                UniMod.Context.AddSource(embeddedModSource);
+                UniModRuntime.Context.AddSource(embeddedModSource);
         }
 
         private async UniTaskVoid StartAsync()
         {
             if (refreshContextOnStart)
-                await UniMod.Context.RefreshAsync();
+                await UniModRuntime.Context.RefreshAsync();
             if (loadAllModsOnStart)
-                await UniMod.Context.TryLoadAllModsAsync();
+                await UniModRuntime.Context.TryLoadAllModsAsync();
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Katas.UniMod
         /// </summary>
         public static bool IsPlatformCompatible(string platform)
         {
-            if (platform == UniMod.AnyPlatform)
+            if (platform == UniModRuntime.AnyPlatform)
                 return true;
             
             // try to get the RuntimePlatform value from the info
@@ -141,7 +141,7 @@ namespace Katas.UniMod
                 return;
             
             // check if the mod contains a startup script
-            if (!mod.ResourceLocator.Locate(UniMod.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
+            if (!mod.ResourceLocator.Locate(UniModRuntime.StartupAddress, typeof(object), out IList<IResourceLocation> locations))
                 return;
             
             // load and execute the startup script
@@ -212,7 +212,7 @@ namespace Katas.UniMod
                 Target = new ModTargetInfo()
                 {
                     UnityVersion = Application.unityVersion,
-                    UniModVersion = UniMod.Version,
+                    UniModVersion = UniModRuntime.Version,
                     Platform = Application.platform.ToString(),
                     HostId = config.appId,
                     HostVersion = config.appVersion
@@ -238,7 +238,7 @@ namespace Katas.UniMod
                 Assembly = await File.ReadAllBytesAsync(filePath)
             };
 
-            if (!UniMod.IsDebugBuild)
+            if (!UniModRuntime.IsDebugBuild)
                 return result;
             
             // look for the assembly's pdb file and load it if exists

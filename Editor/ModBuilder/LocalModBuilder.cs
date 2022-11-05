@@ -84,7 +84,7 @@ namespace Katas.UniMod.Editor
                 throw new Exception($"Could not find a mod assembly builder that supports the current build target: {buildTarget}");
             
             // build the assemblies
-            string assembliesOutputFolder = Path.Combine(outputFolder, UniMod.AssembliesFolder);
+            string assembliesOutputFolder = Path.Combine(outputFolder, UniModRuntime.AssembliesFolder);
             Directory.CreateDirectory(assembliesOutputFolder);
             await assemblyBuilder.BuildAssembliesAsync(assemblyNames, managedPluginPaths, buildMode, buildTarget, assembliesOutputFolder);
         }
@@ -101,15 +101,15 @@ namespace Katas.UniMod.Editor
                 if (config.startup)
                 {
                     AddressablesBuilder.IGroupBuilder groupBuilder = addressablesBuilder.CreateGroup(StartupGroupName);
-                    groupBuilder.CreateEntry(config.startup, UniMod.StartupAddress);
+                    groupBuilder.CreateEntry(config.startup, UniModRuntime.StartupAddress);
                 }
                 
                 // add all the config addressable groups to the build
                 addressablesBuilder.AddGroups(config.addressableGroups);
                 
                 // get the load path and perform the build
-                string buildPath = Path.Combine(outputFolder, UniMod.AssetsFolder);
-                string loadPath = UniMod.GetAddressablesLoadPathForMod(config.modId);
+                string buildPath = Path.Combine(outputFolder, UniModRuntime.AssetsFolder);
+                string loadPath = UniModRuntime.GetAddressablesLoadPathForMod(config.modId);
                 AddressablesPlayerBuildResult result = addressablesBuilder.Build(buildPath, loadPath);
                 
                 if (!string.IsNullOrEmpty(result.Error))
@@ -136,11 +136,11 @@ namespace Katas.UniMod.Editor
             
             // write the info file
             string infoJson = JsonConvert.SerializeObject(info, Formatting.Indented);
-            string infoFilePath = Path.Combine(buildFolder, UniMod.InfoFile);
+            string infoFilePath = Path.Combine(buildFolder, UniModRuntime.InfoFile);
             await File.WriteAllTextAsync(infoFilePath, infoJson);
             
             // make sure the output path has the proper mod extension
-            outputPath = IOUtils.EnsureFileExtension(outputPath, UniMod.ModFileExtensionNoDot);
+            outputPath = IOUtils.EnsureFileExtension(outputPath, UniModRuntime.ModFileExtensionNoDot);
             
             // overwrite the existing file
             if (File.Exists(outputPath))

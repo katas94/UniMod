@@ -63,9 +63,9 @@ namespace Katas.UniMod.Editor
         public static string GetDefaultFileOutputName(this ModConfig config, CodeOptimization buildMode)
         {
             if (config.ContainsAssets && UniModEditorUtility.TryGetRuntimePlatformFromBuildTarget(EditorUserBuildSettings.activeBuildTarget, out RuntimePlatform runtimePlatform))
-                return $"{config.modId}-{config.modVersion}-{runtimePlatform}-{buildMode}{UniMod.ModFileExtension}";
+                return $"{config.modId}-{config.modVersion}-{runtimePlatform}-{buildMode}{UniModRuntime.ModFileExtension}";
             else
-                return $"{config.modId}-{config.modVersion}-{buildMode}{UniMod.ModFileExtension}";
+                return $"{config.modId}-{config.modVersion}-{buildMode}{UniModRuntime.ModFileExtension}";
         }
         
         public static CodeOptimization? GetCachedBuildMode(this ModConfig config)
@@ -124,7 +124,7 @@ namespace Katas.UniMod.Editor
             if (buildMode == CodeOptimization.None)
                 return null;
             
-            string outputPath = EditorUtility.SaveFilePanel("Build mod...", null, defaultOutputPath, UniMod.ModFileExtensionNoDot);
+            string outputPath = EditorUtility.SaveFilePanel("Build mod...", null, defaultOutputPath, UniModRuntime.ModFileExtensionNoDot);
             return outputPath;
         }
     }
