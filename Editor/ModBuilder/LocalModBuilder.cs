@@ -20,16 +20,30 @@ namespace Katas.UniMod.Editor
     }
     
     /// <summary>
-    /// Builds a mod that can be loaded by the LocalMod implementation.
+    /// Mod builder implementation that builds mods that can be loaded by <see cref="LocalModLoader"/>. You can extend this implementation
+    /// to override any building step individually or add extra pre and post building steps (i.e.: including extra files in the build folder
+    /// so they are archived in the final mod file).
     /// </summary>
     [CreateAssetMenu(fileName = "LocalModBuilder", menuName = "UniMod/Local Mod Builder")]
-    public sealed class LocalModBuilder : ModBuilder
+    public class LocalModBuilder : ModBuilder
     {
         private const string StartupGroupName = "ModStartup";
         
         public CompressionLevel compressionLevel = CompressionLevel.Optimal;
         public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.PlatformSpecific;
         public List<CustomModAssemblyBuilder> customAssemblyBuilders;
+        
+        /// <summary>
+        /// Invoked before building the mod. The tmpBuildFolder is already created.
+        /// </summary>
+        protected virtual UniTask OnPreBuildAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string tmpBuildFolder)
+            => UniTask.CompletedTask;
+        
+        /// <summary>
+        /// Invoked after building the mod but before archiving the tmpBuildFolder and deleting it.
+        /// </summary>
+        protected virtual UniTask OnPostBuildAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string tmpBuildFolder)
+            => UniTask.CompletedTask;
         
         /// <summary>
         /// Builds the mod with the specified parameters.
@@ -51,15 +65,20 @@ namespace Katas.UniMod.Editor
             
             try
             {
+                BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+                
+                await OnPreBuildAsync(config, buildMode, buildTarget, tmpBuildFolder);
+                
                 // export the mod thumbnail if any
                 await ExportThumbnailAsync(config, tmpBuildFolder);
                 
                 // build the mod assemblies if there are any
-                BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
                 await BuildAssembliesAsync(config, buildMode, buildTarget, tmpBuildFolder);
                 
                 // build assets if there are any included (this will run an Addressables build)
                 BuildAssets(config, tmpBuildFolder);
+                
+                await OnPostBuildAsync(config, buildMode, buildTarget, tmpBuildFolder);
                 
                 // create the output mod archive file from the build
                 await CreateModFileFromBuildAsync(config, tmpBuildFolder, buildTarget, outputPath);
@@ -71,7 +90,7 @@ namespace Katas.UniMod.Editor
             }
         }
         
-        private async UniTask ExportThumbnailAsync(ModConfig config, string outputFolder)
+        protected virtual async UniTask ExportThumbnailAsync(ModConfig config, string outputFolder)
         {
             if (!config.thumbnail)
                 return;
@@ -111,7 +130,7 @@ namespace Katas.UniMod.Editor
             }
         }
 
-        private async UniTask BuildAssembliesAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder)
+        protected virtual async UniTask BuildAssembliesAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string outputFolder)
         {
             // resolve all the included assemblies in the config that are compatible with the build target
             List<string> assemblyNames = AssemblyDefinitionIncludesUtility.ResolveIncludedSupportedAssemblyNames(config.assemblyDefinitions, buildTarget);
@@ -131,7 +150,7 @@ namespace Katas.UniMod.Editor
             await assemblyBuilder.BuildAssembliesAsync(assemblyNames, managedPluginPaths, buildMode, buildTarget, assembliesOutputFolder);
         }
         
-        private void BuildAssets(ModConfig config, string outputFolder)
+        protected virtual void BuildAssets(ModConfig config, string outputFolder)
         {
             if (!config.ContainsAssets)
                 return;
@@ -166,7 +185,7 @@ namespace Katas.UniMod.Editor
             }
         }
 
-        private async UniTask CreateModFileFromBuildAsync(ModConfig config, string buildFolder, BuildTarget buildTarget, string outputPath)
+        protected virtual async UniTask CreateModFileFromBuildAsync(ModConfig config, string buildFolder, BuildTarget buildTarget, string outputPath)
         {
             // create the mod info struct
             ModInfo info = new ()
@@ -196,7 +215,7 @@ namespace Katas.UniMod.Editor
         }
         
         // tries to get a mod assembly builder for the given build target, based on the current configured mob assembly builder type and custom builders.
-        private bool TryGetModAssemblyBuilder(BuildTarget buildTarget, out IModAssemblyBuilder assemblyBuilder)
+        protected bool TryGetModAssemblyBuilder(BuildTarget buildTarget, out IModAssemblyBuilder assemblyBuilder)
         {
             assemblyBuilder = null;
             
