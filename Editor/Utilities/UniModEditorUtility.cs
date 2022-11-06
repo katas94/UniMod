@@ -17,7 +17,7 @@ namespace Katas.UniMod.Editor
         /// Tries to copy the given managed assembly path into the given output folder. If specified, it will also
         /// try to copy the pdb file (if any).
         /// </summary>
-        public static async UniTask CopyManagedAssemblyToOutputFolder (string dllSrcPath, string outputFolder, bool tryCopyPdbToo)
+        public static async UniTask CopyManagedAssemblyAsync (string dllSrcPath, string outputFolder, bool tryCopyPdbToo)
         {
             if (string.IsNullOrEmpty(outputFolder) || !Directory.Exists(outputFolder))
                 throw new Exception("The given output folder is null/empty or it does not exist");

@@ -101,7 +101,12 @@ namespace Katas.UniMod.Editor
                 var importer = AssetImporter.GetAtPath(path) as PluginImporter;
                 
                 // add the plugin only if it is managed (non-native) and it is compatible with the given build target (or build target is no target)
-                if (importer && !importer.isNativePlugin && (buildTarget == BuildTarget.NoTarget || importer.GetCompatibleWithPlatform(buildTarget)))
+                // if (importer && !importer.isNativePlugin && (buildTarget == BuildTarget.NoTarget || importer.GetCompatibleWithPlatform(buildTarget)))
+                //     paths.Add(path);
+                
+                // I have temporarily disabled the previous check since for some reason the importer.GetCompatibleWithPlatform is not working as expected.
+                // for the same compatible assembly in two different projects I get true and false results...
+                if (importer && !importer.isNativePlugin)
                     paths.Add(path);
             }
         }

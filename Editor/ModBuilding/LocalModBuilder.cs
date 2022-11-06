@@ -31,7 +31,7 @@ namespace Katas.UniMod.Editor
         
         public CompressionLevel compressionLevel = CompressionLevel.Optimal;
         public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.PlatformSpecific;
-        public List<CustomModAssemblyBuilder> customAssemblyBuilders;
+        public List<CustomAssemblyBuilder> customAssemblyBuilders;
         
         /// <summary>
         /// Invoked before building the mod. The tmpBuildFolder is already created.
@@ -139,15 +139,29 @@ namespace Katas.UniMod.Editor
             // return if there are no assemblies included
             if (assemblyNames.Count == 0 && managedPluginPaths.Count == 0)
                 return;
-            
-            // try to get an assembly builder for the target platform
-            if (!TryGetModAssemblyBuilder(buildTarget, out IModAssemblyBuilder assemblyBuilder))
-                throw new Exception($"Could not find a mod assembly builder that supports the current build target: {buildTarget}");
-            
-            // build the assemblies
+
             string assembliesOutputFolder = Path.Combine(outputFolder, UniModRuntime.AssembliesFolder);
             Directory.CreateDirectory(assembliesOutputFolder);
-            await assemblyBuilder.BuildAssembliesAsync(assemblyNames, managedPluginPaths, buildMode, buildTarget, assembliesOutputFolder);
+            
+            // build user defined assemblies
+            if (assemblyNames.Count > 0)
+            {
+                if (!TryGetModAssemblyBuilder(buildTarget, out IAssemblyBuilder assemblyBuilder))
+                    throw new Exception($"Could not find a mod assembly builder that supports the current build target: {buildTarget}");
+                
+                await assemblyBuilder.BuildAssembliesAsync(assemblyNames, buildMode, buildTarget, assembliesOutputFolder);
+            }
+            
+            // copy managed plugins to the output folder
+            await CopyManagedPlugins(managedPluginPaths, assembliesOutputFolder, buildMode);
+        }
+
+        protected virtual UniTask CopyManagedPlugins(IEnumerable<string> managedPluginPaths, string outputFolder, CodeOptimization buildMode)
+        {
+            bool isDebugBuild = buildMode is CodeOptimization.Debug;
+            return UniTaskUtility.WhenAll(managedPluginPaths.Select(
+                path => UniModEditorUtility.CopyManagedAssemblyAsync(path, outputFolder, isDebugBuild)
+            ));
         }
         
         protected virtual void BuildAssets(ModConfig config, string outputFolder)
@@ -215,14 +229,14 @@ namespace Katas.UniMod.Editor
         }
         
         // tries to get a mod assembly builder for the given build target, based on the current configured mob assembly builder type and custom builders.
-        protected bool TryGetModAssemblyBuilder(BuildTarget buildTarget, out IModAssemblyBuilder assemblyBuilder)
+        protected virtual bool TryGetModAssemblyBuilder(BuildTarget buildTarget, out IAssemblyBuilder assemblyBuilder)
         {
             assemblyBuilder = null;
             
             switch (assemblyBuilderType)
             {
                 case ModAssemblyBuilderType.Fast:
-                    assemblyBuilder = new FastModAssemblyBuilder();
+                    assemblyBuilder = FastAssemblyBuilder.Instance;
                     return true;
                 
                 case ModAssemblyBuilderType.PlatformSpecific:
@@ -230,7 +244,8 @@ namespace Katas.UniMod.Editor
                     return false;
                 
                 case ModAssemblyBuilderType.Custom:
-                    foreach (CustomModAssemblyBuilder builder in customAssemblyBuilders)
+                    // try to find a custom builder that supports the given build target
+                    foreach (CustomAssemblyBuilder builder in customAssemblyBuilders)
                     {
                         if (!builder.SupportsBuildTarget(buildTarget))
                             continue;
