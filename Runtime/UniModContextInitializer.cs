@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Katas.UniMod
 {
@@ -23,6 +24,11 @@ namespace Katas.UniMod
         [Header("Loading")][Space(5)]
         [SerializeField] private bool refreshContextOnStart = false;
         [SerializeField] private bool loadAllModsOnStart = false;
+        
+        [Header("Events")][Space(5)]
+        public UnityEvent onContextInitialized = new();
+        public UnityEvent onContextRefreshed = new();
+        public UnityEvent onModsLoaded = new();
 
         private void Awake()
         {
@@ -55,14 +61,23 @@ namespace Katas.UniMod
             var embeddedModSource = GetComponent<EmbeddedModSource>();
             if (embeddedModSource)
                 UniModRuntime.Context.AddSource(embeddedModSource);
+            
+            onContextInitialized.Invoke();
         }
 
         private async UniTaskVoid StartAsync()
         {
             if (refreshContextOnStart)
+            {
                 await UniModRuntime.Context.RefreshAsync();
+                onContextRefreshed.Invoke();
+            }
+
             if (loadAllModsOnStart)
+            {
                 await UniModRuntime.Context.TryLoadAllModsAsync();
+                onModsLoaded.Invoke();
+            }
         }
     }
 }
