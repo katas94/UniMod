@@ -97,6 +97,13 @@ namespace Katas.UniMod
             // get any possible host support issues with the mod
             Issues = host.GetModIssues(this);
             
+            // if the mod contains assemblies, check if we are currently using the Mono scripting backend
+            if (!Issues.HasFlag(ModIssues.UnsupportedContent) && Loader.ContainsAssemblies && !UniModUtility.IsModScriptingSupported)
+            {
+                Debug.LogWarning($"[UniMod] the mod {Id} contains assemblies but the project is using the IL2CPP backend. Please switch to Mono if you want scripting support for mods");
+                Issues |= ModIssues.UnsupportedContent;
+            }
+            
             if (Loader.Info.Dependencies is null)
                 return;
             

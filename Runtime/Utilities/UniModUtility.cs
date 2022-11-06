@@ -13,6 +13,12 @@ namespace Katas.UniMod
 {
     public static class UniModUtility
     {
+#if ENABLE_IL2CPP
+        public const bool IsModScriptingSupported = false;
+#else
+        public const bool IsModScriptingSupported = true;
+#endif
+        
         /// <summary>
         /// Given a platform string which can be UniMod.AnyPlatform or a RuntimePlatform enum serialization, checks if the current runtime
         /// platform is compatible.
