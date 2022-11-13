@@ -10,8 +10,6 @@ namespace Katas.UniMod.Editor
     /// </summary>
     public static class AssetIncludesUtility
     {
-        private static readonly List<string> ValidFolders = new();
-
         /// <summary>
         /// Resolves and returns the included asset GUIDs from the asset includes.
         /// </summary>
@@ -77,7 +75,7 @@ namespace Katas.UniMod.Editor
         /// </summary>
         public static string[] FindAssets(string filter, bool includeAssetsFolder, IEnumerable<DefaultAsset> folderAssets)
         {
-            ValidFolders.Clear();
+            using var _ = ListPool<string>.Get(out var validFolders);
 
             if (folderAssets is not null)
             {
@@ -87,17 +85,17 @@ namespace Katas.UniMod.Editor
                     if (string.IsNullOrEmpty(folder) || !AssetDatabase.IsValidFolder(folder))
                         continue;
                     
-                    ValidFolders.Add(folder);
+                    validFolders.Add(folder);
                 }
             }
             
             if (includeAssetsFolder)
-                ValidFolders.Add("Assets");
+                validFolders.Add("Assets");
             
-            if (ValidFolders.Count == 0)
+            if (validFolders.Count == 0)
                 return Array.Empty<string>();
             
-            return AssetDatabase.FindAssets(filter, ValidFolders.ToArray());
+            return AssetDatabase.FindAssets(filter, validFolders.ToArray());
         }
     }
 }

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEditorInternal;
 
 namespace Katas.UniMod.Editor
@@ -10,18 +12,26 @@ namespace Katas.UniMod.Editor
     /// </summary>
     public static class AssemblyDefinitionIncludesUtility
     {
-        private static readonly HashSet<string> Guids = new();
-        private static readonly HashSet<BuildTarget> SupportedBuildTargets = new();
+        // map of platform strings used in assembly definitions to their build targets
+        private static readonly Dictionary<string, BuildTarget> AssemblyDefinitionTargetsByPlatform
+            = CompilationPipeline.GetAssemblyDefinitionPlatforms()
+                .ToDictionary(platform => platform.Name, platform => platform.BuildTarget);
         
+        // all build targets supported in assembly definition files
+        private static readonly HashSet<BuildTarget> AssemblyDefinitionTargets
+            = CompilationPipeline.GetAssemblyDefinitionPlatforms()
+                .Select(platform => platform.BuildTarget)
+                .ToHashSet();
+
         /// <summary>
         /// Resolves and returns all the included assembly names, excluding those assemblies that are not compatible with the given build target.
         /// </summary>
         public static List<string> ResolveIncludedSupportedAssemblyNames(AssetIncludes<AssemblyDefinitionAsset> assetIncludes, BuildTarget buildTarget)
         {
-            Guids.Clear();
-            assetIncludes.ResolveIncludedGuids(Guids);
-            var names = new List<string>(Guids.Count);
-            ResolveSupportedAssemblyNames(buildTarget, Guids, names);
+            using var _ = HashSetPool<string>.Get(out var guids);
+            assetIncludes.ResolveIncludedGuids(guids);
+            var names = new List<string>(guids.Count);
+            ResolveSupportedAssemblyNames(buildTarget, guids, names);
             return names;
         }
         
@@ -36,9 +46,9 @@ namespace Katas.UniMod.Editor
             if (names is null)
                 return;
             
-            Guids.Clear();
-            assetIncludes.ResolveIncludedGuids(Guids);
-            ResolveSupportedAssemblyNames(buildTarget, Guids, names);
+            using var _ = HashSetPool<string>.Get(out var guids);
+            assetIncludes.ResolveIncludedGuids(guids);
+            ResolveSupportedAssemblyNames(buildTarget, guids, names);
         }
         
         /// <summary>
@@ -49,10 +59,10 @@ namespace Katas.UniMod.Editor
             IEnumerable<DefaultAsset> folderIncludes, IEnumerable<DefaultAsset> folderExcludes,
             IEnumerable<AssemblyDefinitionAsset> assetIncludes, IEnumerable<AssemblyDefinitionAsset> assetExcludes)
         {
-            Guids.Clear();
-            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, Guids);
-            var names = new List<string>(Guids.Count);
-            ResolveSupportedAssemblyNames(buildTarget, Guids, names);
+            using var _ = HashSetPool<string>.Get(out var guids);
+            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, guids);
+            var names = new List<string>(guids.Count);
+            ResolveSupportedAssemblyNames(buildTarget, guids, names);
             return names;
         }
 
@@ -69,9 +79,9 @@ namespace Katas.UniMod.Editor
             if (names is null)
                 return;
             
-            Guids.Clear();
-            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, Guids);
-            ResolveSupportedAssemblyNames(buildTarget, Guids, names);
+            using var _ = HashSetPool<string>.Get(out var guids);
+            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, guids);
+            ResolveSupportedAssemblyNames(buildTarget, guids, names);
         }
 
         /// <summary>
@@ -93,6 +103,8 @@ namespace Katas.UniMod.Editor
         {
             if (names is null)
                 return;
+            
+            using var _ = HashSetPool<BuildTarget>.Get(out var supportedBuildTargets);
             
             foreach (string guid in guids)
             {
@@ -117,9 +129,9 @@ namespace Katas.UniMod.Editor
                 }
                 
                 // check if the given target platform is supported by the assembly
-                SupportedBuildTargets.Clear();
-                GetAssemblyDefinitionSupportedBuildTargets(token, SupportedBuildTargets);
-                if (SupportedBuildTargets.Contains(buildTarget))
+                supportedBuildTargets.Clear();
+                GetAssemblyDefinitionSupportedBuildTargets(token, supportedBuildTargets);
+                if (supportedBuildTargets.Contains(buildTarget))
                     names.Add(assemblyName);
             }
         }
@@ -130,6 +142,8 @@ namespace Katas.UniMod.Editor
         /// </summary>
         public static void GetAssemblyDefinitionSupportedBuildTargets(JToken token, ISet<BuildTarget> supportedBuildTargets)
         {
+            BuildTarget buildTarget;
+            
             // as specified in Unity's documentation, the includePlatforms and excludePlatforms arrays cannot be used together, so we need to check
             // which is defined and contains platforms
             JToken includedToken = token["includePlatforms"];
@@ -137,9 +151,9 @@ namespace Katas.UniMod.Editor
             {
                 foreach (JToken platformToken in includedArray)
                 {
-                    BuildTarget buildTarget = GetAssemblyDefinitionPlatformAsBuildTarget(platformToken.Value<string>());
+                    string platform = platformToken.Value<string>();
                     
-                    if (buildTarget != BuildTarget.NoTarget)
+                    if (TryGetAssemblyDefinitionPlatformAsBuildTarget(platform, out buildTarget))
                         supportedBuildTargets.Add(buildTarget);
                 }
                 
@@ -147,25 +161,7 @@ namespace Katas.UniMod.Editor
             }
             
             // if no includes are specified, we need to add all supported platforms by default and then exclude them
-            supportedBuildTargets.Add(BuildTarget.Android);
-            supportedBuildTargets.Add(BuildTarget.EmbeddedLinux);
-            supportedBuildTargets.Add(BuildTarget.GameCoreXboxSeries);
-            supportedBuildTargets.Add(BuildTarget.GameCoreXboxOne);
-            supportedBuildTargets.Add(BuildTarget.iOS);
-            supportedBuildTargets.Add(BuildTarget.StandaloneLinux64);
-            supportedBuildTargets.Add(BuildTarget.CloudRendering);
-            supportedBuildTargets.Add(BuildTarget.Lumin);
-            supportedBuildTargets.Add(BuildTarget.StandaloneOSX);
-            supportedBuildTargets.Add(BuildTarget.PS4);
-            supportedBuildTargets.Add(BuildTarget.PS5);
-            supportedBuildTargets.Add(BuildTarget.Stadia);
-            supportedBuildTargets.Add(BuildTarget.Switch);
-            supportedBuildTargets.Add(BuildTarget.tvOS);
-            supportedBuildTargets.Add(BuildTarget.WSAPlayer);
-            supportedBuildTargets.Add(BuildTarget.WebGL);
-            supportedBuildTargets.Add(BuildTarget.StandaloneWindows);
-            supportedBuildTargets.Add(BuildTarget.StandaloneWindows64);
-            supportedBuildTargets.Add(BuildTarget.XboxOne);
+            supportedBuildTargets.UnionWith(AssemblyDefinitionTargets);
             
             JToken excludeToken = token["excludePlatforms"];
             if (excludeToken is not JArray { Count: > 0 } excludedArray)
@@ -173,9 +169,9 @@ namespace Katas.UniMod.Editor
             
             foreach (JToken platformToken in excludedArray)
             {
-                BuildTarget buildTarget = GetAssemblyDefinitionPlatformAsBuildTarget(platformToken.Value<string>());
+                string platform = platformToken.Value<string>();
                 
-                if (buildTarget != BuildTarget.NoTarget)
+                if (TryGetAssemblyDefinitionPlatformAsBuildTarget(platform, out buildTarget))
                     supportedBuildTargets.Remove(buildTarget);
             }
         }
@@ -183,32 +179,9 @@ namespace Katas.UniMod.Editor
         /// <summary>
         /// Given the platform string found on a custom assembly definition, tries to return the equivalent BuildTarget.
         /// </summary>
-        public static BuildTarget GetAssemblyDefinitionPlatformAsBuildTarget(string platform)
+        public static bool TryGetAssemblyDefinitionPlatformAsBuildTarget(string platform, out BuildTarget buildTarget)
         {
-            return platform switch
-            {
-                "Android" => BuildTarget.Android,
-                "Editor" => BuildTarget.NoTarget,
-                "EmbeddedLinux" => BuildTarget.EmbeddedLinux,
-                "GameCoreScarlett" => BuildTarget.GameCoreXboxSeries,
-                "GameCoreXboxOne" => BuildTarget.GameCoreXboxOne,
-                "iOS" => BuildTarget.iOS,
-                "LinuxStandalone64" => BuildTarget.StandaloneLinux64,
-                "CloudRendering" => BuildTarget.CloudRendering,
-                "Lumin" => BuildTarget.Lumin,
-                "macOSStandalone" => BuildTarget.StandaloneOSX,
-                "PS4" => BuildTarget.PS4,
-                "PS5" => BuildTarget.PS5,
-                "Stadia" => BuildTarget.Stadia,
-                "Switch" => BuildTarget.Switch,
-                "tvOS" => BuildTarget.tvOS,
-                "WSA" => BuildTarget.WSAPlayer,
-                "WebGL" => BuildTarget.WebGL,
-                "WindowsStandalone32" => BuildTarget.StandaloneWindows,
-                "WindowsStandalone64" => BuildTarget.StandaloneWindows64,
-                "XboxOne" => BuildTarget.XboxOne,
-                _ => BuildTarget.NoTarget
-            };
+            return AssemblyDefinitionTargetsByPlatform.TryGetValue(platform, out buildTarget);
         }
     }
 }

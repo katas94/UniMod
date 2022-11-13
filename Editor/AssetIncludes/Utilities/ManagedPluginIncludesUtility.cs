@@ -8,17 +8,15 @@ namespace Katas.UniMod.Editor
     /// </summary>
     public static class ManagedPluginIncludesUtility
     {
-        private static readonly HashSet<string> Guids = new();
-        
         /// <summary>
         /// Resolves and returns all the included managed plugin paths, excluding non managed plugins and plugins that are not targeted to the given build target.
         /// </summary>
         public static List<string> ResolveIncludedSupportedManagedPluginPaths(AssetIncludes<DefaultAsset> assetIncludes, BuildTarget buildTarget)
         {
-            Guids.Clear();
-            assetIncludes.ResolveIncludedGuids(Guids);
-            var paths = new List<string>(Guids.Count);
-            ResolveSupportedManagedPluginPaths(buildTarget, Guids, paths);
+            using var _ = HashSetPool<string>.Get(out var guids);
+            assetIncludes.ResolveIncludedGuids(guids);
+            var paths = new List<string>(guids.Count);
+            ResolveSupportedManagedPluginPaths(buildTarget, guids, paths);
             return paths;
         }
         
@@ -33,9 +31,9 @@ namespace Katas.UniMod.Editor
             if (paths is null)
                 return;
             
-            Guids.Clear();
-            assetIncludes.ResolveIncludedGuids(Guids);
-            ResolveSupportedManagedPluginPaths(buildTarget, Guids, paths);
+            using var _ = HashSetPool<string>.Get(out var guids);
+            assetIncludes.ResolveIncludedGuids(guids);
+            ResolveSupportedManagedPluginPaths(buildTarget, guids, paths);
         }
         
         /// <summary>
@@ -46,10 +44,10 @@ namespace Katas.UniMod.Editor
             IEnumerable<DefaultAsset> folderIncludes, IEnumerable<DefaultAsset> folderExcludes,
             IEnumerable<DefaultAsset> assetIncludes, IEnumerable<DefaultAsset> assetExcludes)
         {
-            Guids.Clear();
-            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, Guids);
-            var paths = new List<string>(Guids.Count);
-            ResolveSupportedManagedPluginPaths(buildTarget, Guids, paths);
+            using var _ = HashSetPool<string>.Get(out var guids);
+            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, guids);
+            var paths = new List<string>(guids.Count);
+            ResolveSupportedManagedPluginPaths(buildTarget, guids, paths);
             return paths;
         }
 
@@ -66,9 +64,9 @@ namespace Katas.UniMod.Editor
             if (paths is null)
                 return;
             
-            Guids.Clear();
-            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, Guids);
-            ResolveSupportedManagedPluginPaths(buildTarget, Guids, paths);
+            using var _ = HashSetPool<string>.Get(out var guids);
+            AssetIncludesUtility.ResolveIncludedGuids(includeAssetsFolder, folderIncludes, folderExcludes, assetIncludes, assetExcludes, guids);
+            ResolveSupportedManagedPluginPaths(buildTarget, guids, paths);
         }
 
         /// <summary>
@@ -91,7 +89,7 @@ namespace Katas.UniMod.Editor
             if (paths is null)
                 return;
             
-            foreach (string guid in Guids)
+            foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (string.IsNullOrEmpty(path))
