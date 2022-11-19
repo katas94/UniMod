@@ -9,9 +9,9 @@ namespace Katas.UniMod.Editor
     /// <summary>
     /// Uses the editor precompiled assemblies under the Library/ScriptAssemblies folder. It is quicker since no build is required.
     /// <br/><br/>
-    /// This builder supports any platform since all assemblies are managed. Still I'm not sure of the exact
-    /// build parameters used by Unity for these assemblies. I think they are always compiled in debug mode
-    /// so it is preferable to use other assembly builders for production builds.
+    /// Please note that since this uses the editor's precompiled assemblies, the scripting defines will differ from the ones used in
+    /// a final platform specific build. For example, UNITY_EDITOR will be defined so any script trying to access Editor only features
+    /// may cause errors if testing the assemblies in a player build.
     /// <br/><br/>
     /// Use this builder for fast iteration.
     /// </summary>

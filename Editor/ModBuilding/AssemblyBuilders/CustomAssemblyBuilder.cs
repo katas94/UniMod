@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Katas.UniMod.Editor
 {
     /// <summary>
-    /// Extend this class to create custom assembly builders.
+    /// Extend this class to create custom assembly builders that you can set to <see cref="LocalModBuilder"/> assets.
     /// </summary>
     public abstract class CustomAssemblyBuilder : ScriptableObject, IAssemblyBuilder
     {

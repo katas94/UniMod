@@ -14,8 +14,8 @@ namespace Katas.UniMod.Editor
 {
     public enum ModAssemblyBuilderType
     {
+        Final,
         Fast,
-        PlatformSpecific,
         Custom
     }
     
@@ -30,7 +30,7 @@ namespace Katas.UniMod.Editor
         private const string StartupGroupName = "ModStartup";
         
         public CompressionLevel compressionLevel = CompressionLevel.Optimal;
-        public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.PlatformSpecific;
+        public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.Final;
         public List<CustomAssemblyBuilder> customAssemblyBuilders;
         
         /// <summary>
@@ -231,17 +231,14 @@ namespace Katas.UniMod.Editor
         // tries to get a mod assembly builder for the given build target, based on the current configured mob assembly builder type and custom builders.
         protected virtual bool TryGetModAssemblyBuilder(BuildTarget buildTarget, out IAssemblyBuilder assemblyBuilder)
         {
-            assemblyBuilder = null;
-            
             switch (assemblyBuilderType)
             {
+                case ModAssemblyBuilderType.Final:
+                    return TryGetFinalModAssemblyBuilder(buildTarget, out assemblyBuilder);
+                
                 case ModAssemblyBuilderType.Fast:
                     assemblyBuilder = FastAssemblyBuilder.Instance;
                     return true;
-                
-                case ModAssemblyBuilderType.PlatformSpecific:
-                    // TODO: implement platform specific builders
-                    return false;
                 
                 case ModAssemblyBuilderType.Custom:
                     // try to find a custom builder that supports the given build target
@@ -254,9 +251,32 @@ namespace Katas.UniMod.Editor
                         return true;
                     }
                     
+                    assemblyBuilder = null;
                     return false;
                 
                 default:
+                    assemblyBuilder = null;
+                    return false;
+            }
+        }
+        
+        // override this if you have extended the FinalAssemblyBuilder and don't want to create an assembly builder asset
+        protected virtual bool TryGetFinalModAssemblyBuilder(BuildTarget buildTarget, out IAssemblyBuilder assemblyBuilder)
+        {
+            switch (buildTarget)
+            {
+                case BuildTarget.StandaloneWindows:
+                case BuildTarget.StandaloneWindows64:
+                case BuildTarget.StandaloneLinux64:
+                case BuildTarget.StandaloneOSX:
+                    assemblyBuilder = StandaloneAssemblyBuilder.Instance;
+                    return true;
+                case BuildTarget.Android:
+                    assemblyBuilder = AndroidAssemblyBuilder.Instance;
+                    return true;
+                
+                default:
+                    assemblyBuilder = null;
                     return false;
             }
         }
