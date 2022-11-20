@@ -125,18 +125,14 @@ namespace Katas.UniMod.Editor
             {
                 UnityVersion = Application.unityVersion,
                 UniModVersion = UniModRuntime.Version,
-                Platform = GetModTargetPlatform(config, buildTarget),
+                Platform = GetModTargetPlatform(buildTarget),
                 HostId = string.IsNullOrEmpty(config.appId) ? null : config.appId,
                 HostVersion = string.IsNullOrEmpty(config.appVersion) ? null : config.appVersion,
             };
         }
 
-        public static string GetModTargetPlatform(ModConfig config, BuildTarget buildTarget)
+        public static string GetModTargetPlatform(BuildTarget buildTarget)
         {
-            // currently we are only supporting managed assemblies so a mod that only contains assemblies will support all platforms
-            if (!config.ContainsAssets)
-                return UniModRuntime.AnyPlatform;
-            
             // try to get the build target's equivalent runtime platform value
             if (!TryGetRuntimePlatformFromBuildTarget(buildTarget, out RuntimePlatform runtimePlatform))
                 throw new Exception($"Couldn't get the equivalent runtime platform value for the current active build target: {buildTarget}");

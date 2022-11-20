@@ -32,7 +32,6 @@ namespace Katas.UniMod
         public const string StartupAddress = "__mod_startup";
         public const string AssetsFolder = "Assets";
         public const string AssembliesFolder = "Assemblies";
-        public const string AnyPlatform = null;
         
         public static readonly bool IsDebugBuild = Debug.isDebugBuild;
         

@@ -25,9 +25,6 @@ namespace Katas.UniMod
         /// </summary>
         public static bool IsPlatformCompatible(string platform)
         {
-            if (platform == UniModRuntime.AnyPlatform)
-                return true;
-            
             // try to get the RuntimePlatform value from the info
             if (!Enum.TryParse(platform, false, out RuntimePlatform runtimePlatform))
                 return false;
