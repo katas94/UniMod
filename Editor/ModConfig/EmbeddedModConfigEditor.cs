@@ -9,7 +9,7 @@ namespace Katas.UniMod.Editor
         public override void OnInspectorGUI ()
         {
             EditorGUILayout.Space();
-            EditorGUILayout.HelpBox($"Embedded configs are automatically updated by a linked {nameof(ModConfig)} asset", MessageType.Info);
+            EditorGUILayout.HelpBox($"Embedded configs are automatically updated and they must be linked to a {nameof(ModConfig)} asset", MessageType.Info);
             EditorGUILayout.Space();
 
             GUI.enabled = false;
