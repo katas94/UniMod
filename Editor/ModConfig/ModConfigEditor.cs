@@ -32,16 +32,11 @@ namespace Katas.UniMod.Editor
             if (string.IsNullOrEmpty(_includesMessage))
                 UpdateIncludesMessage();
             
-            GUILayout.Space(8);
-            if (config.linkedEmbeddedConfig && GUILayout.Button("Refresh Linked Embedded Config"))
-                config.SyncEmbeddedConfig(config.linkedEmbeddedConfig);
-            
             // if there is no builder, don't display the build buttons
             if (!config.builder)
                 return;
             
-            if (config.linkedEmbeddedConfig)
-                GUILayout.Space(16);
+            GUILayout.Space(8);
             if (GUILayout.Button("Build"))
                 config.BuildWithGuiAsync(defaultToCachedParameters: false).Forget();
             EditorGUILayout.HelpBox(_includesMessage, MessageType.Info, true);
@@ -61,7 +56,7 @@ namespace Katas.UniMod.Editor
             
             // display same build buttons for development build
             GUILayout.Space(16);
-            GUILayout.Label("Build for Development");
+            GUILayout.Label("Development Tools");
             if (GUILayout.Button("Development Build"))
                 config.BuildWithGuiForDevelopmentAsync(defaultToCachedParameters: false).Forget();
             
