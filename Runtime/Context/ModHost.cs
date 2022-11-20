@@ -24,7 +24,7 @@ namespace Katas.UniMod
         
         public virtual ModIssues GetModIssues(IMod mod)
         {
-            var issues = ModIssues.None;
+            ModIssues issues = 0;
             
             bool isHostSupported;
             bool isHostVersionSupported;
@@ -68,7 +68,7 @@ namespace Katas.UniMod
         public virtual bool IsModSupported(IMod mod, out ModIssues issues)
         {
             issues = GetModIssues(mod);
-            return issues == ModIssues.None;
+            return issues == 0;
         }
         
         /// <summary>

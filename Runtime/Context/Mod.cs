@@ -129,7 +129,7 @@ namespace Katas.UniMod
                 }
                 
                 // check any other issues
-                if (dependency.Issues != ModIssues.None)
+                if (dependency.Issues != 0)
                 {
                     Issues |= ModIssues.DependenciesWithIssues;
                     LinkModWithIssue(dependency, ModIssues.DependenciesWithIssues);

@@ -9,10 +9,6 @@ namespace Katas.UniMod
     public enum ModIssues
     {
         /// <summary>
-        /// Mod has no issues.
-        /// </summary>
-        None                           = 0,
-        /// <summary>
         /// Mod has unknown issues. This field can be used by custom implementations.
         /// </summary>
         Unknown                        = 1 << 0,
