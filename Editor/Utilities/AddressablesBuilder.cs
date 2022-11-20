@@ -201,12 +201,17 @@ namespace Katas.UniMod.Editor
             string catalogLoadPathId = profileSettings.CreateValue(CatalogLoadPathName, loadPath);
             string bundlesBuildPathId = profileSettings.CreateValue(BundlesBuildPathName, bundlesBuildPath);
             string bundlesLoadPathId = profileSettings.CreateValue(BundlesLoadPathName, bundlesLoadPath);
-
+            
             // setup remote catalog settings
             _settings.OverridePlayerVersion = CatalogSuffix;
             _settings.BuildRemoteCatalog = true;
             _settings.RemoteCatalogBuildPath.SetVariableById(_settings, catalogBuildPathId);
             _settings.RemoteCatalogLoadPath.SetVariableById(_settings, catalogLoadPathId);
+            
+            // setup active profile with the custom bundles build/load paths so automatically generated dependency groups are built in the proper path
+            string activeProfileId = _settings.activeProfileId;
+            _settings.profileSettings.SetValue(activeProfileId, "Local.BuildPath", bundlesBuildPath);
+            _settings.profileSettings.SetValue(activeProfileId, "Local.LoadPath", bundlesLoadPath);
 
             // setup the bundled schema for all groups
             foreach (GroupBuilder groupBuilder in _groupBuilders)
