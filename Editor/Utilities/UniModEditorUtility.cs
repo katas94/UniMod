@@ -139,5 +139,34 @@ namespace Katas.UniMod.Editor
             
             return runtimePlatform.ToString();
         }
+        
+        /// <summary>
+        /// Refreshes and saves all <see cref="EmbeddedModConfig"/> assets in the project that are currently linked to a <see cref="ModConfig"/> asset.
+        /// <br/><br/>
+        /// This method is run automatically when entering play mode and before doing a player build.
+        /// </summary>
+        [InitializeOnEnterPlayMode] // make sure all embedded configs are refreshed when entering play mode
+        public static void RefreshAndSaveAllEmbeddedModConfigs()
+        {
+            const string modConfigFilter = "t:" + nameof(ModConfig);
+            string[] configGuids = AssetDatabase.FindAssets(modConfigFilter);
+
+            foreach (string guid in configGuids)
+            {
+                if (string.IsNullOrEmpty(guid))
+                    continue;
+                
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (string.IsNullOrEmpty(path))
+                    continue;
+                
+                var config = AssetDatabase.LoadAssetAtPath<ModConfig>(path);
+                if (!config || !config.linkedEmbeddedConfig)
+                    continue;
+                
+                config.SyncEmbeddedConfig(config.linkedEmbeddedConfig);
+                AssetDatabase.SaveAssetIfDirty(config.linkedEmbeddedConfig);
+            }
+        }
     }
 }
