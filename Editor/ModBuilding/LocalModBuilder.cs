@@ -29,8 +29,11 @@ namespace Katas.UniMod.Editor
     {
         private const string StartupGroupName = "ModStartup";
         
+        [Tooltip(CompressionLevelTooltip)]
         public CompressionLevel compressionLevel = CompressionLevel.Optimal;
+        [Tooltip(AssemblyBuilderTypeTooltip)]
         public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.Final;
+        [Tooltip(CustomAssemblyBuildersTooltip)]
         public List<CustomAssemblyBuilder> customAssemblyBuilders;
         
         public override UniTask BuildAsync (ModConfig config, CodeOptimization buildMode, string outputPath)
@@ -312,5 +315,11 @@ namespace Katas.UniMod.Editor
                     return false;
             }
         }
+        
+#region TOOLTIPS
+        private const string CompressionLevelTooltip = "The compression level to use for the output mod file";
+        private const string AssemblyBuilderTypeTooltip = "Specify how to build the script assemblies from the project.\n\n\tFast: skips building the scripts by using the Editor's precompiled assemblies (be aware that they are compiled with the Editor's defines).\n\n\tFinal: performs an scripts only build of the project to produce assemblies with the right defines for the current active platform. Use this option for release builds.\n\n\tCustom: looks on the configured custom assembly builders for any builder compatible with the current platform an uses it.";
+        private const string CustomAssemblyBuildersTooltip = "Define here any custom assembly builders that will be used when \"Custom\" is set in the Assembly Builder Type field";
+#endregion
     }
 }

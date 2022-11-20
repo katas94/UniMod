@@ -12,27 +12,29 @@ namespace Katas.UniMod.Editor
     [CreateAssetMenu(fileName = "ModConfig", menuName = "UniMod/Mod Config")]
     public sealed class ModConfig : ScriptableObject
     {
+        [Tooltip(LinkedEmbeddedConfigTooltip)]
         public EmbeddedModConfig linkedEmbeddedConfig;
 
         [Header("Configuration")][Space(5)]
-        public string modId;
-        public string modVersion;
-        public string displayName;
-        public string description;
-        public Texture2D thumbnail;
-        public ModStartup startup;
-        public List<ModReference> dependencies;
+        [Tooltip(ModIdTooltip)]        public string modId;
+        [Tooltip(ModVersionTooltip)]   public string modVersion;
+        [Tooltip(DisplayNameTooltip)]  public string displayName;
+        [Tooltip(DescriptionTooltip)]  public string description;
+        [Tooltip(ThumbnailTooltip)]    public Texture2D thumbnail;
+        [Tooltip(StartupTooltip)]      public ModStartup startup;
+        [Tooltip(DependenciesTooltip)] public List<ModReference> dependencies;
         
         [Header("Target Application")][Space(5)]
-        public string appId;
-        public string appVersion;
+        [Tooltip(AppIdTooltip)]      public string appId;
+        [Tooltip(AppVersionTooltip)] public string appVersion;
         
         [Header("Content")][Space(5)]
-        public List<AddressableAssetGroup> addressableGroups;
-        public AssetIncludes<AssemblyDefinitionAsset> assemblyDefinitions;
-        public AssetIncludes<DefaultAsset> managedPlugins;
+        [Tooltip(AddressableGroupsTooltip)]   public List<AddressableAssetGroup> addressableGroups;
+        [Tooltip(AssemblyDefinitionsTooltip)] public AssetIncludes<AssemblyDefinitionAsset> assemblyDefinitions;
+        [Tooltip(ManagedPluginsTooltip)]      public AssetIncludes<DefaultAsset> managedPlugins;
 
         [Header("Build")][Space(5)]
+        [Tooltip(BuilderTooltip)]
         public ModBuilder builder;
 
         public bool ContainsAssets
@@ -158,6 +160,23 @@ namespace Katas.UniMod.Editor
             
             return !importer.isNativePlugin;
         }
+#endregion
+
+#region TOOLTIPS
+        private const string LinkedEmbeddedConfigTooltip = "Optional: set an EmbeddedModConfig asset here so it is automatically updated with this config. Embedded configs contain runtime information so the mod can be included in a player build. Use the \"Create > UniMod > Embedded Mod Config\" menu to create one";
+        private const string ModIdTooltip = "Required: a unique ID that represents this mod. Usually in the form of \"com.company.name\"";
+        private const string ModVersionTooltip = "Required: the current version of the mod. It should use Semantic Versioning";
+        private const string DisplayNameTooltip = "Recommended: the name of the mod ready for UI display";
+        private const string DescriptionTooltip = "Recommended: a description of the mod ready for UI display";
+        private const string ThumbnailTooltip = "Optional: the mod's thumbnail sprite to be included with the mod build";
+        private const string StartupTooltip = "Optional: a reference to the mod's startup asset where you can define any custom initialization logic and configuration. An Addressables build is required to include the startup object, so if you want to have an assemblies only mod then use the ModStartup attribute in static methods instead";
+        private const string DependenciesTooltip = "Optional: set here any dependencies to other mods. Each dependency must specify the ID and version of the mod so we can check at runtime if it is present. This mod won't load if any of the dependencies is missing in the host app";
+        private const string AppIdTooltip = "Recommended: the unique ID of the host application that this mod is created for. If this is left empty this mod will be considered standalone, which means that it can be loaded by any project using UniMod that allows standalone mods";
+        private const string AppVersionTooltip = "Recommended: the target version of the host application";
+        private const string AddressableGroupsTooltip = "Optional: the addressable groups containing all the assets to include in this mod";
+        private const string AssemblyDefinitionsTooltip = "Optional: includes/excludes of the script assemblies to include in this mod";
+        private const string ManagedPluginsTooltip = "Optional: includes/excludes of the managed plugins to include in this mod";
+        private const string BuilderTooltip = "Required: the builder asset used to build this mod. You will usually want to instantiate a local mod builder through the \"Create > UniMod > Local Mod Builder\" menu";
 #endregion
     }
 }

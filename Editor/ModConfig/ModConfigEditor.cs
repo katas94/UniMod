@@ -57,6 +57,8 @@ namespace Katas.UniMod.Editor
             // display same build buttons for development build
             GUILayout.Space(16);
             GUILayout.Label("Development Tools");
+            EditorGUILayout.HelpBox("Development builds directly output into a mod folder by skipping the archiving process and allows you to rebuild assets or assemblies separately. Use this to build directly into the host application local installation folder for fast development iteration"
+                , MessageType.Info, true);
             if (GUILayout.Button("Development Build"))
                 config.BuildWithGuiForDevelopmentAsync(defaultToCachedParameters: false).Forget();
             
