@@ -41,11 +41,11 @@ namespace Katas.UniMod
 
             Directory.Delete(path, false);
         }
-
+        
         /// <summary>
         /// Recursive method to copy the specified directory path and all its contents.
         /// </summary>
-        public static void CopyDirectory (string src, string dest, bool ignoreMetaFiles = false)
+        public static void CopyDirectory (string src, string dest, bool overwriteExistingFiles = false, bool ignoreMetaFiles = false)
         {
             if (!Directory.Exists(src))
                 throw new DirectoryNotFoundException($"Could not find the specified directory: \"{src}\"");
@@ -55,13 +55,13 @@ namespace Katas.UniMod
 
             string[] files = Directory.GetFiles(src);
             string[] directories = Directory.GetDirectories(src);
-
+            
             foreach (string file in files)
                 if (!ignoreMetaFiles || Path.GetExtension(file) != ".meta")
-                    File.Copy(file, Path.Combine(dest, Path.GetFileName(file)));
+                    File.Copy(file, Path.Combine(dest, Path.GetFileName(file)), overwriteExistingFiles);
 
             foreach (string directory in directories)
-                CopyDirectory(directory, Path.Combine(dest, Path.GetFileName(directory)), ignoreMetaFiles);
+                CopyDirectory(directory, Path.Combine(dest, Path.GetFileName(directory)), overwriteExistingFiles, ignoreMetaFiles);
         }
 
         /// <summary>

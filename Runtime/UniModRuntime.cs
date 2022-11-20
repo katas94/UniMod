@@ -30,8 +30,8 @@ namespace Katas.UniMod
         public const string ThumbnailFile = "thumbnail.png";
         public const string AddressablesCatalogFileName = "catalog.json";
         public const string StartupAddress = "__mod_startup";
-        public const string AssetsFolder = "Assets";
         public const string AssembliesFolder = "Assemblies";
+        public const string AssetsFolder = "Assets";
         
         public static readonly bool IsDebugBuild = Debug.isDebugBuild;
         

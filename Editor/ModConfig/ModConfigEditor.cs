@@ -49,14 +49,38 @@ namespace Katas.UniMod.Editor
             // display rebuild cached info and rebuild button (if there is any cached info)
             CodeOptimization? cachedBuildMode = config.GetCachedBuildMode();
             string cachedOutputPath = config.GetCachedBuildOutputPath();
+            if (cachedBuildMode is not null && !string.IsNullOrEmpty(cachedOutputPath))
+            {
+                GUILayout.Space(16);
+                if (GUILayout.Button("Rebuild"))
+                    config.BuildWithGuiAsync(defaultToCachedParameters: true).Forget();
+                EditorGUILayout.HelpBox(
+                    $"\nRebuild parameters:\n\n\tBuild mode: {cachedBuildMode}\n\tOutput path: {cachedOutputPath}\n",
+                    MessageType.Info, true);
+            }
+            
+            // display same build buttons for development build
+            GUILayout.Space(16);
+            GUILayout.Label("Build for Development");
+            if (GUILayout.Button("Development Build"))
+                config.BuildWithGuiForDevelopmentAsync(defaultToCachedParameters: false).Forget();
+            
+            // display rebuild cached info and rebuild button (if there is any cached info)
+            cachedBuildMode = config.GetCachedBuildMode(true);
+            cachedOutputPath = config.GetCachedBuildOutputPath(true);
             if (cachedBuildMode is null || string.IsNullOrEmpty(cachedOutputPath))
                 return;
             
             GUILayout.Space(16);
-            if (GUILayout.Button("Rebuild"))
-                config.BuildWithGuiAsync(defaultToCachedParameters: true).Forget();
+            if (GUILayout.Button("Development Rebuild: All"))
+                config.BuildWithGuiForDevelopmentAsync(defaultToCachedParameters: true).Forget();
+            if (GUILayout.Button("Development Rebuild: Assemblies"))
+                config.BuildWithGuiForDevelopmentAsync(defaultToCachedParameters: true, skipAssets: true).Forget();
+            if (GUILayout.Button("Development Rebuild: Assets"))
+                config.BuildWithGuiForDevelopmentAsync(defaultToCachedParameters: true, skipAssemblies: true).Forget();
+            
             EditorGUILayout.HelpBox(
-                $"\nRebuild parameters:\n\n\tBuild mode: {config.GetCachedBuildMode()}\n\tOutput path: {config.GetCachedBuildOutputPath()}\n",
+                $"\nDevelopment rebuild parameters:\n\n\tBuild mode: {cachedBuildMode}\n\tOutput folder: {cachedOutputPath}\n",
                 MessageType.Info, true);
         }
 

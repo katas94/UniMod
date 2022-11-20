@@ -33,22 +33,15 @@ namespace Katas.UniMod.Editor
         public ModAssemblyBuilderType assemblyBuilderType = ModAssemblyBuilderType.Final;
         public List<CustomAssemblyBuilder> customAssemblyBuilders;
         
-        /// <summary>
-        /// Invoked before building the mod. The tmpBuildFolder is already created.
-        /// </summary>
-        protected virtual UniTask OnPreBuildAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string tmpBuildFolder)
-            => UniTask.CompletedTask;
+        public override UniTask BuildAsync (ModConfig config, CodeOptimization buildMode, string outputPath)
+            => BuildInternalAsync(config, buildMode, outputPath, false, false, false);
         
-        /// <summary>
-        /// Invoked after building the mod but before archiving the tmpBuildFolder and deleting it.
-        /// </summary>
-        protected virtual UniTask OnPostBuildAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string tmpBuildFolder)
-            => UniTask.CompletedTask;
+        public override UniTask BuildForDevelopmentAsync (ModConfig config, CodeOptimization buildMode, string outputFolder,
+            bool skipAssemblies = false, bool skipAssets = false)
+            => BuildInternalAsync(config, buildMode, outputFolder, true, skipAssemblies, skipAssets);
         
-        /// <summary>
-        /// Builds the mod with the specified parameters.
-        /// </summary>
-        public override async UniTask BuildAsync (ModConfig config, CodeOptimization buildMode, string outputPath)
+        protected virtual async UniTask BuildInternalAsync (ModConfig config, CodeOptimization buildMode, string outputPath,
+            bool developmentBuild, bool skipAssemblies, bool skipAssets)
         {
             // validate parameters
             if (config is null)
@@ -73,15 +66,23 @@ namespace Katas.UniMod.Editor
                 await ExportThumbnailAsync(config, tmpBuildFolder);
                 
                 // build the mod assemblies if there are any
-                await BuildAssembliesAsync(config, buildMode, buildTarget, tmpBuildFolder);
+                if (!developmentBuild || !skipAssemblies)
+                    await BuildAssembliesAsync(config, buildMode, buildTarget, tmpBuildFolder);
                 
                 // build assets if there are any included (this will run an Addressables build)
-                BuildAssets(config, tmpBuildFolder);
+                if (!developmentBuild || !skipAssets)
+                    BuildAssets(config, tmpBuildFolder);
                 
                 await OnPostBuildAsync(config, buildMode, buildTarget, tmpBuildFolder);
                 
                 // create the output mod archive file from the build
-                await CreateModFileFromBuildAsync(config, tmpBuildFolder, buildTarget, outputPath);
+                await CreateModFileFromBuildAsync(config, tmpBuildFolder, buildTarget, outputPath, skipArchiving: developmentBuild);
+                
+                if (!developmentBuild)
+                    return;
+                
+                // if we are doing a development build then we have to create/update the mod folder in the output path with the build artifacts
+                CreateOrUpdateDevelopmentOutputFolder(config, tmpBuildFolder, outputPath, skipAssemblies, skipAssets);
             }
             finally
             {
@@ -89,6 +90,18 @@ namespace Katas.UniMod.Editor
                 IOUtils.DeleteDirectory(tmpFolder);
             }
         }
+
+        /// <summary>
+        /// Invoked before building the mod. The tmpBuildFolder is already created.
+        /// </summary>
+        protected virtual UniTask OnPreBuildAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string tmpBuildFolder)
+            => UniTask.CompletedTask;
+        
+        /// <summary>
+        /// Invoked after building the mod but before archiving the tmpBuildFolder and deleting it.
+        /// </summary>
+        protected virtual UniTask OnPostBuildAsync(ModConfig config, CodeOptimization buildMode, BuildTarget buildTarget, string tmpBuildFolder)
+            => UniTask.CompletedTask;
         
         protected virtual async UniTask ExportThumbnailAsync(ModConfig config, string outputFolder)
         {
@@ -199,7 +212,7 @@ namespace Katas.UniMod.Editor
             }
         }
 
-        protected virtual async UniTask CreateModFileFromBuildAsync(ModConfig config, string buildFolder, BuildTarget buildTarget, string outputPath)
+        protected virtual async UniTask CreateModFileFromBuildAsync(ModConfig config, string buildFolder, BuildTarget buildTarget, string outputPath, bool skipArchiving = false)
         {
             // create the mod info struct
             ModInfo info = new ()
@@ -217,6 +230,9 @@ namespace Katas.UniMod.Editor
             string infoFilePath = Path.Combine(buildFolder, UniModRuntime.InfoFile);
             await File.WriteAllTextAsync(infoFilePath, infoJson);
             
+            if (skipArchiving)
+                return;
+            
             // make sure the output path has the proper mod extension
             outputPath = IOUtils.EnsureFileExtension(outputPath, UniModRuntime.ModFileExtensionNoDot);
             
@@ -228,6 +244,22 @@ namespace Katas.UniMod.Editor
             ZipFile.CreateFromDirectory(buildFolder, outputPath, compressionLevel, true);
         }
         
+        protected virtual void CreateOrUpdateDevelopmentOutputFolder(ModConfig config, string buildFolder, string outputPath,
+            bool skipAssemblies, bool skipAssets)
+        {
+            outputPath = Path.Combine(outputPath, config.modId);
+
+            // fully delete previous assemblies and assets folder if we rebuilt them
+            string outputAssembliesPath = Path.Combine(outputPath, UniModRuntime.AssembliesFolder);
+            string outputAssetsPath = Path.Combine(outputPath, UniModRuntime.AssetsFolder);
+            if (!skipAssemblies && Directory.Exists(outputAssembliesPath))
+                IOUtils.DeleteDirectory(outputAssembliesPath);
+            if (!skipAssets && Directory.Exists(outputAssetsPath))
+                IOUtils.DeleteDirectory(outputAssetsPath);
+
+            IOUtils.CopyDirectory(buildFolder, outputPath, overwriteExistingFiles: true);
+        }
+
         // tries to get a mod assembly builder for the given build target, based on the current configured mob assembly builder type and custom builders.
         protected virtual bool TryGetModAssemblyBuilder(BuildTarget buildTarget, out IAssemblyBuilder assemblyBuilder)
         {
