@@ -3,7 +3,7 @@ using UnityEditor.Build.Reporting;
 
 namespace Katas.UniMod.Editor
 {
-    public class UniModPreprocessBuild : IPreprocessBuildWithReport
+    public sealed class UniModPreprocessBuild : IPreprocessBuildWithReport
     {
         public int callbackOrder => int.MinValue;
         

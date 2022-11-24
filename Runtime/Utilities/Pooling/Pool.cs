@@ -6,7 +6,7 @@ namespace Katas.UniMod
     /// <summary>
     /// Generic object pool.
     /// </summary>
-    internal class Pool<T>
+    internal sealed class Pool<T>
         where T : class
     {
         private static readonly Action<T> NoOp = delegate { };
