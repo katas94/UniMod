@@ -11,7 +11,8 @@
   "description": "Adds modding support to your Unity project.",
   "license": "MIT",
   "author": {
-    "name": "Pablo Gutierrez Millares"
+    "name": "Pablo Gutierrez Millares",
+    "email": "pagumi.dev@gmail.com"
   },
   "keywords": [
     "unimod",
