@@ -1,5 +1,5 @@
 # UniMod
-A Unity package that adds modding support to your project with a big focus on the modding experience so you can have the richest possible modding ecosystem.
+A Unity package that adds modding support to your project.
 * Mods can contain **imported assets** and **scripts**.
 * **Easy mod distribution and installation**: mods are built into a single `.umod` archive file that the users can drag and drop into a local installation folder. You can also extend UniMod to fetch mods from a server so users don't need to leave the application.
 * Seamless **in-editor development** experience for modders:
