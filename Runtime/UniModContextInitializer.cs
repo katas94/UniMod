@@ -18,7 +18,7 @@ namespace Katas.UniMod
         [SerializeField] private string hostId = "com.company.name";
         [SerializeField] private string hostVersion = "0.1.0";
         [SerializeField] private bool supportStandaloneMods = true;
-        [SerializeField] private bool supportModsContainingAssemblies = true;
+        [SerializeField] private bool supportScriptingInMods = false;
         [SerializeField] private bool supportModsCreatedForOtherHosts = false;
         
         [Header("Loading")][Space(5)]
@@ -51,7 +51,7 @@ namespace Katas.UniMod
             // initialize a mod host with the user configuration
             var host = new ModHost(hostId, hostVersion);
             host.SupportStandaloneMods = supportStandaloneMods;
-            host.SupportModsContainingAssemblies = supportModsContainingAssemblies;
+            host.SupportModsContainingAssemblies = supportScriptingInMods;
             host.SupportModsCreatedForOtherHosts = supportModsCreatedForOtherHosts;
             
             // initialize the UniMod context
