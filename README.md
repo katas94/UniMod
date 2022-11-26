@@ -1,7 +1,7 @@
 # UniMod
 
 A Unity package that adds modding support to your project.
-* **No content restrictions**. Mods can contain **assets** and **scripts**. *Scripts can be disabled*
+* **No content restrictions**. Mods can contain **assets** and **C# scripts**. *Scripts can be disabled*
 * **Easy mod distribution and installation**. Mods are built into a single `.umod` archive file.
 * **Easy setup**. Just add the `UniModContextInitializer` component to your scene.
 * **Script debugging support**.
@@ -20,7 +20,7 @@ A Unity package that adds modding support to your project.
   - As a custom Unity package for the Package Manager.
   - As a plugin.
 
-> This package does **NOT** provide any security features regarding the script execution of mods. If you enable mod scripting in your project users should be warned to load mods under their own risk.
+> This package does **NOT** provide any security features regarding the script execution of mods. Anything that you can do with C# in your Unity project will be also allowed for mod developers. If you enable mod scripting in your project users should be warned to load mods under their own risk.
 
 # Table of Contents
 * [ Getting Started](#getting-started)
@@ -92,7 +92,7 @@ With your `ModConfig` asset ready, use the `Assets > Create > UniMod > Local Mod
 * **Development Rebuild: Assemblies**: rebuilds the scripts only. It can be specially fast if you set the **Assembly Builder Type** to `Fast` in the `LocalModBuilder` asset so it reuses the editor's precompiled assemblies. Be aware that those assemblies have been compiled including the `UNITY_EDITOR` define.
 * **Development Rebuild: Assets**: rebuilds the assets only. This will perform an Addressables content build.
 
-Once you have your `.umod` file, you have to drop it on the host's local installation folder. This folder is located in `{UnityEngine.Application.persistentDataPath}/UniMods`. Checkout the [this Unity doc's](https://docs.unity3d.com/ScriptReference/Application-persistentDataPath.html) to see where the persistent data path is pointed to for your platform.
+Once you have your `.umod` file, you have to drop it on the host's local installation folder. This folder is located in `{UnityEngine.Application.persistentDataPath}/UniMods`. Checkout [this Unity doc's](https://docs.unity3d.com/ScriptReference/Application-persistentDataPath.html) to see where the persistent data path is pointed to for your platform.
 
 ## Implementing mods inside the original project
 
